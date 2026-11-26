@@ -1,12 +1,12 @@
 {
-  "version": "1.13.0",
-  "mac": "1.13.0",
+  "version": "1.14.0",
+  "mac": "1.14.0",
   "date": "2026-11-26",
   "notes": [
+    "Yazdığın her talimat uygulanır: \"ilk 5 sn kes\", \"son 3 saniyeyi sil\", \"sarı altyazı\", \"büyük harf\", \"altyazı olmasın\" kurguyla birlikte çalışır",
     "Profesyonel kurgu: konuşmadaki sessiz boşluklar otomatik kesilir (ses ve altyazı birlikte); istemezsen \"boşlukları kesme\" yaz",
     "Kesme yerine yumuşak yeniden kadraj: cümle değişince görüntü hafifçe içeri/dışarı kayar",
     "Video artık senin isteğine göre kurgulanır: sade, kinetik dev yazı, çerçeveli haber, bölünmüş ekran ya da infografik; renk, font ve altyazıyı yazdığın kelimelerden seçer",
-    "Bir şey belirtmezsen her video bir öncekinden farklı formatta çıkar",
-    "Her video farklı görünür: font, renk, zemin, geçiş ve altyazı stili her seferinde değişir (\"aynı tarz\" dersen öncekini korur)"
+    "Bir şey belirtmezsen her video bir öncekinden farklı formatta çıkar"
   ]
 }

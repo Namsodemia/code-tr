@@ -2225,7 +2225,7 @@ async function makeMotion(prompt, item, el, say, brand = null){
     const same = /aynı (tarz|stil)|öncekiyle aynı|aynısı/i.test(prompt), prevLook = store.get("coder.look", {});
     const look = brand ? null : (same && prevLook.font ? prevLook : MO.pickLook(prevLook, prompt, plan.gorunum || {})); if(look) store.set("coder.look", look);
     const styleName = /dinamik|enerji|hızlı|tiktok/i.test(prompt) ? "dinamik" : /minimal|sade/i.test(prompt) ? "minimal" : (MO.PALETTES[plan.stil] ? plan.stil : "kurumsal");
-    const data = await MO.renderFast({file: item.file, W, H, words, plan, palette: styleName, brand, look, cut: !/kesme|boşluk(ları)? (bırak|kalsın)|olduğu gibi|hiç kesme/i.test(prompt), onStep: say});
+    const data = await MO.renderFast({file: item.file, W, H, words, plan, palette: styleName, brand, look, cut: !/kesme|boşluk(ları)? (bırak|kalsın)|olduğu gibi|hiç kesme/i.test(prompt), wish: MO.parseWishes(prompt), onStep: say});
     const ass = MO.buildCaptions(words, plan, W, H, brand ? MO.brandPalette(brand) : MO.PALETTES[styleName]);
     return {data, ass, words, plan, styleName: brand ? brand.ad : look ? ({info: "infografik", kinetik: "kinetik dev yazı", cerceve: "çerçeveli editoryal", sade: "sade altyazı", bolunmus: "bölünmüş ekran"}[look.fmt] || look.fmt) + " · " + look.font + " · " + look.pal + " · " + look.cap + " altyazı" : styleName, clean, tdk, sure: Math.round((performance.now() - t0) / 1000)};
   }catch(e){
