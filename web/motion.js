@@ -300,6 +300,7 @@ function typoScene(ctx, L0, t, P, d, W, H){
   const C = STYLE.concept || {};
   const sz = C.boyut === "kucuk" ? .82 : C.boyut === "buyuk" ? 1.22 : 1;
   const L = {...L0}; if(C.yerlesim === "orta") L.y = H * .28; else if(C.yerlesim === "alt") L.y = H * .42; else if(C.yerlesim === "sol"){ L.x = W * .07; L.w = W * .62; }
+  if(STYLE.ov && W < H) L.y = Math.max(L.y, H * .4);   // videonun ustundeyken yuz bolgesine (ust-orta) yazi gelmez
   L.s = L0.s * sz;
   const ent = (p, i = 0) => { const g = C.giris || "rise"; return g === "slide" ? {dx: (1 - p) * -60 * L.s, dy: 0} : g === "fade" ? {dx: 0, dy: 0} : {dx: 0, dy: (1 - p) * 16 * L.s}; };
   const {x, w, s} = L, OV = STYLE.ov, ink = OV ? "#ffffff" : P.navy, sub = OV ? "rgba(255,255,255,.8)" : P.gray;
@@ -307,8 +308,6 @@ function typoScene(ctx, L0, t, P, d, W, H){
   const items = (d.items || []).map(i => typeof i === "string" ? i : (i.label || "")).filter(Boolean);
   if(!items.length){ if(d.bas) items.push(d.bas); if(d.son) items.push(d.son); if(d.label && !d.adet) items.push(d.label); if(d.alt) items.push(d.alt); }
   const stroke = (txt, xx, yy) => { if(OV){ ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = Math.max(2, parseInt(ctx.font.match(/(\d+)px/)[1]) * .07); ctx.lineJoin = "round"; ctx.strokeText(txt, xx, yy); } ctx.fillText(txt, xx, yy); };
-  if(OV && !STYLE.glow){ const a = easeOut(prog(t, 0, .5)) * .5, y0 = L.y - 90 * s, y1 = L.y + 720 * s, g = ctx.createLinearGradient(0, y0, 0, y1);
-    g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(.25, "rgba(0,0,0," + a + ")"); g.addColorStop(.75, "rgba(0,0,0," + a + ")"); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.fillRect(0, y0, W, y1 - y0); }
   ctx.save(); ctx.textAlign = center ? "center" : "left"; ctx.textBaseline = "alphabetic";
   let y = L.y + 40 * s;
   const pe = easeOut(prog(t, .05, .4));
@@ -540,7 +539,7 @@ function drawCaption(ctx, W, H, t, groups, emph, P, onScene){
     const a0 = easeOut(clamp((t - g.st + .05) / .25)) * easeOut(clamp((g.en - t) / .22));
     font(ctx, fs, 800); const sp = ctx.measureText(" ").width;
     const parts = g.words.map(w => ({w, t: w.w, wd: ctx.measureText(w.w).width}));
-    const total = parts.reduce((a, p) => a + p.wd, 0) + sp * (parts.length - 1), k = Math.min(1, W * .8 / total);
+    const total = parts.reduce((a, p) => a + p.wd, 0) + sp * (parts.length - 1), k = Math.min(1, W * .74 / total);
     font(ctx, fs * k, 800); let x = W / 2 - total * k / 2; parts.forEach(p => { p.x = x; p.wd *= k; x += p.wd + sp * k; });
     const ci = Math.max(0, parts.findLastIndex(p => t >= p.w.s - .04)), cur = parts[ci], prev = parts[Math.max(0, ci - 1)];
     const m = easeOut(clamp((t - cur.w.s + .04) / .16)), pad = 12 * s * k;
@@ -571,7 +570,7 @@ function drawCaption(ctx, W, H, t, groups, emph, P, onScene){
       const fs = 58 * s, left = STYLE.cap === "left", y = vert ? H * .72 : H * .85;
       font(ctx, fs, 800); const sp = ctx.measureText(" ").width;
       const parts = g.words.map(w => ({w, t: w.w, wd: ctx.measureText(w.w).width}));
-      const total = parts.reduce((a, p) => a + p.wd, 0) + sp * (parts.length - 1), k = Math.min(1, W * .82 / total);
+      const total = parts.reduce((a, p) => a + p.wd, 0) + sp * (parts.length - 1), k = Math.min(1, W * .74 / total);
       font(ctx, fs * k, 800); let x = left ? W * .08 + 22 * s : W / 2 - total * k / 2; ctx.textAlign = "left";
       if(left){ ctx.globalAlpha = a0; ctx.fillStyle = P.red; ctx.fillRect(W * .08, y - fs * .6, 8 * s, fs * 1.2 * clamp((t - g.st) / .2)); }
       for(const p of parts){
@@ -645,7 +644,8 @@ export function parseWishes(q){
 export async function renderFast({file, W, H, words, plan, palette = "kurumsal", brand = null, look = null, cut = false, zoom = true, wish = {}, onStep = () => {}}){
   // Glow Up kurallari: ham sese HIC dokunma (kazanc yalniz teklif edilir); metin yuz bolgesine (ust-orta) gelmez
   if(brand){ if(wish.loud) plan.__sesTeklif = true; wish = {...wish, loud: false}; if(plan.__concept && /ust|orta/.test(plan.__concept.yerlesim)) plan.__concept = {...plan.__concept, yerlesim: "alt"}; }
-  const faceSafe = !!brand;
+  const faceSafe = true;   // genel kural: yazi yuz/kafa bolgesine gelmez (konusmaci videolari)
+  if(!brand){ const cw = cleanWords(words); words = cw.words; plan.__dolgu = cw.removed; plan.__duzeltme = cw.fixed; }   // dolgu (eee/ıı) ve kesin yazim hatalari her videoda
   if(typeof VideoEncoder === "undefined") throw new Error("NO_WEBCODECS");
   const MB = await import("/vendor/mediabunny/mediabunny.min.mjs");
   SLOW = 1.6;
@@ -671,7 +671,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
   const out = new OffscreenCanvas(W, H); const ctx = out.getContext("2d");
   const scv = new OffscreenCanvas(W, H); const sctx = scv.getContext("2d");
   const output = new MB.Output({format: new MB.Mp4OutputFormat({fastStart: "in-memory"}), target: new MB.BufferTarget()});
-  const vsrc = new MB.CanvasSource(out, {codec: "avc", bitrate: MB.QUALITY_HIGH, latencyMode: "quality", hardwareAcceleration: "prefer-hardware", keyFrameInterval: 2});
+  const vsrc = new MB.CanvasSource(out, {codec: "avc", bitrate: Math.round(8.5e6 * (W * H) / (1080 * 1920)) || MB.QUALITY_HIGH, /* 1 dk 1080x1920 ~ 60-65 MB */ latencyMode: "quality", hardwareAcceleration: "prefer-hardware", keyFrameInterval: 2});
   // Akıcı hareket: kaynak 50+ fps ise 60 fps işle
   FPS = dur > 90 ? 30 : 60;  // kisa videoda 60 fps (akici grafik); uzun videoda 30 fps (yari surede biter)
   output.addVideoTrack(vsrc, {frameRate: FPS});
