@@ -375,6 +375,116 @@ body{letter-spacing:-.005em}
 .install-steps .st{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .install-steps .st b{font-family:var(--display)}
 .install-steps .n{width:24px;height:24px;border-radius:50%;background:var(--grad);color:#fff;display:grid;place-items:center;font:700 12px var(--display);flex:0 0 24px}
+/* ---------- IDE (Kod modu, web) ---------- */
+.ide{display:none;flex:1;min-width:0;flex-direction:column;border-left:1px solid var(--line);background:var(--panel)}
+#app.ide-on .ide{display:flex}
+#app.ide-on .main{flex:0 0 min(440px,42vw)}
+#app.ide-on .thread,#app.ide-on .composer,#app.ide-on .hint{max-width:none}
+#app.ide-on .thread{padding:8px 16px 30px}#app.ide-on .composer-wrap{padding:0 12px 12px}
+#app.ide-on .bar{flex-wrap:wrap;row-gap:6px}#app.ide-on .bar #modeSeg{order:10;flex:1 0 100%;overflow-x:auto;scrollbar-width:none}#app.ide-on .pill{max-width:180px}
+.ide-top{height:52px;flex:0 0 52px;display:flex;align-items:center;gap:6px;padding:0 10px;border-bottom:1px solid var(--line)}
+.ide-top .nm{font:700 13.5px var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:30%}
+.ide-top .nm small{font:400 12px var(--sans);color:var(--faint);margin-left:6px}
+.ide-b{border:1px solid var(--line);background:transparent;border-radius:8px;padding:4px 10px;font-size:13px;color:var(--muted);white-space:nowrap}
+.ide-b:hover{color:var(--text);border-color:var(--line2)}
+.ide-b.on{background:var(--accent-soft);color:var(--accent);border-color:transparent;font-weight:600}
+.ide-b.go{background:var(--ink);color:var(--on-ink);border-color:var(--ink);font-weight:600}
+.ide-body{flex:1;display:flex;min-height:0}
+.ide-tree{width:210px;flex:0 0 210px;overflow:auto;border-right:1px solid var(--line);background:var(--side);font-size:13px;padding:6px 0}
+.ide-tree .th{display:flex;align-items:center;gap:4px;padding:2px 8px 6px;color:var(--faint);font-size:11.5px;font-weight:700;letter-spacing:.4px}
+.ide-tree .th span{flex:1}
+.ide-tree .th button{border:0;background:transparent;color:var(--muted);border-radius:5px;padding:0 5px;font-size:14px}
+.ide-tree .th button:hover{background:var(--line);color:var(--text)}
+.tn{display:flex;align-items:center;gap:5px;width:100%;border:0;background:transparent;text-align:left;padding:2px 8px;white-space:nowrap;color:var(--text);font-size:13px;line-height:1.55}
+.tn:hover{background:var(--line)}
+.tn.sel{background:var(--accent-soft);color:var(--accent)}
+.tn .ic{width:14px;flex:0 0 14px;text-align:center;color:var(--faint);font-size:11px}
+.tn .lb{overflow:hidden;text-overflow:ellipsis}
+.tn.dir .lb{font-weight:600}
+.tn.fresh .lb::after{content:" ●";color:var(--ok);font-size:10px}
+.ide-main{flex:1;display:flex;min-width:0}
+.ide-center{flex:1;display:flex;flex-direction:column;min-width:0}
+.ide-tabs{display:flex;overflow-x:auto;border-bottom:1px solid var(--line);flex:0 0 auto;background:var(--side);scrollbar-width:none}
+.ide-tab{display:flex;align-items:center;gap:6px;border:0;border-right:1px solid var(--line);background:transparent;padding:6px 8px 6px 12px;font-size:12.5px;color:var(--muted);white-space:nowrap;font-family:var(--mono)}
+.ide-tab.on{background:var(--panel);color:var(--text);box-shadow:inset 0 2px 0 var(--accent)}
+.ide-tab .x{border:0;background:transparent;color:var(--faint);width:18px;height:18px;border-radius:4px;line-height:1;padding:0}
+.ide-tab .x:hover{background:var(--line);color:var(--text)}
+.ide-tab.dirty .x::before{content:"●";color:var(--accent)}
+.ide-tab.dirty .x span{display:none}
+.ide-tab.dirty:hover .x::before{content:""}.ide-tab.dirty:hover .x span{display:inline}
+.ide-ed{flex:1;min-height:0;position:relative;overflow:hidden}
+.ide-ed>div{position:absolute;inset:0}
+.ide-ed .cm-editor{height:100%;font-size:13px}
+.ide-ed .cm-scroller{font-family:var(--mono)}
+.ide-ta{width:100%;height:100%;border:0;outline:0;resize:none;padding:12px 14px;font:13px/1.55 var(--mono);background:var(--panel);tab-size:2}
+.ide-msg{display:grid;place-items:center;text-align:center;color:var(--muted);padding:24px;overflow:auto}
+.ide-msg img{max-width:100%;max-height:70vh;background:repeating-conic-gradient(var(--line) 0 25%,transparent 0 50%) 0 0/16px 16px;border-radius:8px}
+.ide-welcome h3{font-family:var(--display);font-size:22px;margin:0 0 6px;color:var(--text)}
+.ide-welcome p{max-width:420px;margin:0 auto 16px;font-size:14px}
+.ide-welcome .btn{margin:4px}
+.ide-prev{flex:1;display:none;flex-direction:column;min-width:0;border-left:1px solid var(--line)}
+.ide.prev-on .ide-prev{display:flex}
+.ide-prev .pb{display:flex;align-items:center;gap:6px;padding:5px 8px;border-bottom:1px solid var(--line);font:12px var(--mono);color:var(--muted);background:var(--side)}
+.ide-prev .pb span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ide-prev iframe{flex:1;border:0;background:#fff;width:100%}
+.ide-foot{flex:0 0 auto;display:flex;gap:12px;padding:3px 10px;border-top:1px solid var(--line);font:11.5px var(--mono);color:var(--faint);background:var(--side)}
+.ide-foot span:first-child{flex:1}
+/* fark (diff) */
+.diff{background:var(--panel);border:1px solid var(--line);border-radius:8px;max-height:340px;overflow:auto;font:12px/1.5 var(--mono);margin:0 0 10px}
+.dl{display:flex;white-space:pre}
+.dl .ln{width:38px;flex:0 0 38px;text-align:right;padding-right:6px;color:var(--faint);user-select:none}
+.dl .sg{width:14px;flex:0 0 14px;user-select:none}
+.dl .tx{flex:1;padding-right:10px}
+.dl.add{background:var(--ok-soft)}.dl.add .sg,.dl.add .tx{color:var(--ok)}
+.dl.del{background:var(--err-soft)}.dl.del .sg,.dl.del .tx{color:var(--err)}
+.dl.gap{color:var(--faint);padding:1px 10px;background:var(--side)}
+.approve .df-h{font:12.5px var(--mono);margin:0 0 6px;color:var(--text)}
+.approve .df-h .a{color:var(--ok)}.approve .df-h .d{color:var(--err)}
+/* yayinla */
+.pub-opt{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:0 0 12px}
+.pub-opt h3{margin:0 0 4px;font-size:15.5px}
+.pub-opt h3 small{font-weight:500;color:var(--faint);font-size:12.5px;margin-left:6px}
+.pub-opt p,.pub-opt ol{margin:0 0 10px;font-size:13.5px;color:var(--muted)}
+.pub-opt ol{padding-left:20px}
+.pub-opt .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pub-opt a.btn{text-decoration:none;color:var(--text)}
+.pub-check{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;font-size:12.5px}
+.pub-check span{border-radius:20px;padding:3px 10px;background:var(--ok-soft);color:var(--ok)}
+.pub-check span.no{background:var(--err-soft);color:var(--err)}
+.pub-check button{font-size:12.5px;padding:3px 10px}
+.pub-url{display:block;font-size:13px;color:var(--muted);margin:0 0 12px}
+.pub-url input{display:block;width:100%;margin-top:4px;border:1px solid var(--line2);background:var(--bg);border-radius:9px;padding:7px 10px}
+.pub-guide{border:1px solid var(--line);border-radius:14px;padding:10px 16px;margin:0 0 12px;font-size:13.5px}
+.pub-guide summary{cursor:pointer;font-weight:700}
+.pub-guide ol{padding-left:20px;color:var(--muted)}
+.pub-guide li{margin:5px 0}
+.pub-guide input{width:100%;border:1px solid var(--line2);background:var(--bg);border-radius:9px;padding:7px 10px;font:12px var(--mono);margin:4px 0}
+.pub-done{border-radius:12px;background:var(--ok-soft);color:var(--ok);padding:10px 14px;margin:10px 0 0;font-size:14px}
+.pub-done a{color:inherit;font-weight:700}
+.ide.tree-off .ide-tree{display:none}
+.ide-projs{max-width:360px;margin:16px auto 0;text-align:left;border:1px solid var(--line);border-radius:12px;padding:8px 6px}
+.ide-projs b{display:block;font-size:12px;color:var(--faint);padding:0 8px 4px}
+.ide-projs .pj{display:flex;align-items:center}
+.ide-projs .pj .tn{flex:1;border-radius:7px;padding:5px 8px}
+.pj-x{border:0;background:transparent;color:var(--faint);border-radius:6px;width:26px;height:26px}
+.pj-x:hover{color:var(--err);background:var(--err-soft)}
+@media (max-width: 900px){
+  #app.ide-on .main{flex:1}
+  .ide{position:fixed;inset:0;z-index:40}
+  .ide-tree{width:150px;flex-basis:150px}
+  .ide.prev-on .ide-center{display:none}
+}
+@media (max-width: 640px){
+  #ideDl{display:none}
+  .ide-tree{width:62%;flex-basis:62%;position:absolute;z-index:3;top:0;bottom:0;left:0;box-shadow:var(--shadow)}
+  .ide-body{position:relative}
+  .ide-top{gap:4px;padding:0 6px}
+  .ide-top .nm{display:none}
+  .ide-b{padding:5px 8px}
+  .tn{padding-top:5px;padding-bottom:5px;font-size:14px}
+  .ide-ed .cm-editor{font-size:14px}
+}
+@media (hover: none){ .ide-foot .kb{display:none} .ide-tab .x{width:24px;height:24px} }
 </style>
 </head>
 <body>
@@ -405,6 +515,7 @@ body{letter-spacing:-.005em}
     <div class="top">
       <button class="icon-btn" id="toggleSide" title="Kenar çubuğu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg></button>
       <div class="top-title" id="topTitle"></div>
+      <div class="spacer"></div><button class="pill" id="ideToggle" style="display:none" title="Kod editörünü aç/kapat (dosya ağacı, sekmeler, önizleme, yayınla)">‹/› Editör</button>
     </div>
     <div class="scroll" id="scroll">
       <div class="empty" id="empty">
@@ -452,6 +563,30 @@ body{letter-spacing:-.005em}
     </div>
     <div class="drop" id="drop">Dosyayı buraya bırak</div>
   </main>
+  <section class="ide" id="ide" aria-label="Kod editörü">
+    <div class="ide-top">
+      <button class="icon-btn" data-ide="tree" title="Dosya ağacını aç/kapat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></button>
+      <span class="nm" id="ideName">Editör</span>
+      <button class="ide-b" data-ide="home" title="Başka bir klasör ya da proje aç, yeni proje oluştur">📁 Aç</button>
+      <input type="file" id="ideImpDir" webkitdirectory multiple hidden><input type="file" id="ideImpFiles" multiple hidden>
+      <div class="spacer"></div>
+      <button class="ide-b" id="ideDl" title="Projeyi zip olarak bilgisayarına ya da telefonuna indir">⤓ İndir</button>
+      <button class="ide-b" id="idePrevBtn" title="HTML projesini canlı önizle">▶ Önizle</button>
+      <button class="ide-b go" id="idePubBtn" title="Projeyi internete yükle">⇪ Yayınla</button>
+      <button class="icon-btn" id="ideClose" title="Editörü kapat (sohbete dön)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="ide-body">
+      <nav class="ide-tree" id="ideTree"></nav>
+      <div class="ide-main">
+        <div class="ide-center">
+          <div class="ide-tabs" id="ideTabs"></div>
+          <div class="ide-ed"><div id="ideCM"></div><div class="ide-msg" id="ideMsg"></div></div>
+          <div class="ide-foot"><span id="ideStat">Hazır</span><span class="kb">⌘/Ctrl+S kaydet</span></div>
+        </div>
+        <div class="ide-prev"><div class="pb"><span id="idePrevPath">önizleme</span><button class="ide-b" id="idePrevReload" title="Yenile">↻</button></div><iframe id="idePrevFrame" sandbox="allow-scripts allow-forms allow-modals" title="Canlı önizleme"></iframe></div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <div class="modal-bg" id="authModal">
@@ -578,6 +713,41 @@ body{letter-spacing:-.005em}
     <h2>Yenilikler 🎉</h2>
     <ul class="news" id="newsList"></ul>
     <div class="modal-foot"><button class="btn primary" data-close>Başlayalım</button></div>
+  </div>
+</div>
+<div class="modal-bg" id="pubModal">
+  <div class="modal">
+    <h2>⇪ Yayınla</h2>
+    <p class="sub">Projeni internete yükle ve Google'da bulunabilir yap. Giriş her zaman senin hesabınla, senin tarafından yapılır; Code-Tr parolanı ya da anahtarını görmez, saklamaz.</p>
+    <div class="pub-check" id="pubCheck"></div>
+    <div class="pub-opt" id="pubNetlify" style="display:none">
+      <h3>⚡ Tek tıkla yayınla <small>Netlify · ücretsiz</small></h3>
+      <p>Açılan pencerede Netlify hesabınla giriş yap (yoksa ücretsiz aç). Proje yüklenir, adresin hazır olur; sonraki yayınlar aynı adresi günceller. Giriş izni yalnız bu sekmenin belleğinde durur, sayfayı kapatınca silinir.</p>
+      <div class="row"><button class="btn primary" id="pubGo">Netlify ile yayınla</button><span class="status" id="pubStatus"></span></div>
+      <div id="pubDone"></div>
+    </div>
+    <div class="pub-opt">
+      <h3>⇪ Sürükle-bırak ile yayınla <small>hesap gerekmeden başlar</small></h3>
+      <ol><li><b>Zip'i indir</b>: projen, <code>sitemap.xml</code> ve <code>robots.txt</code> eklenmiş olarak hazırlanır.</li><li>Aşağıdaki sitelerden birini aç, zip'i sayfaya sürükleyip bırak; adresin hemen çıkar.</li><li>Siteyi kalıcı yapmak için <b>60 dakika içinde</b> "Claim / Sahiplen" ile ücretsiz hesabına bağla, yoksa silinir.</li></ol>
+      <div class="row"><button class="btn primary" id="pubZip">⤓ Zip'i indir</button><a class="btn" href="https://app.netlify.com/drop" target="_blank" rel="noopener">Netlify Drop</a><a class="btn" href="https://vercel.com/drop" target="_blank" rel="noopener">Vercel Drop</a><a class="btn" href="https://www.cloudflare.com/drop/" target="_blank" rel="noopener">Cloudflare Drop</a></div>
+    </div>
+    <div class="pub-opt">
+      <h3>GitHub Pages <small>kalıcı · ücretsiz · GitHub hesabıyla</small></h3>
+      <ol><li><a href="https://github.com/new" target="_blank" rel="noopener">github.com/new</a> ile <b>Public</b> bir depo aç.</li><li><b>Add file → Upload files</b> ile zip'in <i>içindekileri</i> sürükle, <b>Commit</b>.</li><li><b>Settings → Pages</b>: Branch <b>main</b>, klasör <b>/ (root)</b>, <b>Save</b>. Birkaç dakikada <code>kullaniciadin.github.io/depo-adi</code> adresinde yayında.</li></ol>
+    </div>
+    <label class="pub-url">Sitenin adresi (sitemap için; Netlify'da otomatik dolar)<input id="pubUrl" placeholder="https://siten.netlify.app" inputmode="url"></label>
+    <details class="pub-guide"><summary>🔎 Google'da bulunmak: sitemap, robots ve Search Console rehberi</summary>
+      <ol>
+        <li><b>robots.txt</b> arama motorlarına siteyi tarayabileceklerini, <b>sitemap.xml</b> hangi sayfaların olduğunu söyler. Code-Tr ikisini de yüklemeye otomatik ekler (klasöründe zaten varsa seninkini kullanır). Sitemap için yukarıya sitenin adresini yaz.</li>
+        <li>Her sayfada <code>&lt;title&gt;</code>, <code>&lt;meta name="description"&gt;</code>, <code>&lt;html lang="tr"&gt;</code> ve mobil için <code>viewport</code> olsun. Yukarıdaki kontrol eksikleri gösterir; "Kod ajanı düzeltsin" ile ekletebilirsin.</li>
+        <li><a href="https://search.google.com/search-console" target="_blank" rel="noopener">Google Search Console</a>'u aç, Google hesabınla gir → <b>Mülk ekle</b> → <b>URL ön eki</b> → sitenin adresini yaz.</li>
+        <li>Doğrulama yöntemi olarak <b>HTML etiketi</b>ni seç, verilen <code>&lt;meta name="google-site-verification" …&gt;</code> satırını buraya yapıştır, "index.html'e ekle"ye bas, sonra siteyi yeniden yayınla ve Search Console'da <b>Doğrula</b>'ya tıkla.
+          <input id="gscMeta" placeholder='&lt;meta name="google-site-verification" content="…"&gt;'><button class="btn" id="gscAdd">index.html'e ekle</button></li>
+        <li>Soldaki <b>Site haritaları</b> bölümüne <code>sitemap.xml</code> yaz, <b>Gönder</b>.</li>
+        <li>Üstteki arama kutusuna ana sayfa adresini yazıp <b>Dizine eklenmesini iste</b>. Google'da görünmesi genelde birkaç gün sürer.</li>
+      </ol>
+    </details>
+    <div class="modal-foot"><button class="btn" data-close>Kapat</button></div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -863,14 +1033,18 @@ function webTools(ask){
     async read_file(a){ const f = await (await fsResolve(a.path, false, false)).getFile(); const lines = (await f.text()).split("\n");
       const st = Math.max(1, +a.start || 1), en = +a.end || lines.length;
       return cut(`# ${a.path} (satır ${st}-${Math.min(en, lines.length)} / ${lines.length})\n` + lines.slice(st - 1, en).map((l, i) => (st + i) + ": " + l).join("\n")); },
-    async write_file(a){ if(!await ask("write", "Dosya yazılsın mı?", a.path + "\n\n" + String(a.content || "").slice(0, 3000))) return "Kullanıcı yazmayı reddetti.";
-      const h = await fsResolve(a.path, true, false); const w = await h.createWritable(); await w.write(a.content || ""); await w.close(); return `'${a.path}' yazıldı.`; },
+    async write_file(a){ const content = String(a.content || ""); let old = null;
+      try{ old = await (await (await fsResolve(a.path, false, false)).getFile()).text(); }catch(e){}
+      if(old === content) return `'${a.path}' zaten bu içerikte; değişiklik gerekmedi.`;
+      if(!await ask("write", old === null ? "Yeni dosya oluşturulsun mu?" : "Dosya değiştirilsin mi?", a.path + "\n\n" + content.slice(0, 3000), makeDiff(a.path, old || "", content, old === null))) return "Kullanıcı yazmayı reddetti.";
+      const h = await fsResolve(a.path, true, false); const w = await h.createWritable(); await w.write(content); await w.close(); ideChanged(a.path); return `'${a.path}' yazıldı.`; },
     async edit_file(a){ const h = await fsResolve(a.path, false, false); const t = await (await h.getFile()).text();
       const n = a.old ? t.split(a.old).length - 1 : 0;
       if(!n) return "HATA: 'old' metni dosyada birebir bulunamadı. Dosyanın gerçek içeriği aşağıda; 'old' alanına buradan birebir kopyala:\n" + cut(t.slice(0, 4000));
       if(n > 1) return "HATA: metin " + n + " yerde geçiyor; daha fazla satır ekleyerek benzersiz yap.";
-      if(!await ask("write", "Dosya düzenlensin mi?", a.path + "\n\n--- eski\n" + a.old.slice(0, 1500) + "\n\n+++ yeni\n" + String(a.new || "").slice(0, 1500))) return "Kullanıcı düzenlemeyi reddetti.";
-      const w = await h.createWritable(); await w.write(t.replace(a.old, a.new || "")); await w.close(); return `'${a.path}' düzenlendi.`; },
+      const next = t.replace(a.old, () => String(a.new || ""));
+      if(!await ask("write", "Dosya düzenlensin mi?", a.path + "\n\n--- eski\n" + a.old.slice(0, 1500) + "\n\n+++ yeni\n" + String(a.new || "").slice(0, 1500), makeDiff(a.path, t, next, false))) return "Kullanıcı düzenlemeyi reddetti.";
+      const w = await h.createWritable(); await w.write(next); await w.close(); ideChanged(a.path); return `'${a.path}' düzenlendi.`; },
     async grep(a){ const files = []; await walk(await fsResolve(a.path, false, true), (a.path && a.path !== "." ? a.path.replace(/\/$/, "") + "/" : ""), files, 1500);
       let re; try{ re = new RegExp(a.pattern, "i"); }catch(e){ return "HATA: geçersiz desen"; }
       const out = [];
@@ -947,10 +1121,10 @@ async function webRun(req, emit, signal){
     emit({type: "final", text: await webStream(s, name, [sys, ...msgs], onToken, signal)});
     return;
   }
-  const ask = (kind, title, detail) => new Promise(res => { const id = Math.random().toString(36).slice(2); WEB.approvals.set(id, res); emit({type: "approval", id, kind, title, detail}); });
+  const ask = (kind, title, detail, diff) => new Promise(res => { const id = Math.random().toString(36).slice(2); WEB.approvals.set(id, res); emit({type: "approval", id, kind, title, detail, diff}); });
   const tools = webTools(ask);
   let listing = ""; try{ listing = (await tools.list_dir({path: "."})).slice(0, 2500); }catch(e){}
-  const convo = [{role: "system", content: AGENT_PROMPT(WEB.dir.name, listing)}, ...msgs];
+  const convo = [{role: "system", content: AGENT_PROMPT(WEB.dir.name, listing) + ideContext()}, ...msgs];
   let nudges = 0;
   for(let step = 1; step <= 15; step++){
     emit({type: "step_start", step});
@@ -1366,8 +1540,9 @@ function approvalEl(ev){
   const d = document.createElement("div"); d.className = "approve";
   d.innerHTML = "<h4>⚠︎ " + esc(ev.title.replace("calistirilsin", "çalıştırılsın").replace("duzenlensin", "düzenlensin")) + "</h4><pre></pre><div class='btns'><button class='btn primary'>İzin ver</button><button class='btn'>Reddet</button></div>";
   d.querySelector("pre").textContent = ev.detail;
+  if(ev.diff){ d.querySelector("pre").replaceWith(diffEl(ev.diff)); d.querySelector("button").textContent = "✓ Uygula"; }
   const [yes, no] = d.querySelectorAll("button");
-  const answer = ok => { api("/api/approve", {id: ev.id, ok}); d.className = "approve done"; d.innerHTML = "<h4>" + (ok ? "✓ İzin verildi" : "✕ Reddedildi") + "</h4>"; };
+  const answer = ok => { api("/api/approve", {id: ev.id, ok}); d.className = "approve done"; d.innerHTML = "<h4>" + (ok ? "✓ İzin verildi" : "✕ Reddedildi") + (ev.diff ? " · " + esc(ev.diff.path) + " (+" + ev.diff.add + " −" + ev.diff.del + ")" : "") + "</h4>"; };
   yes.onclick = () => answer(true); no.onclick = () => answer(false);
   return d;
 }
@@ -1477,6 +1652,7 @@ function setMode(m){
   mode = m; store.set("coder.mode", m);
   document.querySelectorAll("#modeSeg button").forEach(b => b.classList.toggle("on", b.dataset.mode === m));
   $("#wsBtn").style.display = m === "agent" ? "" : "none";
+  ideModeChanged(m);
   $("#arBtn").style.display = m === "image" ? "flex" : "none";
   $("#brandSel").style.display = m === "glowup" ? "" : "none";
   if(m === "glowup") $("#attachBtn").style.display = "";
@@ -1490,6 +1666,7 @@ function setMode(m){
 document.querySelectorAll("#modeSeg button").forEach(b => b.onclick = () => setMode(b.dataset.mode));
 function showWs(p){ workspace = p; $("#wsName").textContent = p ? (p.split("/").filter(Boolean).pop() || "/") : "Klasör seç (isteğe bağlı)"; $("#wsBtn").title = p || "Bir klasör seçersen dosyalarını okuyup düzenleyebilirim"; }
 $("#wsBtn").onclick = async () => {
+  if(!LOCAL){ ideShow(true); return; }
   const r = await (await api("/api/pick-folder", {})).json();
   if(r.folder) showWs(r.folder);
 };
@@ -2557,6 +2734,587 @@ async function openInstall(){
 $("#dlMac").onclick = openInstall;
 $("#installFromSettings").onclick = () => { $("#settings").classList.remove("on"); openInstall(); };
 
+/* ---------------- IDE (web, Kod modu): klasor, dosya agaci, sekmeli editor, canli onizleme, yayinla ----------------
+   Dosyalar File System Access API ile yalniz kullanicinin sectigi klasorde okunur/yazilir.
+   Ajanin her yazmasi once fark (diff) olarak gosterilir, onay gelmeden diske dokunulmaz. */
+const IDE = {cm: null, view: null, tabs: [], active: null, on: false, prev: false, prevPath: "", expanded: new Set(), fresh: new Set(), cfg: {netlify: ""}, token: "", lastDir: null};
+const IDE_SKIP = new Set(["node_modules", ".git", ".next", "__pycache__", ".DS_Store", ".vercel", ".netlify", ".idea", ".vscode"]);
+const IDE_IMG = /\.(png|jpe?g|gif|webp|svg|ico|avif|bmp)$/i;
+const IDE_BIN = /\.(png|jpe?g|gif|webp|ico|avif|bmp|pdf|zip|gz|tgz|rar|7z|mp4|mov|webm|mkv|mp3|wav|ogg|m4a|woff2?|ttf|otf|eot|psd|ai|sketch|exe|dmg|bin|wasm|db|sqlite)$/i;
+const IDE_MIME = {png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", svg: "image/svg+xml", ico: "image/x-icon", avif: "image/avif", bmp: "image/bmp",
+  woff: "font/woff", woff2: "font/woff2", ttf: "font/ttf", otf: "font/otf", mp4: "video/mp4", webm: "video/webm", mp3: "audio/mpeg", wav: "audio/wav", ogg: "audio/ogg", json: "application/json", css: "text/css", js: "text/javascript", txt: "text/plain"};
+const fext = p => (String(p).split("/").pop().split(".").slice(1).pop() || "").toLowerCase();
+const ideCanUse = () => !LOCAL;
+const ideRealFS = () => !!window.showDirectoryPicker;
+const ideHidden = n => IDE_SKIP.has(n) || n.startsWith(".env");
+const ideStat = t => { $("#ideStat").textContent = t; };
+
+async function ideLoadCM(){
+  if(IDE.cm !== null) return IDE.cm;
+  try{ IDE.cm = await import("/vendor/ide/ide.mjs"); }catch(e){ IDE.cm = false; }
+  return IDE.cm;
+}
+/* son klasoru hatirla (yalniz klasor tutamaci; icerik ya da parola degil) */
+const ideDB = (store, fn) => new Promise(res => { try{ const r = indexedDB.open("codetr-ide", 2); r.onupgradeneeded = () => { for(const n of ["h", "proj"]) if(!r.result.objectStoreNames.contains(n)) r.result.createObjectStore(n); };
+  r.onsuccess = () => { try{ const tx = r.result.transaction(store, "readwrite"); const q = fn(tx.objectStore(store)); tx.oncomplete = () => res(q && q.result); tx.onerror = () => res(null); }catch(e){ res(null); } }; r.onerror = () => res(null); }catch(e){ res(null); } });
+
+/* Tarayici projeleri: gercek klasor acilamayan cihazlarda (telefon, tablet, Safari, Firefox) dosyalar bu tarayicida
+   (IndexedDB) saklanir. File System Access tutamaciyla ayni arayuzu sunar; ajan, editor ve yayinla aynen calisir. */
+function vfsRoot(name, rec){
+  const fs = {name, files: new Map(Object.entries(rec.files || {})), dirs: new Set(rec.dirs || []), t: 0,
+    save(){ clearTimeout(this.t); this.t = setTimeout(() => ideDB("proj", st => st.put({files: Object.fromEntries(this.files), dirs: [...this.dirs], at: Date.now()}, name)), 120); }};
+  return new VDir(fs, "", name);
+}
+class VDir{
+  constructor(fs, path, name){ this.fs = fs; this.path = path; this.name = name; this.kind = "directory"; this.vfs = true; }
+  child(n){ return this.path ? this.path + "/" + n : n; }
+  async *entries(){
+    const pre = this.path ? this.path + "/" : "", seen = new Set();
+    for(const p of [...this.fs.dirs, ...this.fs.files.keys()]){
+      if(!p.startsWith(pre) || p === this.path) continue;
+      const rest = p.slice(pre.length), n = rest.split("/")[0]; if(!n || seen.has(n)) continue; seen.add(n);
+      const full = pre + n; yield [n, this.fs.files.has(full) ? new VFile(this.fs, full, n) : new VDir(this.fs, full, n)];
+    }
+  }
+  async *keys(){ for await (const [n] of this.entries()) yield n; }
+  async getDirectoryHandle(n, o = {}){
+    const p = this.child(n);
+    if(this.fs.files.has(p)) throw new DOMException("Bu bir dosya", "TypeMismatchError");
+    if(!this.fs.dirs.has(p) && ![...this.fs.files.keys()].some(k => k.startsWith(p + "/"))){ if(!o.create) throw new DOMException("Bulunamadı", "NotFoundError"); this.fs.dirs.add(p); this.fs.save(); }
+    return new VDir(this.fs, p, n);
+  }
+  async getFileHandle(n, o = {}){
+    const p = this.child(n);
+    if(!this.fs.files.has(p)){ if(!o.create) throw new DOMException("Bulunamadı", "NotFoundError"); this.fs.files.set(p, new Blob([])); this.fs.save(); }
+    return new VFile(this.fs, p, n);
+  }
+  async removeEntry(n){ const p = this.child(n); for(const k of [...this.fs.files.keys()]) if(k === p || k.startsWith(p + "/")) this.fs.files.delete(k); for(const k of [...this.fs.dirs]) if(k === p || k.startsWith(p + "/")) this.fs.dirs.delete(k); this.fs.save(); }
+  async queryPermission(){ return "granted"; }
+  async requestPermission(){ return "granted"; }
+}
+class VFile{
+  constructor(fs, path, name){ this.fs = fs; this.path = path; this.name = name; this.kind = "file"; }
+  async getFile(){ const b = this.fs.files.get(this.path); if(!b) throw new DOMException("Bulunamadı", "NotFoundError"); return new File([b], this.name, {type: IDE_MIME[fext(this.name)] || ""}); }
+  async createWritable(){ const parts = []; return {write: async d => { parts.push(d); }, close: async () => { this.fs.files.set(this.path, new Blob(parts)); this.fs.save(); }}; }
+}
+const vfsList = async () => ((await ideDB("proj", st => st.getAllKeys())) || []).map(String);
+async function vfsLoad(name){ const rec = await ideDB("proj", st => st.get(name)); return rec ? vfsRoot(name, rec) : null; }
+async function vfsUnique(name){ name = name.replace(/[\\/:*?"<>|]+/g, "-").trim().slice(0, 60) || "proje"; const have = new Set(await vfsList()); let n = name, i = 2; while(have.has(n)) n = name + " " + i++; return n; }
+const IDE_STARTER = n => ({
+  "index.html": '<!doctype html>\n<html lang="tr">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>' + n + '</title>\n  <meta name="description" content="' + n + ' sitesi">\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <main>\n    <h1>Merhaba!</h1>\n    <p>Bu sayfayı Code-Tr ile düzenliyorum.</p>\n  </main>\n  <script src="script.js"><\/script>\n</body>\n</html>\n',
+  "style.css": "body {\n  font-family: system-ui, sans-serif;\n  margin: 0;\n  min-height: 100vh;\n  display: grid;\n  place-items: center;\n  background: #faf7f2;\n  color: #1c1e23;\n}\n",
+  "script.js": "console.log(\"Hazır\");\n"});
+
+function ideShow(on){
+  IDE.on = !!on && ideCanUse();
+  $("#app").classList.toggle("ide-on", IDE.on);
+  $("#ideToggle").classList.toggle("on", IDE.on);
+  if(IDE.on){ if(!WEB.dir) ideWelcome(); if(IDE.view) IDE.view.requestMeasure(); if(window.innerWidth < 1500) $("#side").classList.add("hidden"); }
+}
+async function ideWelcome(){
+  $("#ideName").innerHTML = "Editör";
+  $("#ideTree").innerHTML = ""; $("#ideTabs").innerHTML = ""; $("#ide").classList.remove("tree-off");
+  $("#ideCM").style.display = "none"; const m = $("#ideMsg"); m.style.display = "";
+  if(!IDE.lastDir && ideRealFS()){ const h = await ideDB("h", st => st.get("dir")); if(h && typeof h === "object") IDE.lastDir = h; }
+  const projs = await vfsList();
+  m.innerHTML = '<div class="ide-welcome"><h3>Projeni aç</h3><p>Dosyaları solda görürsün, sekmelerde düzenlersin, HTML projelerini canlı önizlersin. Kod ajanı da bu projede çalışır; her değişikliği önce sana fark olarak gösterir.</p>' +
+    (ideRealFS() ? '<button class="btn primary" data-ide="open">📁 Bilgisayarımdan klasör aç</button>' + (IDE.lastDir ? '<button class="btn" data-ide="last">↻ ' + esc(IDE.lastDir.name) + '</button>' : '') : '') +
+    '<button class="btn' + (ideRealFS() ? '' : ' primary') + '" data-ide="new">✦ Yeni proje</button><button class="btn" data-ide="impdir">⇪ Klasör içe aktar</button><button class="btn" data-ide="impfiles">⇪ Dosya içe aktar</button>' +
+    (projs.length ? '<div class="ide-projs"><b>Bu tarayıcıdaki projelerin</b>' + projs.map(n => '<div class="pj"><button class="tn" data-ide="proj" data-name="' + esc(n) + '"><span class="ic">▣</span><span class="lb">' + esc(n) + '</span></button><button class="pj-x" data-ide="projdel" data-name="' + esc(n) + '" title="Projeyi sil">×</button></div>').join("") + '</div>' : '') +
+    '<p style="margin-top:14px;font-size:12.5px;color:var(--faint)">' + (ideRealFS() ? 'Klasör açınca dosyalar bilgisayarında kalır, sunucuya yüklenmez.' : 'Bu cihazda (telefon, tablet, Safari, Firefox) projeler bu tarayıcıda saklanır. Bilgisayarındaki klasörü doğrudan düzenlemek için Windows ya da Mac\'te Chrome veya Edge kullan.') + ' Projeyi istediğin an Yayınla → Zip ile indirebilirsin.</p></div>';
+}
+async function ideOpenFolder(handle){
+  try{
+    if(!handle){ if(!ideRealFS()){ ideShow(true); return; } handle = await window.showDirectoryPicker({mode: "readwrite"}); }
+    else if(await handle.queryPermission({mode: "readwrite"}) !== "granted" && await handle.requestPermission({mode: "readwrite"}) !== "granted") return;
+  }catch(e){ return; }
+  WEB.dir = handle;
+  if(!handle.vfs){ IDE.lastDir = handle; ideDB("h", st => st.put(handle, "dir")); }
+  showWs(handle.name);
+  IDE.tabs = []; IDE.active = null; IDE.expanded = new Set(); IDE.fresh = new Set(); IDE.prevPath = "";
+  ideShow(true);
+  $("#ideName").innerHTML = esc(handle.name) + "<small>" + (handle.vfs ? "tarayıcıda" : "klasör") + "</small>";
+  $("#ide").classList.remove("tree-off");
+  await ideTree();
+  if(await ideExists("index.html")) await ideOpenFile("index.html");
+  else ideRenderTabs();
+}
+async function ideNewProject(){
+  const n = (prompt("Yeni projenin adı:", "yeni-site") || "").trim(); if(!n) return;
+  const root = vfsRoot(await vfsUnique(n), {files: {}, dirs: []});
+  for(const [k, v] of Object.entries(IDE_STARTER(root.name))) root.fs.files.set(k, new Blob([v]));
+  root.fs.save(); await ideOpenFolder(root); ideTogglePrev(true);
+  if(window.innerWidth < 640) $("#ide").classList.add("tree-off");
+}
+async function ideImport(list){
+  const files = [...list]; if(!files.length) return;
+  const rel = f => f.webkitRelativePath || f.name;
+  const top = rel(files[0]).includes("/") ? rel(files[0]).split("/")[0] : "";
+  const n = top || (prompt("Proje adı:", "projem") || "").trim(); if(!n) return;
+  const root = vfsRoot(await vfsUnique(n), {files: {}, dirs: []}); let skipped = 0, total = 0;
+  for(const f of files){
+    let p = rel(f); if(top && p.startsWith(top + "/")) p = p.slice(top.length + 1);
+    if(p.split("/").some(x => ideHidden(x))){ skipped++; continue; }
+    total += f.size; if(total > 150e6){ toast("Proje çok büyük; ilk 150 MB alındı."); break; }
+    root.fs.files.set(p, f);
+  }
+  root.fs.save(); await ideOpenFolder(root);
+  toast(root.fs.files.size + " dosya içe aktarıldı" + (skipped ? " (" + skipped + " sistem dosyası atlandı)" : "") + ".");
+}
+$("#ideImpDir").onchange = e => { ideImport(e.target.files); e.target.value = ""; };
+$("#ideImpFiles").onchange = e => { ideImport(e.target.files); e.target.value = ""; };
+async function ideExists(p){ try{ await fsResolve(p, false, false); return true; }catch(e){ return false; } }
+async function ideEntries(dir){
+  const out = [];
+  for await (const [n, h] of dir.entries()) if(!ideHidden(n) || n === ".gitignore") out.push([n, h]);
+  return out.sort((a, b) => (a[1].kind === b[1].kind ? a[0].localeCompare(b[0], "tr") : a[1].kind === "directory" ? -1 : 1));
+}
+async function ideTree(){
+  if(!WEB.dir) return;
+  const box = $("#ideTree");
+  const frag = document.createElement("div");
+  frag.innerHTML = '<div class="th"><span>DOSYALAR</span><button data-ide="newfile" title="Yeni dosya">＋</button><button data-ide="refresh" title="Yenile">↻</button></div>';
+  const render = async (dir, prefix, depth, into) => {
+    let list; try{ list = await ideEntries(dir); }catch(e){ return; }
+    for(const [n, h] of list){
+      const p = prefix + n, b = document.createElement("button");
+      b.className = "tn" + (h.kind === "directory" ? " dir" : "") + (IDE.active && IDE.active.path === p ? " sel" : "") + (IDE.fresh.has(p) ? " fresh" : "");
+      b.style.paddingLeft = (8 + depth * 12) + "px"; b.dataset.path = p; b.dataset.kind = h.kind; b.title = p;
+      const open = IDE.expanded.has(p);
+      b.innerHTML = '<span class="ic">' + (h.kind === "directory" ? (open ? "▾" : "▸") : IDE_IMG.test(n) ? "▣" : "·") + '</span><span class="lb">' + esc(n) + "</span>";
+      into.appendChild(b);
+      if(h.kind === "directory" && open) await render(h, p + "/", depth + 1, into);
+    }
+  };
+  await render(WEB.dir, "", 0, frag);
+  box.innerHTML = ""; box.append(...frag.childNodes);
+}
+$("#ideTree").addEventListener("click", async e => {
+  const b = e.target.closest(".tn"); if(!b) return;
+  if(b.dataset.kind === "directory"){ IDE.expanded.has(b.dataset.path) ? IDE.expanded.delete(b.dataset.path) : IDE.expanded.add(b.dataset.path); await ideTree(); }
+  else { await ideOpenFile(b.dataset.path); if(window.innerWidth < 900 && IDE.prev) ideTogglePrev(false); if(window.innerWidth < 640) $("#ide").classList.add("tree-off"); }
+});
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-ide]"); if(!b) return;
+  const a = b.dataset.ide;
+  if(a === "open") ideOpenFolder();
+  else if(a === "last" && IDE.lastDir) ideOpenFolder(IDE.lastDir);
+  else if(a === "new") ideNewProject();
+  else if(a === "impdir") $("#ideImpDir").click();
+  else if(a === "impfiles") $("#ideImpFiles").click();
+  else if(a === "proj"){ const r = await vfsLoad(b.dataset.name); if(r) ideOpenFolder(r); }
+  else if(a === "projdel"){ if(confirm("'" + b.dataset.name + "' projesi bu tarayıcıdan kalıcı olarak silinsin mi? Geri alınamaz.")){ await ideDB("proj", st => st.delete(b.dataset.name)); if(WEB.dir && WEB.dir.vfs && WEB.dir.name === b.dataset.name){ WEB.dir = null; showWs(""); } ideWelcome(); } }
+  else if(a === "home"){ if(IDE.tabs.some(t => t.dirty) && !confirm("Kaydedilmemiş değişiklikler silinsin mi?")) return; WEB.dir = null; IDE.tabs = []; IDE.active = null; showWs(""); ideTogglePrev(false); ideWelcome(); }
+  else if(a === "tree") $("#ide").classList.toggle("tree-off");
+  else if(a === "refresh") ideTree();
+  else if(a === "newfile"){
+    const n = (prompt("Yeni dosyanın adı (ör. sayfa.html ya da css/tema.css):") || "").trim().replace(/^\/+/, "");
+    if(!n) return;
+    try{ if(await ideExists(n)){ toast("Bu adda bir dosya zaten var."); return ideOpenFile(n); }
+      const h = await fsResolve(n, true, false); const w = await h.createWritable(); await w.write(""); await w.close();
+      n.split("/").slice(0, -1).reduce((acc, part) => { const q = acc ? acc + "/" + part : part; IDE.expanded.add(q); return q; }, "");
+      await ideTree(); await ideOpenFile(n);
+    }catch(err){ toast("Oluşturulamadı: " + err.message); }
+  }
+});
+
+/* ---------- editor ---------- */
+function ideLang(cm, p){
+  const e = fext(p);
+  if(/^(html?|xml|svg)$/.test(e)) return cm.html();
+  if(e === "css") return cm.css();
+  if(e === "json") return cm.json();
+  if(/^(js|mjs|cjs|jsx|ts|tsx)$/.test(e)) return cm.javascript({jsx: /x$/.test(e), typescript: /^tsx?$/.test(e)});
+  if(/^(md|markdown)$/.test(e)) return cm.markdown();
+  if(e === "py") return cm.python();
+  return [];
+}
+function ideMakeState(cm, tab, text){
+  return cm.EditorState.create({doc: text, extensions: [cm.basicSetup, cm.keymap.of([cm.indentWithTab]), ideLang(cm, tab.path),
+    ...(matchMedia("(prefers-color-scheme: dark)").matches ? [cm.oneDark] : []),
+    cm.EditorView.updateListener.of(u => { if(u.docChanged) ideEdited(tab); })]});
+}
+function ideText(tab){
+  if(tab.kind !== "text") return null;
+  if(IDE.cm && tab.state) return (IDE.view && IDE.active === tab ? IDE.view.state : tab.state).doc.toString();
+  return tab.text;
+}
+function ideEdited(tab){
+  if(IDE.view && IDE.active === tab) tab.state = IDE.view.state;
+  const was = tab.dirty; tab.dirty = ideText(tab) !== tab.saved;
+  if(was !== tab.dirty) ideRenderTabs();
+  if(IDE.prev && /\.(html?|css|js|svg)$/i.test(tab.path)){ clearTimeout(IDE.pt); IDE.pt = setTimeout(idePreview, 500); }
+}
+async function ideReadDisk(path){
+  const f = await (await fsResolve(path, false, false)).getFile();
+  return f;
+}
+async function ideOpenFile(path){
+  let tab = IDE.tabs.find(t => t.path === path);
+  if(!tab){
+    let f; try{ f = await ideReadDisk(path); }catch(e){ toast("Açılamadı: " + path); return; }
+    tab = {path, kind: "text", dirty: false, saved: "", text: "", state: null};
+    if(IDE_IMG.test(path) && !/\.svg$/i.test(path)) tab.kind = "image";
+    else if(IDE_BIN.test(path) || f.size > 2e6) tab.kind = "binary";
+    else {
+      const t = await f.text();
+      if(t.includes("\u0000")) tab.kind = "binary"; else { tab.saved = t; tab.text = t; }
+    }
+    tab.size = f.size;
+    IDE.tabs.push(tab);
+  }
+  await ideActivate(tab);
+}
+async function ideActivate(tab){
+  if(IDE.view && IDE.active && IDE.active.state) IDE.active.state = IDE.view.state;
+  IDE.active = tab;
+  const cmBox = $("#ideCM"), msg = $("#ideMsg");
+  if(!tab){ cmBox.style.display = "none"; msg.style.display = ""; msg.innerHTML = '<div>Soldan bir dosya seç.</div>'; ideRenderTabs(); ideTree(); return; }
+  if(tab.kind !== "text"){
+    cmBox.style.display = "none"; msg.style.display = "";
+    if(tab.kind === "image"){ const f = await ideReadDisk(tab.path); const u = URL.createObjectURL(f); msg.innerHTML = '<div><img alt=""><p>' + esc(tab.path) + " · " + Math.round(tab.size / 1024) + " KB</p></div>"; msg.querySelector("img").src = u; }
+    else msg.innerHTML = "<div>" + esc(tab.path) + "<br>Bu dosya metin değil ya da çok büyük; editörde açılamaz.</div>";
+  } else {
+    msg.style.display = "none"; cmBox.style.display = "";
+    const cm = await ideLoadCM();
+    if(cm){
+      if(!tab.state) tab.state = ideMakeState(cm, tab, tab.text);
+      if(!IDE.view){ cmBox.innerHTML = ""; IDE.view = new cm.EditorView({state: tab.state, parent: cmBox}); }
+      else IDE.view.setState(tab.state);
+      IDE.view.focus();
+    } else {
+      let ta = cmBox.querySelector("textarea");
+      if(!ta){ cmBox.innerHTML = '<textarea class="ide-ta" spellcheck="false"></textarea>'; ta = cmBox.querySelector("textarea");
+        ta.addEventListener("input", () => { if(IDE.active){ IDE.active.text = ta.value; ideEdited(IDE.active); } });
+        ta.addEventListener("keydown", e => { if(e.key === "Tab"){ e.preventDefault(); ta.setRangeText("  ", ta.selectionStart, ta.selectionEnd, "end"); ta.dispatchEvent(new Event("input")); } }); }
+      ta.value = tab.text;
+    }
+  }
+  IDE.fresh.delete(tab.path);
+  ideStat(tab.path + (tab.kind === "text" ? " · " + (ideText(tab) || "").split("\n").length + " satır" : ""));
+  ideRenderTabs(); ideTree();
+  if(IDE.prev && /\.html?$/i.test(tab.path)){ IDE.prevPath = tab.path; idePreview(); }
+}
+function ideRenderTabs(){
+  const box = $("#ideTabs"); box.innerHTML = "";
+  for(const t of IDE.tabs){
+    const b = document.createElement("button");
+    b.className = "ide-tab" + (t === IDE.active ? " on" : "") + (t.dirty ? " dirty" : ""); b.title = t.path;
+    b.innerHTML = esc(t.path.split("/").pop()) + '<span class="x" title="Kapat"><span>×</span></span>';
+    b.onclick = e => { if(e.target.closest(".x")) ideCloseTab(t); else ideActivate(t); };
+    box.appendChild(b);
+  }
+}
+function ideCloseTab(t){
+  if(t.dirty && !confirm(t.path + " kaydedilmedi. Değişiklikler silinsin mi?")) return;
+  const i = IDE.tabs.indexOf(t); IDE.tabs.splice(i, 1);
+  if(IDE.active === t){ IDE.active = null; ideActivate(IDE.tabs[i] || IDE.tabs[i - 1] || null); } else ideRenderTabs();
+}
+async function ideWrite(path, text){
+  const h = await fsResolve(path, true, false); const w = await h.createWritable(); await w.write(text); await w.close();
+}
+async function ideSave(tab){
+  tab = tab || IDE.active; if(!tab || tab.kind !== "text" || !tab.dirty) return;
+  const t = ideText(tab);
+  try{ await ideWrite(tab.path, t); tab.saved = t; tab.dirty = false; ideRenderTabs(); ideStat(tab.path + " kaydedildi ✓"); if(IDE.prev) idePreview(); }
+  catch(e){ toast("Kaydedilemedi: " + e.message); }
+}
+async function ideSaveAll(){ for(const t of IDE.tabs) if(t.dirty) await ideSave(t); }
+document.addEventListener("keydown", e => {
+  if(IDE.on && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s"){ e.preventDefault(); ideSave(); }
+});
+window.addEventListener("beforeunload", e => { if(IDE.tabs.some(t => t.dirty)){ e.preventDefault(); e.returnValue = ""; } });
+
+/* Ajan bir dosyayi yazinca: agaci yenile, acik sekmeyi guncelle (kaydedilmemis degisiklik varsa korunur), onizlemeyi tazele */
+async function ideChanged(path){
+  if(!IDE.on && !WEB.dir) return;
+  IDE.fresh.add(path);
+  path.split("/").slice(0, -1).reduce((acc, part) => { const q = acc ? acc + "/" + part : part; IDE.expanded.add(q); return q; }, "");
+  let tab = IDE.tabs.find(t => t.path === path);
+  try{
+    const text = await (await ideReadDisk(path)).text();
+    if(tab && tab.kind === "text"){
+      if(tab.dirty){ toast(path + " ajan tarafından değişti; editördeki kaydedilmemiş halin korunuyor."); tab.saved = text; }
+      else { tab.saved = tab.text = text; if(IDE.cm && tab.state){ tab.state = ideMakeState(IDE.cm, tab, text); if(IDE.active === tab && IDE.view) IDE.view.setState(tab.state); }
+        else if(IDE.active === tab){ const ta = $("#ideCM textarea"); if(ta) ta.value = text; } }
+    } else if(!tab && IDE.on){ await ideOpenFile(path); return; }
+  }catch(e){}
+  ideTree();
+  if(IDE.prev) idePreview();
+}
+function ideContext(){
+  if(!IDE.on || !WEB.dir) return "";
+  const open = IDE.tabs.map(t => t.path + (t.dirty ? " (kaydedilmemiş değişiklik var)" : ""));
+  return "\n\nKullanıcı bu klasörü Code-Tr editöründe açtı." + (open.length ? " Açık sekmeler: " + open.join(", ") + "." : "") + (IDE.active ? " Şu an baktığı dosya: " + IDE.active.path + "." : "") +
+    "\nWeb projelerinde giriş sayfası index.html olsun; kullanıcı sonucu canlı önizlemede görür ve 'Yayınla' ile internete yükleyebilir. Göreli yollar kullan (css/style.css gibi).";
+}
+
+/* ---------- canli onizleme (HTML projeleri) ---------- */
+function ideJoin(dir, rel){
+  rel = String(rel || "").trim().split(/[?#]/)[0];
+  if(!rel || /^([a-z][a-z0-9+.-]*:|\/\/)/i.test(rel)) return null;
+  const parts = (rel.startsWith("/") ? rel : dir + rel).split("/"), out = [];
+  for(const p of parts){ if(!p || p === ".") continue; if(p === ".."){ if(!out.length) return null; out.pop(); } else out.push(decodeURIComponent(p)); }
+  return out.join("/");
+}
+const ideDirOf = p => p.includes("/") ? p.slice(0, p.lastIndexOf("/") + 1) : "";
+async function ideReadText(p){ const t = IDE.tabs.find(x => x.path === p && x.kind === "text"); return t ? ideText(t) : (await ideReadDisk(p)).text(); }
+async function ideDataUrl(p, cache){
+  if(cache.has(p)) return cache.get(p);
+  const f = await ideReadDisk(p); const type = IDE_MIME[fext(p)] || f.type || "application/octet-stream";
+  let blob = f; if(/\.svg$/i.test(p)){ const t = IDE.tabs.find(x => x.path === p && x.kind === "text"); if(t) blob = new Blob([ideText(t)]); }
+  const u = await new Promise(res => { const r = new FileReader(); r.onload = () => res(String(r.result).replace(/^data:[^;,]*/, "data:" + type)); r.readAsDataURL(blob); });
+  cache.set(p, u); return u;
+}
+async function ideCss(css, cssPath, cache){
+  const dir = ideDirOf(cssPath);
+  const urls = [...new Set([...css.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g)].map(m => m[2]))];
+  for(const u of urls){ const p = ideJoin(dir, u); if(!p) continue; try{ css = css.split(u).join(await ideDataUrl(p, cache)); }catch(e){} }
+  return css;
+}
+async function ideBuildPage(path){
+  const cache = new Map(), dir = ideDirOf(path);
+  const doc = new DOMParser().parseFromString(await ideReadText(path), "text/html");
+  for(const l of doc.querySelectorAll('link[rel~="stylesheet"][href]')){
+    const p = ideJoin(dir, l.getAttribute("href")); if(!p) continue;
+    try{ const s = doc.createElement("style"); s.textContent = await ideCss(await ideReadText(p), p, cache); l.replaceWith(s); }catch(e){}
+  }
+  for(const s of doc.querySelectorAll("style")) s.textContent = await ideCss(s.textContent, path, cache);
+  for(const s of doc.querySelectorAll("script[src]")){
+    const p = ideJoin(dir, s.getAttribute("src")); if(!p) continue;
+    try{ const t = await ideReadText(p); s.removeAttribute("src"); s.textContent = t.replace(/<\/script/gi, "<\\/script"); }catch(e){}
+  }
+  for(const el of doc.querySelectorAll("img,source,video,audio,input[type=image],link[rel~=icon],object,embed")){
+    for(const at of ["src", "href", "poster", "data"]){
+      const v = el.getAttribute(at); if(!v) continue; const p = ideJoin(dir, v); if(!p) continue;
+      try{ el.setAttribute(at, await ideDataUrl(p, cache)); }catch(e){}
+    }
+    el.removeAttribute("srcset");
+  }
+  for(const el of doc.querySelectorAll("[style*='url(']")) el.setAttribute("style", await ideCss(el.getAttribute("style"), path, cache));
+  const nav = doc.createElement("script");
+  nav.textContent = 'document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("a[href]");if(!a)return;var h=a.getAttribute("href");if(!h||/^(#|[a-z][a-z0-9+.-]*:|\\/\\/)/i.test(h))return;e.preventDefault();parent.postMessage({ctPrev:h},"*");},true);';
+  (doc.head || doc.documentElement).prepend(nav);
+  return "<!doctype html>\n" + doc.documentElement.outerHTML;
+}
+async function ideFindHtml(){
+  if(IDE.prevPath && await ideExists(IDE.prevPath)) return IDE.prevPath;
+  if(IDE.active && /\.html?$/i.test(IDE.active.path)) return IDE.active.path;
+  if(await ideExists("index.html")) return "index.html";
+  const files = []; await walk(WEB.dir, "", files, 400);
+  const h = files.map(f => f[0]).filter(p => /\.html?$/i.test(p)).sort((a, b) => a.split("/").length - b.split("/").length)[0];
+  return h || "";
+}
+async function idePreview(){
+  if(!IDE.prev || !WEB.dir) return;
+  const p = await ideFindHtml(); const fr = $("#idePrevFrame");
+  if(!p){ $("#idePrevPath").textContent = "HTML dosyası yok"; fr.srcdoc = '<body style="font:15px system-ui;color:#666;display:grid;place-items:center;height:90vh;margin:0">Önizlemek için bir .html dosyası oluştur (ör. index.html).</body>'; return; }
+  IDE.prevPath = p; $("#idePrevPath").textContent = "/" + p;
+  try{ fr.srcdoc = await ideBuildPage(p); }catch(e){ fr.srcdoc = "<pre>Önizleme hazırlanamadı: " + esc(e.message) + "</pre>"; }
+}
+function ideTogglePrev(on){
+  IDE.prev = on === undefined ? !IDE.prev : on;
+  $("#ide").classList.toggle("prev-on", IDE.prev);
+  $("#idePrevBtn").textContent = IDE.prev ? "‹/› Kod" : "▶ Önizle";
+  $("#idePrevBtn").classList.toggle("on", IDE.prev);
+  if(IDE.prev) idePreview();
+}
+window.addEventListener("message", async e => {
+  if(!e.data || !e.data.ctPrev || e.source !== $("#idePrevFrame").contentWindow) return;
+  let p = ideJoin(ideDirOf(IDE.prevPath), e.data.ctPrev); if(p === null) return;
+  if(!p || !/\.[a-z0-9]+$/i.test(p)) p = (p ? p + "/" : "") + "index.html";
+  if(!/\.html?$/i.test(p) || !await ideExists(p)){ toast("Önizlemede açılamadı: " + e.data.ctPrev); return; }
+  IDE.prevPath = p; const t = IDE.tabs.find(x => x.path === p);
+  if(t && IDE.active !== t) await ideActivate(t); else idePreview();
+});
+$("#idePrevBtn").onclick = () => ideTogglePrev();
+$("#idePrevReload").onclick = () => idePreview();
+$("#ideClose").onclick = () => ideShow(false);
+$("#ideToggle").onclick = () => ideShow(!IDE.on);
+function ideModeChanged(m){
+  const can = ideCanUse() && m === "agent";
+  $("#ideToggle").style.display = can ? "" : "none";
+  if(!can && IDE.on){ IDE.wasOn = true; ideShow(false); }
+  else if(can && IDE.wasOn){ IDE.wasOn = false; ideShow(true); }
+}
+
+/* ---------- fark (diff) ---------- */
+function lineDiff(a, b){
+  const A = a.split("\n"), B = b.split("\n");
+  let s = 0; while(s < A.length && s < B.length && A[s] === B[s]) s++;
+  let ea = A.length, eb = B.length; while(ea > s && eb > s && A[ea - 1] === B[eb - 1]){ ea--; eb--; }
+  const X = A.slice(s, ea), Y = B.slice(s, eb), out = [];
+  for(let i = 0; i < s; i++) out.push([" ", A[i]]);
+  if(X.length * Y.length > 4e6){ X.forEach(l => out.push(["-", l])); Y.forEach(l => out.push(["+", l])); }
+  else {
+    const n = X.length, m = Y.length, L = Array.from({length: n + 1}, () => new Uint32Array(m + 1));
+    for(let i = n - 1; i >= 0; i--) for(let j = m - 1; j >= 0; j--) L[i][j] = X[i] === Y[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+    let i = 0, j = 0;
+    while(i < n && j < m){ if(X[i] === Y[j]){ out.push([" ", X[i]]); i++; j++; } else if(L[i + 1][j] >= L[i][j + 1]) out.push(["-", X[i++]]); else out.push(["+", Y[j++]]); }
+    while(i < n) out.push(["-", X[i++]]); while(j < m) out.push(["+", Y[j++]]);
+  }
+  for(let i = ea; i < A.length; i++) out.push([" ", A[i]]);
+  return out;
+}
+function makeDiff(path, oldText, newText, isNew){
+  const ops = isNew ? newText.split("\n").map(l => ["+", l]) : lineDiff(oldText, newText);
+  let o = 0, n = 0, add = 0, del = 0; const rows = [];
+  const numbered = ops.map(([t, s]) => { if(t === " "){ o++; n++; return [t, o, n, s]; } if(t === "-"){ o++; del++; return [t, o, "", s]; } n++; add++; return [t, "", n, s]; });
+  const keep = new Uint8Array(numbered.length);
+  numbered.forEach((r, i) => { if(r[0] !== " ") for(let k = Math.max(0, i - 3); k <= Math.min(numbered.length - 1, i + 3); k++) keep[k] = 1; });
+  let gap = false, more = 0;
+  numbered.forEach((r, i) => { if(!keep[i]){ gap = true; return; } if(rows.length >= 400){ more++; return; } if(gap && rows.length) rows.push(["~"]); gap = false; rows.push(r); });
+  return {path, rows, add, del, more, isNew: !!isNew};
+}
+function diffEl(d){
+  const box = document.createElement("div");
+  box.innerHTML = '<div class="df-h">' + esc(d.path) + (d.isNew ? " (yeni dosya)" : "") + ' · <span class="a">+' + d.add + '</span> <span class="d">−' + d.del + "</span></div>";
+  const dv = document.createElement("div"); dv.className = "diff";
+  dv.innerHTML = d.rows.map(r => r[0] === "~" ? '<div class="dl gap">⋯</div>' :
+    '<div class="dl' + (r[0] === "+" ? " add" : r[0] === "-" ? " del" : "") + '"><span class="ln">' + r[1] + '</span><span class="ln">' + r[2] + '</span><span class="sg">' + (r[0] === " " ? "" : r[0]) + '</span><span class="tx">' + esc(r[3]) + "</span></div>").join("") +
+    (d.more ? '<div class="dl gap">… ' + d.more + " satır daha</div>" : "") + (!d.rows.length ? '<div class="dl gap">(boş dosya)</div>' : "");
+  box.appendChild(dv); return box;
+}
+
+/* ---------- yayinla ---------- */
+async function ideCollect(){
+  const out = [];
+  const go = async (dir, prefix) => { for await (const [n, h] of dir.entries()){ if(out.length > 3000) return; if(ideHidden(n) || n.startsWith(".")) continue; if(h.kind === "directory") await go(h, prefix + n + "/"); else out.push([prefix + n, h]); } };
+  await go(WEB.dir, ""); return out;
+}
+function ideSeoFiles(base, paths){
+  const extra = {}; const today = new Date().toISOString().slice(0, 10);
+  base = String(base || "").trim().replace(/\/+$/, "");
+  if(!/^https?:\/\/[^\s/]+/i.test(base)) base = "";
+  const pages = paths.filter(p => /\.html?$/i.test(p) && !/(^|\/)(404|_)/.test(p)).sort();
+  if(base && !paths.includes("sitemap.xml") && pages.length)
+    extra["sitemap.xml"] = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+      pages.map(p => "  <url><loc>" + esc(base + "/" + p.replace(/(^|\/)index\.html?$/i, "$1").split("/").map(encodeURIComponent).join("/")) + "</loc><lastmod>" + today + "</lastmod></url>").join("\n") + "\n</urlset>\n";
+  if(!paths.includes("robots.txt")) extra["robots.txt"] = "User-agent: *\nAllow: /\n" + (base ? "\nSitemap: " + base + "/sitemap.xml\n" : "");
+  return extra;
+}
+async function ideZip(base){
+  const cm = await ideLoadCM(); if(!cm) throw new Error("Zip aracı yüklenemedi; sayfayı yenileyip tekrar dene.");
+  const files = await ideCollect(); if(!files.length) throw new Error("Klasör boş.");
+  const out = {}; let total = 0;
+  for(const [p, h] of files){ const f = await h.getFile(); total += f.size; if(total > 100e6) throw new Error("Proje 100 MB'tan büyük; büyük video ve dosyaları çıkar."); out[p] = new Uint8Array(await f.arrayBuffer()); }
+  const extra = ideSeoFiles(base, Object.keys(out)); for(const k in extra) out[k] = cm.strToU8(extra[k]);
+  return cm.zipSync(out, {level: 6});
+}
+async function idePrePublish(){
+  if(!WEB.dir){ toast("Önce bir klasör aç."); return false; }
+  if(IDE.tabs.some(t => t.dirty)){ if(!confirm("Kaydedilmemiş değişiklikler var. Kaydedilip yayınlansın mı?")) return false; await ideSaveAll(); }
+  return true;
+}
+async function ideSeoCheck(){
+  const box = $("#pubCheck"); box.innerHTML = "";
+  if(!await ideExists("index.html")){ box.innerHTML = '<span class="no">✕ Kök klasörde index.html yok: site açılış sayfası olmadan görünmez</span>'; return; }
+  const t = await ideReadText("index.html");
+  const doc = new DOMParser().parseFromString(t, "text/html");
+  const checks = [["index.html", true], ["<title>", !!(doc.title || "").trim()], ["açıklama (meta description)", !!doc.querySelector('meta[name="description"][content]')],
+    ['dil (lang="tr")', !!doc.documentElement.getAttribute("lang")], ["mobil uyum (viewport)", !!doc.querySelector('meta[name="viewport"]')], ["başlık (h1)", !!doc.querySelector("h1")]];
+  box.innerHTML = checks.map(([n, ok]) => '<span class="' + (ok ? "" : "no") + '">' + (ok ? "✓ " : "✕ ") + esc(n) + "</span>").join("");
+  const miss = checks.filter(c => !c[1]).map(c => c[0]);
+  if(miss.length){
+    const b = document.createElement("button"); b.className = "btn"; b.textContent = "Kod ajanı düzeltsin";
+    b.onclick = () => { closeModal("pubModal"); setMode("agent"); send("index.html dosyasına Google'da bulunabilmesi için şu eksikleri ekle: " + miss.join(", ") + ". Sayfanın içeriğine uygun Türkçe başlık ve açıklama yaz, başka bir şeyi değiştirme."); };
+    box.appendChild(b);
+  }
+}
+async function ideOpenPublish(){
+  if(!await idePrePublish()) return;
+  const site = (store.get("coder.ide.sites", {}))[WEB.dir.name];
+  $("#pubNetlify").style.display = IDE.cfg.netlify ? "" : "none";
+  $("#pubGo").textContent = site ? "Netlify'da güncelle" : "Netlify ile yayınla";
+  $("#pubDone").innerHTML = site ? '<div class="pub-done">Son yayın: <a href="' + esc(site.url) + '" target="_blank" rel="noopener">' + esc(site.url) + "</a></div>" : "";
+  if(site && !$("#pubUrl").value) $("#pubUrl").value = site.url;
+  $("#pubStatus").textContent = "";
+  openModal("pubModal"); ideSeoCheck();
+}
+$("#idePubBtn").onclick = ideOpenPublish;
+async function ideDownload(b, label){
+  if(!await idePrePublish()) return;
+  b.disabled = true; b.textContent = "Hazırlanıyor…";
+  try{
+    const z = await ideZip($("#pubUrl").value);
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([z], {type: "application/zip"})); a.download = (WEB.dir.name || "site").replace(/[^\wçğıöşüÇĞİÖŞÜ.-]+/g, "-") + ".zip";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+    toast(b.id === "pubZip" ? "Zip indirildi. Şimdi bir Drop sayfasına sürükleyip bırak." : "Proje zip olarak indirildi.");
+  }catch(e){ toast(e.message); }
+  b.disabled = false; b.textContent = label;
+}
+$("#pubZip").onclick = () => ideDownload($("#pubZip"), "⤓ Zip'i indir");
+$("#ideDl").onclick = () => ideDownload($("#ideDl"), "⤓ İndir");
+function netlifyLogin(){
+  return new Promise((res, rej) => {
+    const state = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)).replace(/-/g, "");
+    const redir = location.origin + "/yayin-giris.html";
+    const w = window.open("https://app.netlify.com/authorize?client_id=" + encodeURIComponent(IDE.cfg.netlify) + "&response_type=token&redirect_uri=" + encodeURIComponent(redir) + "&state=" + state, "ctnetlify", "width=560,height=760");
+    if(!w) return rej(new Error("Açılır pencere engellendi. Adres çubuğundan izin verip tekrar dene."));
+    const ch = new BroadcastChannel("codetr-yayin");
+    const to = setTimeout(() => { ch.close(); rej(new Error("Giriş zaman aşımına uğradı.")); }, 300000);
+    ch.onmessage = e => { const d = e.data || {}; if(d.ctAuth !== "netlify" || d.state !== state) return;
+      clearTimeout(to); ch.close(); if(d.token){ IDE.token = d.token; res(d.token); } else rej(new Error(d.error || "Giriş iptal edildi.")); };
+  });
+}
+async function netlifyPublish(say){
+  const API = "https://api.netlify.com/api/v1";
+  if(!IDE.token){ say("Netlify girişi bekleniyor…"); await netlifyLogin(); }
+  const H = {Authorization: "Bearer " + IDE.token};
+  const call = async (url, opt) => { const r = await fetch(API + url, Object.assign({}, opt, {headers: Object.assign({}, H, (opt || {}).headers)})); if(r.status === 401){ IDE.token = ""; throw new Error("Netlify oturumu geçersiz; tekrar bas, yeniden giriş yap."); } return r; };
+  const sites = store.get("coder.ide.sites", {}); let site = sites[WEB.dir.name];
+  if(site){ const r = await call("/sites/" + site.id); if(!r.ok) site = null; }
+  if(!site){
+    say("Site oluşturuluyor…");
+    const slug = WEB.dir.name.toLocaleLowerCase("tr").replace(/ç/g, "c").replace(/ğ/g, "g").replace(/ı/g, "i").replace(/ö/g, "o").replace(/ş/g, "s").replace(/ü/g, "u").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "site";
+    let r = await call("/sites", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({name: slug + "-" + Math.random().toString(36).slice(2, 6)})});
+    if(r.status === 422) r = await call("/sites", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"});
+    if(!r.ok) throw new Error("Site oluşturulamadı (" + r.status + ").");
+    const j = await r.json(); site = {id: j.id, url: (j.ssl_url || j.url || "").replace(/\/$/, ""), admin: j.admin_url || ""};
+    sites[WEB.dir.name] = site; store.set("coder.ide.sites", sites);
+  }
+  $("#pubUrl").value = site.url;
+  say("Dosyalar paketleniyor…"); const zip = await ideZip(site.url);
+  say("Yükleniyor… (" + Math.max(1, Math.round(zip.length / 1024)) + " KB)");
+  const d = await call("/sites/" + site.id + "/deploys", {method: "POST", headers: {"Content-Type": "application/zip"}, body: zip});
+  if(!d.ok) throw new Error("Yükleme başarısız (" + d.status + ").");
+  let dep = await d.json();
+  for(let i = 0; i < 60 && !["ready", "error"].includes(dep.state); i++){
+    say("Yayına alınıyor… (" + (dep.state || "bekliyor") + ")"); await new Promise(r => setTimeout(r, 1500));
+    const r = await call("/deploys/" + dep.id); if(r.ok) dep = await r.json();
+  }
+  if(dep.state === "error") throw new Error(dep.error_message || "Netlify yayını tamamlayamadı.");
+  return site;
+}
+$("#pubGo").onclick = async () => {
+  const b = $("#pubGo"), say = t => { $("#pubStatus").textContent = t; };
+  b.disabled = true;
+  try{
+    const site = await netlifyPublish(say);
+    say("");
+    $("#pubDone").innerHTML = '<div class="pub-done">✓ Yayında: <a href="' + esc(site.url) + '" target="_blank" rel="noopener">' + esc(site.url) + "</a>" +
+      (site.admin ? ' · <a href="' + esc(site.admin) + '" target="_blank" rel="noopener">Netlify paneli</a>' : "") + "<br>Google'a eklemek için aşağıdaki rehberi izle (sitemap.xml hazır).</div>";
+    $("#pubGo").textContent = "Netlify'da güncelle";
+  }catch(e){ say(e.message); }
+  b.disabled = false;
+};
+$("#gscAdd").onclick = async () => {
+  const v = $("#gscMeta").value.trim();
+  const m = v.match(/<meta\s+name=["']google-site-verification["']\s+content=["']([\w-]+)["']\s*\/?>/i) || (/^[\w-]{20,}$/.test(v) ? [null, v] : null);
+  if(!m){ toast("Search Console'un verdiği <meta name=\"google-site-verification\" …> satırını yapıştır."); return; }
+  try{
+    let t = await ideReadText("index.html");
+    const tag = '<meta name="google-site-verification" content="' + m[1] + '">';
+    if(/google-site-verification/i.test(t)) t = t.replace(/<meta[^>]*google-site-verification[^>]*>/i, () => tag);
+    else if(/<\/head>/i.test(t)) t = t.replace(/<\/head>/i, () => "  " + tag + "\n</head>");
+    else { toast("index.html'de <head> bölümü yok."); return; }
+    const tab = IDE.tabs.find(x => x.path === "index.html");
+    if(tab && tab.dirty){ toast("Önce index.html'i kaydet."); return; }
+    await ideWrite("index.html", t); await ideChanged("index.html");
+    toast("Doğrulama etiketi eklendi. Şimdi yeniden yayınla, sonra Search Console'da Doğrula'ya bas.");
+  }catch(e){ toast("Eklenemedi: " + e.message); }
+};
+
 /* ---------------- baslat ---------------- */
 (async function init(){
   const h = new Date().getHours();
@@ -2568,7 +3326,7 @@ $("#installFromSettings").onclick = () => { $("#settings").classList.remove("on"
     $("#dlMac").style.display = standalone() ? "none" : ""; $("#localSec").style.display = "none"; $("#webSec").style.display = ""; $("#legalLinks").style.display = "";
     try{
       const cfg = await (await fetch("/api/config")).json();
-      WEB.shared = !!cfg.shared; ACC.google = !!cfg.google;
+      WEB.shared = !!cfg.shared; ACC.google = !!cfg.google; IDE.cfg.netlify = cfg.netlify || "";
       if(cfg.accounts) ACC.init();
       if(WEB.shared){
         WEB.sharedModels = (await (await fetch("/api/models")).json()).models || [];

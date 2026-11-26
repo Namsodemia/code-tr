@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Code-Tr · Yayın girişi</title></head>
+<body style="font:16px system-ui,sans-serif;display:grid;place-items:center;min-height:90vh;margin:0;background:#f7f5f1;color:#18191d;text-align:center;padding:20px">
+<p id="t">Giriş tamamlanıyor…</p>
+<script>
+// Netlify girisi bu sayfaya doner. Izin anahtari yalniz acik Code-Tr sekmesine (ayni site, BroadcastChannel) iletilir;
+// hicbir yere kaydedilmez ve sunucuya gonderilmez (adres #parcasi sunucuya gitmez).
+var h = new URLSearchParams(location.hash.slice(1)), q = new URLSearchParams(location.search);
+history.replaceState(null, "", location.pathname);
+var msg = {ctAuth: "netlify", token: h.get("access_token") || "", state: h.get("state") || q.get("state") || "",
+  error: h.get("error_description") || q.get("error_description") || h.get("error") || q.get("error") || ""};
+try { new BroadcastChannel("codetr-yayin").postMessage(msg); } catch (e) {}
+document.getElementById("t").textContent = msg.token ? "Giriş tamam ✓ Bu pencere kapanıyor, Code-Tr'ye dön." : "Giriş tamamlanamadı: " + (msg.error || "iptal edildi");
+setTimeout(function () { window.close(); }, 900);
+</script>
+</body></html>

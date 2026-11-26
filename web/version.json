@@ -1,12 +1,14 @@
 {
-  "version": "1.22.0",
-  "mac": "1.22.0",
-  "date": "2026-11-26",
+  "version": "1.23.0",
+  "mac": "1.23.0",
+  "date": "2026-11-27",
   "notes": [
-    "Kod önizleme: HTML/SVG kodlarında \"▶ Önizle\" ile sonuç sohbetin içinde canlı çalışır",
-    "Belirsiz video isteğinde önce sorar: sade altyazı, dinamik, haber tarzı, bilgi grafikli ya da bölünmüş ekran",
-    "Video artık tam olarak yazdığın isteğe göre yapılır: yapay zekâ önce isteğini yorumlar, yalnız istediklerini ekler (\"sadece altyazı\" dersen sadece altyazı)",
-    "Teslimde \"İsteğini şöyle uyguladım\" satırı: grafik, açılış başlığı, kadraj, boşluk kesme açık mı kapalı mı görürsün",
-    "Kanca başlığı: ilk 2-3 saniyede yapay zekânın konuşmadan yazdığı merak uyandıran büyük başlık (izleyici ilk 3 saniyede karar veriyor)"
+    "Editör: Kod modunda \"‹/› Editör\" ile proje aç; solda dosya ağacı, ortada sekmeli kod editörü (renklendirme, ⌘/Ctrl+S ile kaydet)",
+    "Her cihazda: Windows ve Mac'te Chrome/Edge ile bilgisayarındaki klasörü doğrudan düzenle; telefon, tablet, Safari ve Firefox'ta projeler tarayıcında saklanır, dosya ya da klasör içe aktarabilirsin",
+    "Kod ajanı açık projendeki dosyaları okuyup düzenler; her değişikliği önce satır satır fark (eklenen yeşil, silinen kırmızı) olarak gösterir, \"✓ Uygula\" demeden hiçbir şeye dokunmaz",
+    "Canlı önizleme: HTML projen yazdıkça sağda güncellenir, sayfalar arası bağlantılar da çalışır",
+    "Yayınla: projeni tek tıkla internete yükle (Netlify) ya da zip'i indirip Netlify/Vercel/Cloudflare Drop veya GitHub Pages'e koy; sitemap.xml ve robots.txt otomatik eklenir, Google Search Console rehberi içinde",
+    "⤓ İndir: projeni istediğin an zip olarak indir",
+    "Kod önizleme: HTML/SVG kodlarında \"▶ Önizle\" ile sonuç sohbetin içinde canlı çalışır"
   ]
 }

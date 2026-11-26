@@ -59,7 +59,14 @@ if [ ! -f web/vendor/mediabunny/mediabunny.min.mjs ]; then
   mkdir -p web/vendor/mediabunny && cp "$T"/package/dist/bundles/mediabunny.min.mjs "$T"/package/LICENSE web/vendor/mediabunny/
 fi
 cp -R web/vendor/mediabunny site/vendor/
-cp web/manifest.webmanifest web/sw.js web/motion.js site/
+# IDE editoru (CodeMirror 6, MIT) + zip (fflate, MIT): sabit surumlerden tek dosyalik paket
+if [ ! -f web/vendor/ide/ide.mjs ]; then
+  T=$(mktemp -d); cp mac/ide/entry.js "$T/"
+  (cd "$T" && npm init -y >/dev/null && npm i --silent codemirror@6.0.2 @codemirror/state @codemirror/view @codemirror/commands @codemirror/lang-html@6.4.12 @codemirror/lang-css@6.3.1 @codemirror/lang-javascript@6.2.5 @codemirror/lang-json@6.0.2 @codemirror/lang-markdown@6.5.2 @codemirror/lang-python@6.2.1 @codemirror/theme-one-dark@6.1.3 fflate@0.8.3 esbuild@0.28.2 >/dev/null && npx esbuild entry.js --bundle --format=esm --minify --outfile=ide.mjs --log-level=warning)
+  mkdir -p web/vendor/ide && cp "$T/ide.mjs" web/vendor/ide/
+fi
+cp -R web/vendor/ide site/vendor/
+cp web/manifest.webmanifest web/sw.js web/motion.js web/yayin-giris.html site/
 mkdir -p site/api && cp web/api/*.js site/api/
 cp web/version.json site/version.json
 CONTACT=$(cat mac/contact.txt 2>/dev/null || echo "iletisim@coder-tr.vercel.app")

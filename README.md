@@ -18,6 +18,9 @@ Güçlü yapay zekâ araçlarının çoğu ücretli, İngilizce ya da kredi kart
 
 - **Sohbet** — akarak gelen cevaplar, Markdown ve renkli kod blokları
 - **Kod** — kod yazar; klasör seçersen dosyaları okur, düzenler (yazma ve komutlar onay ister)
+- **Editör** — Kod modunda dosya ağacı, sekmeli editör (CodeMirror 6), HTML projeleri için canlı önizleme. Chrome/Edge'de (Windows, Mac) bilgisayardaki klasör doğrudan açılır; telefon, tablet, Safari ve Firefox'ta projeler tarayıcıda saklanır, içe/dışa aktarılır. Ajanın her değişikliği önce satır satır fark olarak gösterilir, onaylanmadan diske yazılmaz
+- **Yayınla** — Netlify ile tek tıkla (kullanıcının kendi hesabıyla; izin anahtarı yalnız sekme belleğinde durur), ya da zip + Netlify/Vercel/Cloudflare Drop, GitHub Pages. `sitemap.xml` ve `robots.txt` otomatik eklenir; Google Search Console rehberi içinde
+- **Her cihazda** — Windows, Mac, Android, iPhone ve iPad'e uygulama olarak yüklenir (PWA); Mac için ayrıca yerel modelli uygulama
 - **Görsel** — yazdığını ücretsiz görsele çevirir (kare, dikey, yatay, gönderi)
 - **Ekler** — görsel, PDF (taranmış PDF dahil) ve metin dosyaları
 - **Hesaplar** — e-posta/şifre ya da Google ile giriş; sohbetler her cihazda
@@ -38,9 +41,12 @@ web/
     chats.js        Sohbet eşitleme
     google.js       Google ile giriş (OAuth 2.0)
     contact.js      İletişim formu
+    config.js       Arayüz ayarları (paylaşılan model, hesaplar, Netlify istemci kimliği)
+  yayin-giris.html  Netlify girişinin döndüğü sayfa (anahtarı yalnız açık sekmeye iletir)
   legal/            Hakkında, Gizlilik/KVKK, Kullanım Şartları
   version.json      Sürüm ve "Yenilikler" notları
 mac/                Mac uygulaması başlatıcısı ve simge
+mac/ide/entry.js    Editör paketi girişi (CodeMirror 6 + fflate); build.sh tek dosyaya paketler
 build.sh            Mac uygulamasını ve web sitesini üretir
 ```
 
@@ -52,6 +58,7 @@ build.sh            Mac uygulamasını ve web sitesini üretir
    - `OPENROUTER_API_KEY` — [openrouter.ai/keys](https://openrouter.ai/keys) (ücretsiz)
    - Upstash Redis entegrasyonu (`KV_REST_API_URL`, `KV_REST_API_TOKEN`) — hesaplar için
    - İsteğe bağlı: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — Google ile giriş
+   - İsteğe bağlı: `NETLIFY_CLIENT_ID` — "tek tıkla yayınla". [app.netlify.com/user/applications](https://app.netlify.com/user/applications) → *New OAuth app*, yönlendirme adresi `https://SENIN-ALANIN/yayin-giris.html`. Yalnız istemci kimliği gerekir (gizli anahtar kullanılmaz). Boş bırakılırsa sürükle-bırak seçenekleri kalır
 
 ## Mac uygulaması
 
