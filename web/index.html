@@ -2085,7 +2085,9 @@ Kurallar:
 - eyebrow 2-3 kelimelik büyük harf üst başlık (ör. "SÜREÇ NASIL İLERLİYOR?"). title1/title2 kısa ve vurucu; konuşmadaki ifadeleri kullan.
 - vurgu: anahtar kelimeler (sayılar, ürün/kurum adları, sonuçlar), kelimelerin en fazla %12'si.
 - isim: konuşmacı kendini tanıtıyorsa ya da kullanıcı isteğinde verilmişse doldur, yoksa null.
-- Türkçe yazımı düzgün olsun; dökümde yanlış duyulmuş özel isimleri bağlamdan düzelt.`;
+- Türkçe yazımı düzgün olsun; dökümde yanlış duyulmuş özel isimleri bağlamdan düzelt.
+- KULLANICININ İSTEĞİNE UY: JSON'a "gorunum" alanı ekle: {"format": "info|kinetik|cerceve|sade|bolunmus", "renk": "lacivert|zumrut|murekkep|komur|bordo|okyanus|orman|gece", "altyazi": "pop|glide|twolayer|karaoke|left", "font": "Montserrat|Archivo|Sora|Space Grotesk|Outfit|Plus Jakarta Sans|Barlow Condensed|Bricolage Grotesque|Lexend|Manrope"}.
+  format: info = grafik sahneler, kinetik = dev kelimeler (enerjik/sosyal medya), cerceve = video çerçeve içinde + başlık (haber/belgesel/kurumsal), sade = yalnız altyazı (minimal/duygusal), bolunmus = üst video alt grafik (eğitim/açıklama). İstekte açıkça ne yazıyorsa onu seç; yazmıyorsa içeriğin tonuna en uygun olanı seç. Hep aynı formatı seçme.`;
 function heuristicPlan(words){
   const vurgu = [], sahneler = []; let last = -99;
   words.forEach((w, i) => {
@@ -2221,11 +2223,11 @@ async function makeMotion(prompt, item, el, say, brand = null){
     say("Motion tasarımcısı kurguyu planlıyor…");
     const plan = await planMotion(prompt, words, W, H);
     const same = /aynı (tarz|stil)|öncekiyle aynı|aynısı/i.test(prompt), prevLook = store.get("coder.look", {});
-    const look = brand ? null : (same && prevLook.font ? prevLook : MO.pickLook(prevLook, prompt)); if(look) store.set("coder.look", look);
+    const look = brand ? null : (same && prevLook.font ? prevLook : MO.pickLook(prevLook, prompt, plan.gorunum || {})); if(look) store.set("coder.look", look);
     const styleName = /dinamik|enerji|hızlı|tiktok/i.test(prompt) ? "dinamik" : /minimal|sade/i.test(prompt) ? "minimal" : (MO.PALETTES[plan.stil] ? plan.stil : "kurumsal");
     const data = await MO.renderFast({file: item.file, W, H, words, plan, palette: styleName, brand, look, onStep: say});
     const ass = MO.buildCaptions(words, plan, W, H, brand ? MO.brandPalette(brand) : MO.PALETTES[styleName]);
-    return {data, ass, words, plan, styleName: brand ? brand.ad : look ? look.font + " · " + look.pal + " · " + look.cap + " altyazı" : styleName, clean, tdk, sure: Math.round((performance.now() - t0) / 1000)};
+    return {data, ass, words, plan, styleName: brand ? brand.ad : look ? ({info: "infografik", kinetik: "kinetik dev yazı", cerceve: "çerçeveli editoryal", sade: "sade altyazı", bolunmus: "bölünmüş ekran"}[look.fmt] || look.fmt) + " · " + look.font + " · " + look.pal + " · " + look.cap + " altyazı" : styleName, clean, tdk, sure: Math.round((performance.now() - t0) / 1000)};
   }catch(e){
     if(/Videoda|Konuşma/.test(e.message || "")) throw e;
     console.warn("Hızlı motor olmadı, yedek motora geçiliyor:", e);

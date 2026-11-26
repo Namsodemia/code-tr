@@ -1,12 +1,12 @@
 {
-  "version": "1.11.0",
-  "mac": "1.11.0",
+  "version": "1.12.0",
+  "mac": "1.12.0",
   "date": "2026-11-26",
   "notes": [
+    "Video artık senin isteğine göre kurgulanır: sade, kinetik dev yazı, çerçeveli haber, bölünmüş ekran ya da infografik; renk, font ve altyazıyı yazdığın kelimelerden seçer",
+    "Bir şey belirtmezsen her video bir öncekinden farklı formatta çıkar",
     "Her video farklı görünür: font, renk, zemin, geçiş ve altyazı stili her seferinde değişir (\"aynı tarz\" dersen öncekini korur)",
     "Video artık sürekli kesilmez: grafikler şeffaf, videonun üstünde; tam ekran yalnız açılışta (\"arka plansız\" dersen hiç yok)",
-    "Mac uygulamasında Bilgisayar modu: ekranını görüp fareyi ve klavyeyi kullanır; başlamadan ve yazmadan önce izin ister, fareyi sol üst köşeye götürünce durur",
-    "Glow Up sekmesi: yalnız davet edilen ekip hesaplarına özel; marka seçince renk, font ve kurallar otomatik",
-    "Glow Up altyazısı: gölgesiz, pop yok, yalnız opaklık + kayma, Reels güvenli alanı, tam ekran infografikte altyazı yok"
+    "Mac uygulamasında Bilgisayar modu: ekranını görüp fareyi ve klavyeyi kullanır; başlamadan ve yazmadan önce izin ister, fareyi sol üst köşeye götürünce durur"
   ]
 }

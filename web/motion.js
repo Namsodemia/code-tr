@@ -18,10 +18,18 @@ const PAL = {
 };
 const FONTS = ["Montserrat", "Archivo", "Sora", "Space Grotesk", "Outfit", "Plus Jakarta Sans", "Barlow Condensed", "Bricolage Grotesque", "Lexend", "Manrope"];
 const BGS = ["gradient", "solid", "grid", "editorial"], WIPES = ["diag", "bars", "iris", "slide", "none"], CAPS = ["pop", "glide", "twolayer", "karaoke", "left"];
-export function pickLook(prev = {}, prefer = ""){
+export const FORMATS = ["info", "kinetik", "cerceve", "sade", "bolunmus"];
+// Kullanicinin istegindeki kelimeler once gelir; yazmadigi her sey bir oncekinden farkli secilir.
+export function pickLook(prev = {}, prefer = "", ai = {}){
   const pick = (arr, old) => { const c = arr.filter(x => x !== old); return c[Math.floor(Math.random() * c.length)]; };
-  const palKey = /kurumsal/i.test(prefer) ? "lacivert" : pick(Object.keys(PAL), prev.pal);
-  return {pal: palKey, font: pick(FONTS, prev.font), bg: pick(BGS, prev.bg), wipe: pick(WIPES, prev.wipe), cap: pick(CAPS, prev.cap), full: /arka ?plansız|şeffaf|seffaf|kesme|kesmesin/i.test(prefer) ? "none" : /tam ekran/i.test(prefer) ? "all" : ""};
+  const q = String(prefer).toLocaleLowerCase("tr"), has = rx => rx.test(q);
+  const fmt = FORMATS.includes(ai.format) ? ai.format : has(/sade|minimal|yalnız altyazı|sadece altyazı/) ? "sade" : has(/enerjik|dinamik|tiktok|hızlı|kinetik|dev yazı|büyük yazı/) ? "kinetik" : has(/haber|belgesel|çerçeve|editoryal|dergi/) ? "cerceve" : has(/bölünmüş|split|ikiye böl|yarım ekran/) ? "bolunmus" : has(/infografi|grafik|şema|adım/) ? "info" : pick(FORMATS, prev.fmt);
+  const colors = {mavi: "okyanus", lacivert: "lacivert", kurumsal: "lacivert", yeşil: "zumrut", mor: "murekkep", sarı: "komur", siyah: "komur", bordo: "bordo", pembe: "bordo", kırmızı: "lacivert", doğa: "orman"};
+  const ck = Object.keys(colors).find(k => q.includes(k));
+  const palKey = PAL[ai.renk] ? ai.renk : ck ? colors[ck] : pick(Object.keys(PAL), prev.pal);
+  const cap = CAPS.includes(ai.altyazi) ? ai.altyazi : has(/karaoke/) ? "karaoke" : has(/kelime kelime|yumuşak|soft|zarif/) ? "glide" : has(/sola|sol hizalı/) ? "left" : has(/iki katman|büyük altyazı|vurgulu/) ? "twolayer" : has(/zıpla|pop/) ? "pop" : pick(CAPS, prev.cap);
+  const font = FONTS.includes(ai.font) ? ai.font : has(/dar|condensed/) ? "Barlow Condensed" : has(/modern|teknoloji/) ? "Space Grotesk" : pick(FONTS, prev.font);
+  return {fmt, pal: palKey, font, bg: pick(BGS, prev.bg), wipe: pick(WIPES, prev.wipe), cap, full: /arka ?plansız|şeffaf|seffaf|kesme|kesmesin/i.test(prefer) ? "none" : /tam ekran/i.test(prefer) ? "all" : ""};
 }
 export function lookPalette(l){ const c = PAL[l.pal] || PAL.lacivert; return {bg1: "#f5f5f3", bg2: "#e8e8e4", navy: c.navy, red: c.red, gray: "#5f6368", line: "#d0d0cc", card: "#ffffff"}; }
 export function brandPalette(b){ return {bg1: "#f6f6f4", bg2: "#ecebe7", navy: b.c1, red: b.c2, gray: "#5f6368", line: "#d4d4d0", card: "#ffffff"}; }
@@ -540,8 +548,41 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
   const n = Math.max(1, Math.floor(dur * FPS));
   function* times(){ for(let i = 0; i < n; i++) yield i / FPS; }
   let i = 0, t0 = performance.now();
+  const fmt = brand ? "info" : (look && look.fmt) || "info", S = Math.min(W, H) / 1080;
+  const half = fmt === "bolunmus" ? new OffscreenCanvas(W, Math.round(H / 2)) : null;
+  const crop = (src, dx, dy, dw, dh) => { const a = dw / dh, sw = Math.min(W, H * a), sh = sw / a; ctx.drawImage(src, (W - sw) / 2, (H - sh) / 2, sw, sh, dx, dy, dw, dh); };
+  // kinetik: vurgulanan (yoksa uzun) kelimeler ekranin ortasinda dev tipografi olarak gelir
+  const bigWords = fmt === "kinetik" ? words.map((w, k) => ({...w, k})).filter((w, k) => emph.has(k) || (w.w.length >= 7 && k % 4 === 0)).filter((w, k, a) => !k || w.s - a[k - 1].s > 1.6) : [];
   for await (const wc of sink.canvasesAtTimestamps(times())){
     const t = i / FPS;
+    if(fmt !== "info"){
+      const src = wc ? wc.canvas : null;
+      if(fmt === "cerceve"){
+        ctx.fillStyle = P.navy; ctx.fillRect(0, 0, W, H);
+        const m = W * .06, fy = H * .17, fh = H * .5; if(src) crop(src, m, fy, W - 2 * m, fh);
+        ctx.fillStyle = P.red; ctx.fillRect(m, fy + fh, (W - 2 * m) * clamp(t / 1.2), 8 * S);
+        const sc0 = scenes.find(x => t >= x.start && t < x.end) || scenes[0];
+        if(sc0){ const tt = String(sc0.title1 || "") + (sc0.title2 ? " " + sc0.title2 : ""); ctx.fillStyle = "#fff"; const fs = fitText(ctx, tt, W - 2 * m, 64 * S, 900); ctx.textBaseline = "alphabetic"; ctx.fillText(tt, m, fy - 30 * S);
+          ctx.fillStyle = P.red; font(ctx, 24 * S, 800); spaced(ctx, String(sc0.eyebrow || "").toLocaleUpperCase("tr"), m, fy - 34 * S - fs * 1.1, 4 * S); }
+      } else if(fmt === "bolunmus"){
+        const sc = scenes.find(x => t >= x.start && t < x.end);
+        if(src){ if(sc) crop(src, 0, 0, W, H / 2); else ctx.drawImage(src, 0, 0, W, H); }
+        if(sc){ const hc = half.getContext("2d"); drawScene(hc, W, H / 2, {...sc, ov: false}, t - sc.start, P); const k = easeOut(clamp((t - sc.start) / .35)); ctx.drawImage(half, 0, H / 2 + (1 - k) * H / 2); ctx.fillStyle = P.red; ctx.fillRect(0, H / 2 - 4 * S, W * k, 8 * S); }
+        drawCaption(ctx, W, H, t, groups, emph, P, !!sc);
+      } else if(src) ctx.drawImage(src, 0, 0, W, H);
+      if(fmt === "kinetik"){
+        const b = bigWords.find(x => t >= x.s - .05 && t < x.s + .9);
+        if(b){ const k = easeOut(clamp((t - b.s + .05) / .14)), o = clamp((b.s + .9 - t) / .15), txt = b.w.replace(/[.,!?;:…]+$/, "").toLocaleUpperCase("tr");
+          const fs = fitText(ctx, txt, W * .9, 230 * S, 900), y = H * .42;
+          ctx.save(); ctx.globalAlpha = o; ctx.fillStyle = P.red; ctx.fillRect(0, y - fs * .62, W * k, fs * 1.24);
+          ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(txt, W / 2 + (1 - k) * -80 * S, y); ctx.restore(); }
+      }
+      if(fmt !== "bolunmus") drawCaption(ctx, W, H, t, groups, emph, P, false);
+      drawLowerThird(ctx, W, H, t, plan.isim, P);
+      await vsrc.add(t, 1 / FPS);
+      if(++i % 15 === 0){ const fps = i / ((performance.now() - t0) / 1000); onStep("Video işleniyor… %" + Math.round(i / n * 100) + " · " + fps.toFixed(0) + " kare/sn"); }
+      continue;
+    }
     const sc = scenes.find(x => t >= x.start && t < x.end);
     const fadeOut = sc ? clamp((sc.end - t) / .25) : 0;
     if(!sc || sc.ov || fadeOut < 1){ if(wc) ctx.drawImage(wc.canvas, 0, 0, W, H); else { ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H); } }
