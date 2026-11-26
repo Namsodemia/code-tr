@@ -8,16 +8,20 @@ export const PALETTES = {
   minimal:  {bg1: "#f7f7f7", bg2: "#ececec", navy: "#111111", red: "#111111", gray: "#777777", line: "#d6d6d6", card: "#ffffff"},
 };
 const FPS = 30;
+// Glow Up modu: marka rengi/fontu, pop-scale yok, golge yok, guvenli alan, tam ekran sahnede altyazi yok.
+let STYLE = {};
+export function brandPalette(b){ return {bg1: "#f6f6f4", bg2: "#ecebe7", navy: b.c1, red: b.c2, gray: "#5f6368", line: "#d4d4d0", card: "#ffffff"}; }
 
 // ---------- yardimcilar ----------
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const easeOut = t => 1 - Math.pow(1 - clamp(t), 3);
-const easeBack = t => { t = clamp(t); const c = 1.6; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+const easeBack = t => { if(STYLE.glow) return easeOut(t); t = clamp(t); const c = 1.6; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
 const prog = (t, start, dur) => clamp((t - start) / dur);
 function rr(ctx, x, y, w, h, r){ r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-function font(ctx, size, weight = 800){ ctx.font = weight + " " + Math.round(size) + "px Montserrat, Manrope, sans-serif"; }
+function font(ctx, size, weight = 800){ ctx.font = (STYLE.italic ? "italic " : "") + weight + " " + Math.round(size) + "px " + (STYLE.font ? '"' + STYLE.font + '", ' : "") + "Montserrat, Manrope, sans-serif"; }
 function spaced(ctx, text, x, y, spacing){ let cx = x; for(const ch of text){ ctx.fillText(ch, cx, y); cx += ctx.measureText(ch).width + spacing; } return cx - x; }
 function shadowCard(ctx, x, y, w, h, r, P, a = 1){
+  if(STYLE.glow){ ctx.save(); ctx.globalAlpha *= a; ctx.fillStyle = P.card; ctx.fillRect(x, y, w, h); ctx.fillStyle = P.line; ctx.fillRect(x, y + h - 2, w, 2); ctx.restore(); return; }
   ctx.save(); ctx.globalAlpha *= a; ctx.shadowColor = "rgba(20,28,60,0.12)"; ctx.shadowBlur = h * 0.18; ctx.shadowOffsetY = h * 0.06;
   ctx.fillStyle = P.card; rr(ctx, x, y, w, h, r); ctx.fill(); ctx.restore();
 }
@@ -44,6 +48,7 @@ function icon(ctx, name, cx, cy, r, color){
 
 // ---------- ortak sahne parcalari ----------
 function background(ctx, W, H, t, P, dark){
+  if(STYLE.glow){ ctx.fillStyle = dark ? P.navy : P.bg1; ctx.fillRect(0, 0, W, H); if(!dark){ ctx.fillStyle = P.bg2; ctx.fillRect(0, H * .82, W, H * .18); } return; }
   if(dark){ const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, P.navy); g.addColorStop(1, "#0b1128"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
   else { const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, P.bg1); g.addColorStop(1, P.bg2); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     ctx.save(); ctx.globalAlpha = .55; ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.moveTo(W * .35, 0); ctx.lineTo(W, 0); ctx.lineTo(W, H * .55); ctx.closePath(); ctx.fill(); ctx.restore(); }
@@ -346,7 +351,72 @@ function captionGroups(words){
   words.forEach((w, i) => { cur.push({...w, i}); const nx = words[i + 1]; if(cur.length >= 3 || /[.,!?;:…]$/.test(w.w) || !nx || nx.s - w.e > .3){ groups.push(cur); cur = []; } });
   return groups.map(g => ({words: g, st: g[0].s, en: Math.min(g[g.length - 1].e + .35, g[g.length - 1].e + 1.2)}));
 }
+// Glow Up altyazi: beyaz kalin sans + ince koyu kontur, anahtar kelime duz marka renginde keskin kutu,
+// giris yalniz opaklik + 14px kayma; alt kenar <= y1470 (1920'de), sag dugme sutunu bos.
+function drawCaptionGlow(ctx, W, H, t, groups, emph, P, onScene){
+  if(onScene) return;
+  const g = groups.find(x => t >= x.st && t < x.en); if(!g) return;
+  const s = Math.min(W, H) / 1080, vert = W < H, fs = (vert ? 64 : 56) * s;
+  const bottom = vert ? H * (1470 / 1920) : H * .9, cx = vert ? W * .47 : W / 2, maxW = vert ? W * .78 : W * .8;
+  const txt = w => { const x = w.w.replace(/[{}\\]/g, ""); return STYLE.lower ? x : x; };
+  font(ctx, fs, 800);
+  const sp = ctx.measureText(" ").width;
+  let parts = g.words.map(w => ({w, t: txt(w), wd: ctx.measureText(txt(w)).width}));
+  const total = parts.reduce((a, p) => a + p.wd, 0) + sp * (parts.length - 1);
+  const k = Math.min(1, maxW / total), f2 = fs * k; font(ctx, f2, 800);
+  parts = parts.map(p => ({...p, wd: p.wd * k}));
+  const y = bottom - f2 * .75;
+  const pad = 14 * s, nEm = STYLE.nobox ? 0 : parts.filter(p => emph.has(p.w.i)).length;
+  let x = cx - (total * k + nEm * pad * 2) / 2;
+  const out = clamp((g.en - t) / .12);
+  ctx.save(); ctx.textBaseline = "middle"; ctx.textAlign = "left"; ctx.lineJoin = "round";
+  for(const p of parts){
+    const a = clamp((t - p.w.s + .04) / .12);
+    if(a > 0){
+      const dy = (1 - easeOut(a)) * 14 * s, em = emph.has(p.w.i) && !STYLE.nobox; if(em) x += pad;
+      ctx.globalAlpha = a * out;
+      if(em){ ctx.fillStyle = P.red; ctx.fillRect(x - 10 * s, y - f2 * .62 + dy, p.wd + 20 * s, f2 * 1.2); }
+      else { ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = Math.max(2, f2 * .09); ctx.strokeText(p.t, x, y + dy); }
+      ctx.fillStyle = em && /^#?(f|e|d)[0-9a-f]/i.test(P.red.replace("#", "")) ? "#111111" : "#ffffff";
+      ctx.fillText(p.t, x, y + dy);
+    }
+    x += p.wd + sp * k + (emph.has(p.w.i) && !STYLE.nobox ? (a > 0 ? pad : pad * 2) : 0);
+  }
+  ctx.restore();
+}
+// Dolgu sesleri ("eee", "ıı", "hmm") altyazidan cikar; kesin yazim hatalarini duzelt (TDK).
+const FILLER = /^(e{2,}|ı{2,}|i{3,}|a{3,}|h?m{2,}|hı+m*|ee+h|ıh+|eh+)[.,…]*$/i;
+const FIX = {"herşey": "her şey", "birşey": "bir şey", "hiçbirşey": "hiçbir şey", "yada": "ya da", "şuan": "şu an", "herkez": "herkes", "birsürü": "bir sürü", "yanlız": "yalnız", "birkere": "bir kere", "pekçok": "pek çok"};
+export function cleanWords(words){
+  const fixed = [];
+  const out = words.filter(w => !FILLER.test(w.w.trim())).map(w => {
+    const m = w.w.match(/^(.*?)([.,!?;:…]*)$/); const key = m[1].toLocaleLowerCase("tr");
+    if(FIX[key]){ fixed.push(m[1] + " → " + FIX[key]); return {...w, w: (m[1][0] === m[1][0].toLocaleUpperCase("tr") ? FIX[key][0].toLocaleUpperCase("tr") + FIX[key].slice(1) : FIX[key]) + m[2]}; }
+    return w;
+  });
+  return {words: out, removed: words.length - out.length, fixed};
+}
+// TDK de/da kontrol listesi: ayri "de/da" ve "-de/-da" ile biten kelimeler zaman koduyla (insan gozuyle teyit icin).
+export function tdkReport(words){
+  const tc = s => Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+  return words.filter(w => /^(de|da|[\p{L}]{2,}(de|da|te|ta))[.,!?…]*$/iu.test(w.w)).slice(0, 40).map(w => tc(w.s) + " " + w.w);
+}
+// Google Fonts'tan marka fontunu yukle (latin + latin-ext; Turkce karakterler dahil).
+async function loadBrandFont(name, italic){
+  if(!name || name === "Montserrat") return;
+  try{
+    const css = await (await fetch("https://fonts.googleapis.com/css2?family=" + encodeURIComponent(name) + ":" + (italic ? "ital,wght@1,600;1,800;1,900" : "wght@600;800;900") + "&display=swap")).text();
+    const rx = /\/\* ([\w-]+) \*\/\s*@font-face\s*{([^}]+)}/g; let m; const jobs = [];
+    while((m = rx.exec(css))){
+      if(!/^latin/.test(m[1])) continue;
+      const b = m[2], url = (b.match(/url\(([^)]+)\)/) || [])[1], w = (b.match(/font-weight:\s*(\d+)/) || [])[1], ur = (b.match(/unicode-range:\s*([^;]+)/) || [])[1];
+      if(url){ const f = new FontFace(name, "url(" + url + ")", {weight: w || "800", style: italic ? "italic" : "normal", unicodeRange: ur}); jobs.push(f.load().then(x => (self.fonts || document.fonts).add(x))); }
+    }
+    await Promise.all(jobs);
+  }catch(e){ console.warn("Marka fontu yüklenemedi:", e); }
+}
 function drawCaption(ctx, W, H, t, groups, emph, P, onScene){
+  if(STYLE.glow) return drawCaptionGlow(ctx, W, H, t, groups, emph, P, onScene);
   const g = groups.find(x => t >= x.st && t < x.en); if(!g) return;
   const s = Math.min(W, H) / 1080, fs = 62 * s, y = H * (W < H ? .73 : .86);
   font(ctx, fs, 800); ctx.textBaseline = "middle";
@@ -378,16 +448,18 @@ function drawLowerThird(ctx, W, H, t, it, P){
   const s = Math.min(W, H) / 1080, bx = W * .06, by = H * (W < H ? .6 : .72), bw = Math.min(W * .62, 560 * s), bh = 96 * s;
   const pin = easeOut(clamp((t - a) / .35)), pout = clamp((b - t) / .25), x = bx - (1 - pin) * (bw + bx);
   ctx.save(); ctx.globalAlpha = pout;
-  ctx.fillStyle = "#fff"; ctx.fillRect(x, by, bw, bh); ctx.fillStyle = P.red; ctx.fillRect(x, by, 7 * s, bh + 26 * s);
+  ctx.fillStyle = "#fff"; ctx.fillRect(x, by, bw, bh); ctx.fillStyle = P.red; ctx.fillRect(x, by, 7 * s, bh + (STYLE.glow ? 30 : 26) * s);
   ctx.fillStyle = P.navy; fitText(ctx, it.ad, bw - 50 * s, 44 * s, 800); ctx.textBaseline = "middle"; ctx.fillText(it.ad, x + 26 * s, by + bh / 2 + 2 * s);
   if(it.unvan){ const p2 = easeOut(clamp((t - a - .25) / .3)); ctx.globalAlpha = pout * p2; ctx.fillStyle = P.navy; ctx.fillRect(x, by + bh, bw * .62 * p2, 30 * s); ctx.fillStyle = "#fff"; font(ctx, 19 * s, 800); ctx.fillText(it.unvan, x + 22 * s, by + bh + 15 * s); }
   ctx.restore();
 }
-export async function renderFast({file, W, H, words, plan, palette = "kurumsal", onStep = () => {}}){
+export async function renderFast({file, W, H, words, plan, palette = "kurumsal", brand = null, onStep = () => {}}){
   if(typeof VideoEncoder === "undefined") throw new Error("NO_WEBCODECS");
   const MB = await import("/vendor/mediabunny/mediabunny.min.mjs");
-  const P = PALETTES[palette] || PALETTES.kurumsal;
+  STYLE = brand ? {glow: true, font: brand.font, italic: !!brand.italic, nobox: !!brand.nobox, lower: !!brand.lower} : {};
+  const P = brand ? brandPalette(brand) : (PALETTES[palette] || PALETTES.kurumsal);
   await loadFonts();
+  if(brand){ onStep("Marka fontu yükleniyor (" + brand.font + ")…"); await loadBrandFont(brand.font, brand.italic); }
   const scenes = (plan.sahneler || []).filter(sc => SCENES[sc.type] && +sc.end > +sc.start).map(sc => ({...sc, start: +sc.start, end: +sc.end})).sort((a, b) => a.start - b.start).slice(0, 14);
   plan.sahneler = scenes;
   const groups = captionGroups(words), emph = new Set(plan.vurgu || []);
@@ -418,7 +490,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
     await vsrc.add(t, 1 / FPS);
     if(++i % 15 === 0){ const fps = i / ((performance.now() - t0) / 1000); onStep("Video işleniyor… %" + Math.round(i / n * 100) + " · " + fps.toFixed(0) + " kare/sn (donanım hızlandırmalı)"); }
   }
-  vsrc.close();
+  vsrc.close(); STYLE = {};
   if(at && asrc){
     onStep("Ses ekleniyor…");
     const ps = new MB.EncodedPacketSink(at); const cfg = await at.getDecoderConfig(); let first = true;
@@ -427,4 +499,11 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
   }
   await output.finalize();
   return new Uint8Array(output.target.buffer);
+}
+
+// Test/onizleme: Glow Up altyazisini tek karede ciz
+export async function previewCaption(canvas, words, t, brand){
+  STYLE = {glow: true, font: brand.font, italic: !!brand.italic, nobox: !!brand.nobox}; await loadFonts(); await loadBrandFont(brand.font, brand.italic);
+  const ctx = canvas.getContext("2d"); ctx.fillStyle = "#777"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  drawCaption(ctx, canvas.width, canvas.height, t, captionGroups(words), new Set([1]), brandPalette(brand), false); STYLE = {};
 }

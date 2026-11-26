@@ -1,12 +1,13 @@
 {
-  "version": "1.8.0",
-  "mac": "1.8.0",
+  "version": "1.9.0",
+  "mac": "1.9.0",
   "date": "2026-11-26",
   "notes": [
+    "Glow Up sekmesi: yalnız davet edilen ekip hesaplarına özel; marka seçince renk, font ve kurallar otomatik",
+    "Glow Up altyazısı: gölgesiz, pop yok, yalnız opaklık + kayma, Reels güvenli alanı, tam ekran infografikte altyazı yok",
+    "Dolgu sesleri (eee, ıı) altyazıdan çıkar; yazım düzeltme ve TDK de/da teyit listesi",
+    "Video bitince bildirim: sekme arka plandaysa sesli uyarı + masaüstü bildirimi",
     "🎤 Sesli komut: mikrofona bas ve konuş, susunca gönderilir. \"Görsel moduna geç\", \"yeni sohbet\", \"dur\" gibi komutlar da çalışır.",
-    "🔊 Sesli yanıt: hoparlör düğmesini açınca Code-Tr cevaplarını Türkçe sesle okur; mikrofonla konuşursan cevaptan sonra seni tekrar dinler (eller serbest sohbet).",
-    "🎬 Video modunda artık varsayılan profesyonel motion kurgusu: \"güzel, animasyonlu, alt yazılı bir video yap\" demen yeterli.",
-    "⚡ Kendi API anahtarının hakkı dolduğunda otomatik olarak Code-Tr'nin yedekli ücretsiz modellerine geçiliyor; \"çok yoğun\" hatası çok daha az.",
-    "🎬 Motion düzeltmesi: her videoda mutlaka infografik sahneler çıkıyor; yapay zekâ plan veremezse sahneler konuşmadan otomatik çıkarılıyor (adımlar, sayılar, seçenekler, kapanış alıntısı)."
+    "🔊 Sesli yanıt: hoparlör düğmesini açınca Code-Tr cevaplarını Türkçe sesle okur; mikrofonla konuşursan cevaptan sonra seni tekrar dinler (eller serbest sohbet)."
   ]
 }

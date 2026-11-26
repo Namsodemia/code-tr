@@ -434,7 +434,9 @@ body{letter-spacing:-.005em}
             <button data-mode="agent" title="Kod yazar; klasör seçersen dosyaları okuyup düzenler">Kod</button>
             <button data-mode="image" title="Yazdığını görsele çevirir (ücretsiz)">Görsel</button>
             <button data-mode="video" title="Videonu Türkçe talimatla düzenler; işlem senin cihazında yapılır">Video</button>
+            <button data-mode="glowup" id="glowBtn" style="display:none" title="Glow Up ekibine özel: marka kurallarıyla kurgu">Glow Up</button>
           </div>
+          <select class="pill" id="brandSel" style="display:none" title="Marka"></select>
           <button class="pill ar-pill" id="arBtn" title="Görsel boyutu"><span id="arName">Kare</span></button>
           <button class="pill" id="wsBtn" style="display:none" title="Çalışma klasörünü değiştir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg><span id="wsName">Klasör</span></button>
           <div class="spacer"></div>
@@ -498,6 +500,7 @@ body{letter-spacing:-.005em}
       <button class="btn primary" id="mSave">Kaydet</button>
     </div>
     <button class="btn wide" id="learnBtn" style="display:none;margin:0 0 12px">🧠 Öğrenme paneli</button>
+    <button class="btn wide" id="teamBtn" style="display:none;margin:0 0 12px">✦ Glow Up ekibi</button>
     <div class="row" style="justify-content:space-between">
       <button class="btn" id="logoutBtn">Çıkış yap</button>
       <button class="btn danger" id="deleteBtn">Hesabımı sil</button>
@@ -1272,6 +1275,7 @@ async function send(textOverride){
   if(!text && !pending.length) return;
   if(mode === "image") return makeImage(text);
   if(mode === "video") return makeVideo(text);
+  if(mode === "glowup") return makeVideo(text || "Glow Up kurgusu", GLOW.brand());
   if(!model){ openSettings(); return; }
   if(!current) newChat();
   if(!chats.includes(current)) chats.unshift(current);
@@ -1472,9 +1476,12 @@ function setMode(m){
   document.querySelectorAll("#modeSeg button").forEach(b => b.classList.toggle("on", b.dataset.mode === m));
   $("#wsBtn").style.display = m === "agent" ? "" : "none";
   $("#arBtn").style.display = m === "image" ? "flex" : "none";
+  $("#brandSel").style.display = m === "glowup" ? "" : "none";
+  if(m === "glowup") $("#attachBtn").style.display = "";
   if(m === "video") $("#attachBtn").style.display = "";
   $("#modelBtn").parentElement.style.display = m === "image" ? "none" : "";
   $("#attachBtn").style.display = m === "image" ? "none" : "";
+  if(m === "glowup"){ $("#input").placeholder = "Hamı ekle, notunu yaz (ör. künye: Op. Dr. Ad Soyad - Unvan). Marka kuralları otomatik."; return; }
   $("#input").placeholder = m === "agent" ? "Ne kodlayalım? (ör. bir yapılacaklar uygulaması yaz)" : m === "image" ? "Ne çizeyim? (ör. gün batımında İstanbul, sinematik)" : m === "video" ? "Videonu ekle, ne yapayım yaz (ör. ilk 5 saniyeyi kes, dikey yap, altına yazı ekle)" : "Code-Tr'ye bir şey sor…";
 }
 document.querySelectorAll("#modeSeg button").forEach(b => b.onclick = () => setMode(b.dataset.mode));
@@ -1633,6 +1640,7 @@ const ACC = {
     return j;
   },
   render(){
+    if(GLOW) GLOW.check(this.user);
     $("#acctBox").style.display = this.enabled ? "" : "none";
     $("#loginBtn").style.display = this.user ? "none" : "";
     $("#acctBtn").style.display = this.user ? "" : "none";
@@ -1694,6 +1702,7 @@ const ACC = {
     $("#mName").value = this.user.name; $("#mPass").value = ""; $("#mNew").value = "";
     $("#pwFields").style.display = this.user.hasPassword ? "" : "none";
     $("#learnBtn").style.display = this.user.admin ? "" : "none";
+    $("#teamBtn").style.display = this.user.admin ? "" : "none";
     openModal("acctModal");
   },
   async save(){
@@ -1834,12 +1843,13 @@ function parseJSONLoose(t){
   for(const x of tries){ try{ return JSON.parse(x); }catch(e){} }
   return null;
 }
-async function makeVideo(prompt){
+async function makeVideo(prompt, brand = null){
   if(busy) return;
   if(LOCAL){ toast("Video modu şimdilik web sürümünde: coder-tr.vercel.app"); return; }
   if(ACC.enabled && !ACC.user){ ACC.gate(); return; }
   const item = pending.find(p => p.media);
   if(!item){ toast("Önce 📎 ile bir video ekle."); $("#attachBtn").click(); return; }
+  askNotify();
   if(!prompt){ $("#input").focus(); toast("Videoda ne yapmamı istediğini yaz."); return; }
   if(!current) newChat();
   if(!chats.includes(current)) chats.unshift(current);
@@ -1858,12 +1868,14 @@ async function makeVideo(prompt){
   try{
     say("Video düzenleyici hazırlanıyor… (ilk seferde ~30 MB iner)");
     const ff = await getFF();
-    if(MOTION_RX.test(prompt) || !BASIC_EDIT_RX.test(prompt)){
-      const r = await makeMotion(prompt, item, el, say);
+    if(brand || MOTION_RX.test(prompt) || !BASIC_EDIT_RX.test(prompt)){
+      const r = await makeMotion(prompt, item, el, say, brand);
       const url = URL.createObjectURL(new Blob([r.data], {type: "video/mp4"}));
       const nCard = (r.plan.sahneler || []).length, nEmph = (r.plan.vurgu || []).length;
       const ozet = (r.plan.__heuristic ? "_Not: yapay zekâ kurgu planı alınamadı (" + (WEB.lastPlanError || "bilinmeyen sebep") + "), sahneler konuşmadan otomatik çıkarıldı._\n\n" : "") + "**Kinetik tipografi hazır** (" + r.styleName + " stil" + (r.sure ? ", " + r.sure + " sn'de" : "") + "): " + r.words.length + " kelime konuşmayla eş zamanlı animasyonlandı, " + nEmph + " anahtar kelime vurgulandı" + (nCard ? ", " + nCard + " infografik sahne eklendi (" + [...new Set(r.plan.sahneler.map(x => x.type))].join(", ") + ")" : "") + (r.plan.isim && r.plan.isim.ad ? ", isim etiketi: " + r.plan.isim.ad : "") + ".";
-      box.innerHTML = md(ozet) + '<video controls playsinline style="max-width:min(100%,520px);max-height:560px;border-radius:12px;display:block;background:#000"></video>';
+      const glowNot = brand ? "\n\n**Teslim notu (" + brand.ad + "):** ham sese dokunulmadı, müzik eklenmedi; altyazı opaklık + kayma ile, gölgesiz, Reels güvenli alanında (alt kenar ≤ y1470); tam ekran infografikte altyazı yok; font " + brand.font + " (Türkçe karakter setiyle)." + (r.clean ? " " + r.clean.removed + " dolgu (eee/ıı) altyazıdan çıkarıldı." + (r.clean.fixed.length ? " Yazım düzeltildi: " + r.clean.fixed.join(", ") + "." : "") : "") + (r.tdk && r.tdk.length ? "\n\n**TDK de/da teyidi:** " + r.tdk.join(" · ") : "") + (brand.not ? "\n\n_Marka kuralı: " + brand.not + "_" : "") : "";
+      notifyDone("Videon hazır", brand ? brand.ad + " kurgusu bitti" : "Code-Tr videonu bitirdi");
+      box.innerHTML = md(ozet + glowNot) + '<video controls playsinline style="max-width:min(100%,520px);max-height:560px;border-radius:12px;display:block;background:#000"></video>';
       box.querySelector("video").src = url;
       const acts = document.createElement("div"); acts.className = "gen-acts";
       const assUrl = URL.createObjectURL(new Blob([r.ass], {type: "text/plain"}));
@@ -2182,7 +2194,7 @@ async function planMotion(prompt, words, W, H){
   if(nm) plan.isim = {ad: nm[1].trim(), unvan: (nm[2] || "").trim(), start: .6, end: 5};
   return plan;
 }
-async function makeMotion(prompt, item, el, say){
+async function makeMotion(prompt, item, el, say, brand = null){
   if(typeof VideoEncoder === "undefined" || typeof OffscreenCanvas === "undefined") return makeMotionSlow(prompt, item, el, say);
   const t0 = performance.now();
   try{
@@ -2192,7 +2204,7 @@ async function makeMotion(prompt, item, el, say){
     const inp = new MB.Input({source: new MB.BlobSource(item.file), formats: MB.ALL_FORMATS});
     const vt = await inp.getPrimaryVideoTrack(); if(!vt) throw new Error("Videoda görüntü yok.");
     let W = vt.displayWidth, H = vt.displayHeight;
-    if(/dikey|reels|tiktok|shorts|9:16|story|hikaye/i.test(prompt) && W > H){ W = 1080; H = 1920; }
+    if((brand || /dikey|reels|tiktok|shorts|9:16|story|hikaye/i.test(prompt)) && W > H && !/yatay|16:9/i.test(prompt)){ W = 1080; H = 1920; }
     const k = Math.min(1, 1920 / Math.max(W, H)); W = Math.round(W * k / 2) * 2; H = Math.round(H * k / 2) * 2;
     say("Konuşma çıkarılıyor…");
     const audio = await audio16k(item.file);
@@ -2200,14 +2212,16 @@ async function makeMotion(prompt, item, el, say){
     const asr = await getASR(x => say("Ses tanıma modeli hazırlanıyor… %" + Math.round(x.progress || 0) + " (yalnızca ilk seferde)"));
     say("Konuşma yazıya dökülüyor… (" + Math.round(audio.length / 16000) + " sn ses" + (asr.__gpu ? ", ekran kartında" : "") + ")");
     const res = await asr(audio, {language: "turkish", task: "transcribe", return_timestamps: "word", chunk_length_s: 30, stride_length_s: 5});
-    const words = mergeWords(res.chunks || []);
+    let words = mergeWords(res.chunks || []);
     if(!words.length) throw new Error("Konuşma anlaşılamadı.");
+    let clean = null, tdk = null;
+    if(brand){ clean = MO.cleanWords(words); words = clean.words; tdk = MO.tdkReport(words); }
     say("Motion tasarımcısı kurguyu planlıyor…");
     const plan = await planMotion(prompt, words, W, H);
     const styleName = /dinamik|enerji|hızlı|tiktok/i.test(prompt) ? "dinamik" : /minimal|sade/i.test(prompt) ? "minimal" : (MO.PALETTES[plan.stil] ? plan.stil : "kurumsal");
-    const data = await MO.renderFast({file: item.file, W, H, words, plan, palette: styleName, onStep: say});
-    const ass = MO.buildCaptions(words, plan, W, H, MO.PALETTES[styleName]);
-    return {data, ass, words, plan, styleName, sure: Math.round((performance.now() - t0) / 1000)};
+    const data = await MO.renderFast({file: item.file, W, H, words, plan, palette: styleName, brand, onStep: say});
+    const ass = MO.buildCaptions(words, plan, W, H, brand ? MO.brandPalette(brand) : MO.PALETTES[styleName]);
+    return {data, ass, words, plan, styleName: brand ? brand.ad : styleName, clean, tdk, sure: Math.round((performance.now() - t0) / 1000)};
   }catch(e){
     if(/Videoda|Konuşma/.test(e.message || "")) throw e;
     console.warn("Hızlı motor olmadı, yedek motora geçiliyor:", e);
@@ -2370,6 +2384,40 @@ async function teachPost(action, body, btn){
 $("#eAddText").onclick = async () => { if(await teachPost("add_text", {title: $("#eTitle").value, text: $("#eText").value}, $("#eAddText"))){ $("#eText").value = ""; $("#eTitle").value = ""; } };
 $("#eAddUrl").onclick = async () => { if(await teachPost("add_url", {url: $("#eUrl").value, title: $("#eTitle").value}, $("#eAddUrl"))){ $("#eUrl").value = ""; } };
 $("#learnBtn").onclick = () => { openLearn(); loadSources(); };
+/* ---------------- Glow Up ekibi ---------------- */
+var GLOW = {
+  data: null,
+  async check(user){
+    if(!user || LOCAL){ this.data = null; $("#glowBtn").style.display = "none"; if(mode === "glowup") setMode("chat"); return; }
+    try{ this.data = await (await fetch("/api/team")).json(); }catch(e){ this.data = null; }
+    const on = !!(this.data && this.data.member);
+    $("#glowBtn").style.display = on ? "" : "none";
+    if(on){ const sel = $("#brandSel"), last = store.get("coder.brand", "");
+      sel.innerHTML = this.data.brands.map(b => '<option value="' + b.id + '">' + esc(b.ad) + '</option>').join("");
+      if(last) sel.value = last; sel.onchange = () => store.set("coder.brand", sel.value);
+      if(store.get("coder.mode") === "glowup") setMode("glowup"); }
+    else if(mode === "glowup") setMode("chat");
+  },
+  brand(){ const id = $("#brandSel").value; return (this.data && this.data.brands || []).find(b => b.id === id) || null; },
+  async manage(){
+    const r = await (await fetch("/api/team")).json();
+    const list = (r.members || []).join("\n") || "(henüz kimse yok)";
+    const e = prompt("Glow Up ekibi (yönetici her zaman dahil):\n" + list + "\n\nEklemek için e-posta yaz. Çıkarmak için başına - koy:");
+    if(!e) return;
+    const rm = e.trim().startsWith("-");
+    const j = await (await fetch("/api/team", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({action: rm ? "remove" : "add", email: e.replace(/^-/, "").trim()})})).json();
+    toast(j.error || (rm ? "Çıkarıldı." : "Eklendi. Bu e-postayla kayıt olunca / Google ile girince Glow Up sekmesini görür."));
+  },
+};
+$("#teamBtn").onclick = () => GLOW.manage();
+/* ---------------- is bitince bildirim ---------------- */
+function askNotify(){ try{ if("Notification" in window && Notification.permission === "default") Notification.requestPermission(); }catch(e){} }
+function notifyDone(title, body){
+  try{ const a = new AudioContext(), o = a.createOscillator(), g = a.createGain(); o.frequency.value = 880; g.gain.setValueAtTime(.12, a.currentTime); g.gain.exponentialRampToValueAtTime(.001, a.currentTime + .5); o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + .5); }catch(e){}
+  if(!document.hidden) return;
+  const old = document.title; document.title = "✓ " + title; addEventListener("focus", () => { document.title = old; }, {once: true});
+  try{ if("Notification" in window && Notification.permission === "granted") new Notification(title, {body, icon: "/icons/icon-192.png"}); }catch(e){}
+}
 
 /* ---------------- uygulama olarak yukleme (PWA) ---------------- */
 let installEvt = null;

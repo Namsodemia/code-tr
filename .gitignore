@@ -12,3 +12,4 @@ __pycache__/
 mac/icon.svg.png
 # FFmpeg cekirdegi (build.sh indirir)
 web/vendor/
+web/api/_glowup_brands.js
