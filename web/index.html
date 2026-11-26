@@ -434,6 +434,7 @@ body{letter-spacing:-.005em}
             <button data-mode="agent" title="Kod yazar; klasör seçersen dosyaları okuyup düzenler">Kod</button>
             <button data-mode="image" title="Yazdığını görsele çevirir (ücretsiz)">Görsel</button>
             <button data-mode="video" title="Videonu Türkçe talimatla düzenler; işlem senin cihazında yapılır">Video</button>
+            <button data-mode="computer" id="pcBtn" style="display:none" title="Mac uygulamasında: ekranını görüp fare ve klavyeyi kullanır (her adımda durdurabilirsin)">Bilgisayar</button>
             <button data-mode="glowup" id="glowBtn" style="display:none" title="Glow Up ekibine özel: marka kurallarıyla kurgu">Glow Up</button>
           </div>
           <select class="pill" id="brandSel" style="display:none" title="Marka"></select>
@@ -1481,6 +1482,7 @@ function setMode(m){
   if(m === "video") $("#attachBtn").style.display = "";
   $("#modelBtn").parentElement.style.display = m === "image" ? "none" : "";
   $("#attachBtn").style.display = m === "image" ? "none" : "";
+  if(m === "computer"){ $("#input").placeholder = "Bilgisayarda ne yapayım? (ör. Safari'yi aç, hava durumuna bak). Durdurmak için fareyi sol üst köşeye götür."; return; }
   if(m === "glowup"){ $("#input").placeholder = "Hamı ekle, notunu yaz (ör. künye: Op. Dr. Ad Soyad - Unvan). Marka kuralları otomatik."; return; }
   $("#input").placeholder = m === "agent" ? "Ne kodlayalım? (ör. bir yapılacaklar uygulaması yaz)" : m === "image" ? "Ne çizeyim? (ör. gün batımında İstanbul, sinematik)" : m === "video" ? "Videonu ekle, ne yapayım yaz (ör. ilk 5 saniyeyi kes, dikey yap, altına yazı ekle)" : "Code-Tr'ye bir şey sor…";
 }
@@ -2218,10 +2220,12 @@ async function makeMotion(prompt, item, el, say, brand = null){
     if(brand){ clean = MO.cleanWords(words); words = clean.words; tdk = MO.tdkReport(words); }
     say("Motion tasarımcısı kurguyu planlıyor…");
     const plan = await planMotion(prompt, words, W, H);
+    const same = /aynı (tarz|stil)|öncekiyle aynı|aynısı/i.test(prompt), prevLook = store.get("coder.look", {});
+    const look = brand ? null : (same && prevLook.font ? prevLook : MO.pickLook(prevLook, prompt)); if(look) store.set("coder.look", look);
     const styleName = /dinamik|enerji|hızlı|tiktok/i.test(prompt) ? "dinamik" : /minimal|sade/i.test(prompt) ? "minimal" : (MO.PALETTES[plan.stil] ? plan.stil : "kurumsal");
-    const data = await MO.renderFast({file: item.file, W, H, words, plan, palette: styleName, brand, onStep: say});
+    const data = await MO.renderFast({file: item.file, W, H, words, plan, palette: styleName, brand, look, onStep: say});
     const ass = MO.buildCaptions(words, plan, W, H, brand ? MO.brandPalette(brand) : MO.PALETTES[styleName]);
-    return {data, ass, words, plan, styleName: brand ? brand.ad : styleName, clean, tdk, sure: Math.round((performance.now() - t0) / 1000)};
+    return {data, ass, words, plan, styleName: brand ? brand.ad : look ? look.font + " · " + look.pal + " · " + look.cap + " altyazı" : styleName, clean, tdk, sure: Math.round((performance.now() - t0) / 1000)};
   }catch(e){
     if(/Videoda|Konuşma/.test(e.message || "")) throw e;
     console.warn("Hızlı motor olmadı, yedek motora geçiliyor:", e);
@@ -2410,6 +2414,7 @@ var GLOW = {
   },
 };
 $("#teamBtn").onclick = () => GLOW.manage();
+if(LOCAL){ $("#pcBtn").style.display = ""; if(store.get("coder.mode") === "computer") setMode("computer"); }
 /* ---------------- is bitince bildirim ---------------- */
 function askNotify(){ try{ if("Notification" in window && Notification.permission === "default") Notification.requestPermission(); }catch(e){} }
 function notifyDone(title, body){

@@ -10,12 +10,26 @@ export const PALETTES = {
 const FPS = 30;
 // Glow Up modu: marka rengi/fontu, pop-scale yok, golge yok, guvenli alan, tam ekran sahnede altyazi yok.
 let STYLE = {};
+// Her video farkli gorunsun: font, renk, zemin, gecis ve altyazi dili her seferinde degisir (son kullanilan tekrarlanmaz).
+const PAL = {
+  lacivert: {navy: "#141c3c", red: "#d81f2a"}, zumrut: {navy: "#0f3d3e", red: "#19a974"}, murekkep: {navy: "#1b1b3a", red: "#6c5ce7"},
+  komur: {navy: "#161616", red: "#e0b400"}, bordo: {navy: "#3b0d1a", red: "#c2185b"}, okyanus: {navy: "#0b2545", red: "#139bb8"},
+  orman: {navy: "#1f3d2b", red: "#7fb33a"}, gece: {navy: "#10141f", red: "#3d7bff"},
+};
+const FONTS = ["Montserrat", "Archivo", "Sora", "Space Grotesk", "Outfit", "Plus Jakarta Sans", "Barlow Condensed", "Bricolage Grotesque", "Lexend", "Manrope"];
+const BGS = ["gradient", "solid", "grid", "editorial"], WIPES = ["diag", "bars", "iris", "slide", "none"], CAPS = ["pop", "glide", "twolayer", "karaoke", "left"];
+export function pickLook(prev = {}, prefer = ""){
+  const pick = (arr, old) => { const c = arr.filter(x => x !== old); return c[Math.floor(Math.random() * c.length)]; };
+  const palKey = /kurumsal/i.test(prefer) ? "lacivert" : pick(Object.keys(PAL), prev.pal);
+  return {pal: palKey, font: pick(FONTS, prev.font), bg: pick(BGS, prev.bg), wipe: pick(WIPES, prev.wipe), cap: pick(CAPS, prev.cap), full: /arka ?plansız|şeffaf|seffaf|kesme|kesmesin/i.test(prefer) ? "none" : /tam ekran/i.test(prefer) ? "all" : ""};
+}
+export function lookPalette(l){ const c = PAL[l.pal] || PAL.lacivert; return {bg1: "#f5f5f3", bg2: "#e8e8e4", navy: c.navy, red: c.red, gray: "#5f6368", line: "#d0d0cc", card: "#ffffff"}; }
 export function brandPalette(b){ return {bg1: "#f6f6f4", bg2: "#ecebe7", navy: b.c1, red: b.c2, gray: "#5f6368", line: "#d4d4d0", card: "#ffffff"}; }
 
 // ---------- yardimcilar ----------
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const easeOut = t => 1 - Math.pow(1 - clamp(t), 3);
-const easeBack = t => { if(STYLE.glow) return easeOut(t); t = clamp(t); const c = 1.6; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+const easeBack = t => { if(STYLE.glow || STYLE.noback) return easeOut(t); t = clamp(t); const c = 1.6; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
 const prog = (t, start, dur) => clamp((t - start) / dur);
 function rr(ctx, x, y, w, h, r){ r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 function font(ctx, size, weight = 800){ ctx.font = (STYLE.italic ? "italic " : "") + weight + " " + Math.round(size) + "px " + (STYLE.font ? '"' + STYLE.font + '", ' : "") + "Montserrat, Manrope, sans-serif"; }
@@ -49,6 +63,9 @@ function icon(ctx, name, cx, cy, r, color){
 // ---------- ortak sahne parcalari ----------
 function background(ctx, W, H, t, P, dark){
   if(STYLE.glow){ ctx.fillStyle = dark ? P.navy : P.bg1; ctx.fillRect(0, 0, W, H); if(!dark){ ctx.fillStyle = P.bg2; ctx.fillRect(0, H * .82, W, H * .18); } return; }
+  if(STYLE.bg === "solid"){ ctx.fillStyle = dark ? P.navy : P.bg1; ctx.fillRect(0, 0, W, H); ctx.fillStyle = P.red; ctx.fillRect(0, H - 10, W * (.2 + .1 * Math.sin(t)), 10); return; }
+  if(STYLE.bg === "grid"){ ctx.fillStyle = dark ? P.navy : P.bg1; ctx.fillRect(0, 0, W, H); const g = Math.min(W, H) / 12; ctx.strokeStyle = dark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.06)"; ctx.lineWidth = 1; ctx.beginPath(); const o = (t * 12) % g; for(let x = -o; x < W; x += g){ ctx.moveTo(x, 0); ctx.lineTo(x, H); } for(let y = 0; y < H; y += g){ ctx.moveTo(0, y); ctx.lineTo(W, y); } ctx.stroke(); return; }
+  if(STYLE.bg === "editorial"){ ctx.fillStyle = dark ? P.navy : P.bg1; ctx.fillRect(0, 0, W, H); ctx.fillStyle = dark ? "rgba(255,255,255,.06)" : P.bg2; ctx.fillRect(0, 0, W * .09, H); ctx.fillStyle = P.red; ctx.fillRect(W * .09 - 6, H * .12, 6, H * .22 * clamp(t / .6)); return; }
   if(dark){ const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, P.navy); g.addColorStop(1, "#0b1128"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
   else { const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, P.bg1); g.addColorStop(1, P.bg2); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     ctx.save(); ctx.globalAlpha = .55; ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.moveTo(W * .35, 0); ctx.lineTo(W, 0); ctx.lineTo(W, H * .55); ctx.closePath(); ctx.fill(); ctx.restore(); }
@@ -68,23 +85,27 @@ function background(ctx, W, H, t, P, dark){
 function header(ctx, L, t, P, d){
   const {x, y, w, s} = L;
   const pe = easeOut(prog(t, .05, .35));
-  ctx.save(); ctx.globalAlpha = pe; ctx.fillStyle = P.gray; font(ctx, 22 * s, 800); ctx.textBaseline = "alphabetic";
+  const OV = STYLE.ov;
+  ctx.save(); ctx.globalAlpha = pe; ctx.fillStyle = OV ? "#ffffff" : P.gray; font(ctx, 22 * s, 800); ctx.textBaseline = "alphabetic";
   spaced(ctx, String(d.eyebrow || "").toLocaleUpperCase("tr"), x, y - 10 * s * (1 - pe) , 5 * s); ctx.restore();
-  const lines = [[d.title1 || "", P.navy], [d.title2 || "", P.red]];
+  const lines = [[d.title1 || "", OV ? "#ffffff" : P.navy], [d.title2 || "", P.red]];
   let yy = y + 78 * s;
   lines.forEach(([txt, col], i) => {
     if(!txt) return;
     const size = fitText(ctx, txt, w, 76 * s, 900);
     const p = easeOut(prog(t, .12 + i * .1, .45));
     ctx.save(); ctx.beginPath(); ctx.rect(x - 10 * s, yy - size * 1.05, w + 20 * s, size * 1.3); ctx.clip();
-    ctx.fillStyle = col; font(ctx, size, 900); ctx.fillText(txt, x, yy + size * (1 - p)); ctx.restore();
+    font(ctx, size, 900); if(OV){ ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.lineWidth = size * .08; ctx.lineJoin = "round"; ctx.strokeText(txt, x, yy + size * (1 - p)); }
+    ctx.fillStyle = col; ctx.fillText(txt, x, yy + size * (1 - p)); ctx.restore();
     yy += size * 1.08;
   });
   return yy + 30 * s;
 }
 function wipe(ctx, W, H, t, P){
-  // giriste kirmizi capraz serit
-  const p = prog(t, 0, .45); if(p >= 1) return;
+  const p = prog(t, 0, .45); if(p >= 1 || STYLE.wipe === "none") return;
+  if(STYLE.wipe === "bars"){ ctx.save(); ctx.fillStyle = P.red; for(let i = 0; i < 5; i++){ const q = easeOut(clamp(p * 1.6 - i * .12)); ctx.fillRect(i * W / 5, H * q, W / 5 + 1, H * (1 - q)); } ctx.restore(); return; }
+  if(STYLE.wipe === "iris"){ ctx.save(); ctx.fillStyle = P.navy; ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.arc(W / 2, H / 2, Math.hypot(W, H) * .6 * easeOut(p), 0, 7, true); ctx.fill("evenodd"); ctx.restore(); return; }
+  if(STYLE.wipe === "slide"){ ctx.save(); ctx.fillStyle = P.navy; ctx.fillRect(W * easeOut(p), 0, W, H); ctx.fillStyle = P.red; ctx.fillRect(W * easeOut(p) - 12, 0, 12, H); ctx.restore(); return; }
   const x = -W * .6 + easeOut(p) * W * 2.2;
   ctx.save(); ctx.fillStyle = P.red; ctx.globalAlpha = 1 - p * .2;
   ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + W * .22, 0); ctx.lineTo(x + W * .22 - H * .25, H); ctx.lineTo(x - H * .25, H); ctx.closePath(); ctx.fill(); ctx.restore();
@@ -240,6 +261,8 @@ function layout(W, H){
 }
 function drawScene(ctx, W, H, sc, t, P){
   const dark = sc.type === "alinti";
+  STYLE.ov = !!sc.ov;
+  if(sc.ov){ ctx.clearRect(0, 0, W, H); const fn = SCENES[sc.type] || SCENES.kartlar; try{ fn(ctx, layout(W, H), t, P, sc, W, H); }catch(e){} STYLE.ov = false; return; }
   background(ctx, W, H, t, P, dark);
   const fn = SCENES[sc.type] || SCENES.kartlar;
   try{ fn(ctx, layout(W, H), t, P, sc, W, H); }catch(e){}
@@ -295,6 +318,9 @@ export async function renderMotion({ff, input, W, H, words, plan, palette = "kur
   const P = PALETTES[palette] || PALETTES.kurumsal;
   await loadFonts();
   const scenes = (plan.sahneler || []).filter(sc => SCENES[sc.type] && +sc.end > +sc.start).map(sc => ({...sc, start: +sc.start, end: +sc.end})).sort((a, b) => a.start - b.start).slice(0, 14);
+  // Video surekli kesilmesin: tam ekran yalniz ilk sahne ve alinti; digerleri seffaf (videonun ustunde).
+  const full = brand ? null : (look && look.full);
+  scenes.forEach((sc, i) => { sc.ov = full === "all" ? false : full === "none" ? sc.type !== "alinti" : !(i === 0 || sc.type === "alinti"); });
   plan.sahneler = scenes;
   // 1) sahneleri kare kare ciz -> JPEG
   const cv = typeof OffscreenCanvas !== "undefined" ? new OffscreenCanvas(W, H) : Object.assign(document.createElement("canvas"), {width: W, height: H});
@@ -416,7 +442,40 @@ async function loadBrandFont(name, italic){
   }catch(e){ console.warn("Marka fontu yüklenemedi:", e); }
 }
 function drawCaption(ctx, W, H, t, groups, emph, P, onScene){
-  if(STYLE.glow) return drawCaptionGlow(ctx, W, H, t, groups, emph, P, onScene);
+  if(STYLE.glow || STYLE.cap === "glide") return drawCaptionGlow(ctx, W, H, t, groups, emph, P, onScene);
+  if(STYLE.cap === "karaoke" || STYLE.cap === "twolayer" || STYLE.cap === "left"){
+    if(onScene) return;
+    const g = groups.find(x => t >= x.st && t < x.en); if(!g) return;
+    const s = Math.min(W, H) / 1080, vert = W < H, out = clamp((g.en - t) / .12), a0 = clamp((t - g.st) / .12) * out;
+    const cur = [...g.words].reverse().find(w => t >= w.s - .03) || g.words[0];
+    ctx.save(); ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+    if(STYLE.cap === "twolayer"){
+      const yb = vert ? H * .70 : H * .82;
+      font(ctx, 34 * s, 600); ctx.textAlign = "center"; ctx.globalAlpha = a0 * .9; ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "rgba(0,0,0,.5)"; ctx.lineWidth = 5 * s;
+      const line = g.words.map(w => w.w).join(" "); ctx.strokeText(line, W / 2, yb - 70 * s, W * .84); ctx.fillText(line, W / 2, yb - 70 * s, W * .84);
+      const k = clamp((t - cur.s) / .15), big = cur.w.replace(/[.,!?;:…]+$/, "").toLocaleUpperCase("tr");
+      const fs = fitText(ctx, big, W * .8, 110 * s, 900); ctx.globalAlpha = out * k;
+      if(emph.has(cur.i)){ const wd = ctx.measureText(big).width; ctx.fillStyle = P.red; ctx.fillRect(W / 2 - wd / 2 - 18 * s, yb - fs * .6 + (1 - k) * 18 * s, wd + 36 * s, fs * 1.2); }
+      else { ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = fs * .08; ctx.strokeText(big, W / 2, yb + (1 - k) * 18 * s); }
+      ctx.fillStyle = "#ffffff"; ctx.fillText(big, W / 2, yb + (1 - k) * 18 * s);
+    } else {
+      const fs = 58 * s, left = STYLE.cap === "left", y = vert ? H * .72 : H * .85;
+      font(ctx, fs, 800); const sp = ctx.measureText(" ").width;
+      const parts = g.words.map(w => ({w, t: w.w, wd: ctx.measureText(w.w).width}));
+      const total = parts.reduce((a, p) => a + p.wd, 0) + sp * (parts.length - 1), k = Math.min(1, W * .82 / total);
+      font(ctx, fs * k, 800); let x = left ? W * .08 + 22 * s : W / 2 - total * k / 2; ctx.textAlign = "left";
+      if(left){ ctx.globalAlpha = a0; ctx.fillStyle = P.red; ctx.fillRect(W * .08, y - fs * .6, 8 * s, fs * 1.2 * clamp((t - g.st) / .2)); }
+      for(const p of parts){
+        const shown = t >= p.w.s - .03, on = p.w === cur;
+        const a = left ? clamp((t - p.w.s + .03) / .12) : 1; if(left && a <= 0){ x += (p.wd + sp) * k; continue; }
+        ctx.globalAlpha = a0 * a * (shown || left ? 1 : .45);
+        ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = fs * k * .09; ctx.strokeText(p.t, x, y + (left ? (1 - a) * 12 * s : 0));
+        ctx.fillStyle = (!left && on) || emph.has(p.w.i) && shown ? P.red : "#ffffff"; ctx.fillText(p.t, x, y + (left ? (1 - a) * 12 * s : 0));
+        x += (p.wd + sp) * k;
+      }
+    }
+    ctx.restore(); return;
+  }
   const g = groups.find(x => t >= x.st && t < x.en); if(!g) return;
   const s = Math.min(W, H) / 1080, fs = 62 * s, y = H * (W < H ? .73 : .86);
   font(ctx, fs, 800); ctx.textBaseline = "middle";
@@ -453,12 +512,14 @@ function drawLowerThird(ctx, W, H, t, it, P){
   if(it.unvan){ const p2 = easeOut(clamp((t - a - .25) / .3)); ctx.globalAlpha = pout * p2; ctx.fillStyle = P.navy; ctx.fillRect(x, by + bh, bw * .62 * p2, 30 * s); ctx.fillStyle = "#fff"; font(ctx, 19 * s, 800); ctx.fillText(it.unvan, x + 22 * s, by + bh + 15 * s); }
   ctx.restore();
 }
-export async function renderFast({file, W, H, words, plan, palette = "kurumsal", brand = null, onStep = () => {}}){
+export async function renderFast({file, W, H, words, plan, palette = "kurumsal", brand = null, look = null, onStep = () => {}}){
   if(typeof VideoEncoder === "undefined") throw new Error("NO_WEBCODECS");
   const MB = await import("/vendor/mediabunny/mediabunny.min.mjs");
   STYLE = brand ? {glow: true, font: brand.font, italic: !!brand.italic, nobox: !!brand.nobox, lower: !!brand.lower} : {};
-  const P = brand ? brandPalette(brand) : (PALETTES[palette] || PALETTES.kurumsal);
+  if(!brand && look) STYLE = {font: look.font, bg: look.bg, wipe: look.wipe, cap: look.cap, noback: look.cap !== "pop"};
+  const P = brand ? brandPalette(brand) : look ? lookPalette(look) : (PALETTES[palette] || PALETTES.kurumsal);
   await loadFonts();
+  if(!brand && look && look.font !== "Montserrat"){ onStep("Font yükleniyor (" + look.font + ")…"); await loadBrandFont(look.font); }
   if(brand){ onStep("Marka fontu yükleniyor (" + brand.font + ")…"); await loadBrandFont(brand.font, brand.italic); }
   const scenes = (plan.sahneler || []).filter(sc => SCENES[sc.type] && +sc.end > +sc.start).map(sc => ({...sc, start: +sc.start, end: +sc.end})).sort((a, b) => a.start - b.start).slice(0, 14);
   plan.sahneler = scenes;
@@ -483,8 +544,8 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
     const t = i / FPS;
     const sc = scenes.find(x => t >= x.start && t < x.end);
     const fadeOut = sc ? clamp((sc.end - t) / .25) : 0;
-    if(!sc || fadeOut < 1){ if(wc) ctx.drawImage(wc.canvas, 0, 0, W, H); else { ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H); } }
-    if(sc){ drawScene(sctx, W, H, sc, t - sc.start, P); ctx.save(); ctx.globalAlpha = fadeOut; ctx.drawImage(scv, 0, 0); ctx.restore(); }
+    if(!sc || sc.ov || fadeOut < 1){ if(wc) ctx.drawImage(wc.canvas, 0, 0, W, H); else { ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H); } }
+    if(sc){ drawScene(sctx, W, H, sc, t - sc.start, P); ctx.save(); ctx.globalAlpha = sc.ov ? fadeOut * clamp((t - sc.start) / .25) : fadeOut; ctx.drawImage(scv, 0, 0); ctx.restore(); }
     drawCaption(ctx, W, H, t, groups, emph, P, !!sc && fadeOut > .5);
     drawLowerThird(ctx, W, H, t, plan.isim, P);
     await vsrc.add(t, 1 / FPS);
@@ -506,4 +567,13 @@ export async function previewCaption(canvas, words, t, brand){
   STYLE = {glow: true, font: brand.font, italic: !!brand.italic, nobox: !!brand.nobox}; await loadFonts(); await loadBrandFont(brand.font, brand.italic);
   const ctx = canvas.getContext("2d"); ctx.fillStyle = "#777"; ctx.fillRect(0, 0, canvas.width, canvas.height);
   drawCaption(ctx, canvas.width, canvas.height, t, captionGroups(words), new Set([1]), brandPalette(brand), false); STYLE = {};
+}
+// Test: bir gorunumle sahne (seffaf/tam) + altyazi tek karede
+export async function previewLook(canvas, sc, t, look, words, wt){
+  STYLE = {font: look.font, bg: look.bg, wipe: look.wipe, cap: look.cap, noback: true}; await loadFonts(); await loadBrandFont(look.font);
+  const P = lookPalette(look), W = canvas.width, H = canvas.height, ctx = canvas.getContext("2d");
+  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#6b7f8f"); g.addColorStop(1, "#3a3f44"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const off = new OffscreenCanvas(W, H); drawScene(off.getContext("2d"), W, H, sc, t, P); ctx.drawImage(off, 0, 0);
+  if(words){ drawCaption(ctx, W, H, wt, captionGroups(words), new Set([1]), P, false); }
+  STYLE = {};
 }
