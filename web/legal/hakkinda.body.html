@@ -1,9 +1,9 @@
-<h1>Coder-tr hakkında</h1>
+<h1>Code-Tr hakkında</h1>
 <p class="date">Türkçe konuşan herkes için ücretsiz yapay zekâ asistanı</p>
 
 <h2>Neden geliştirdik?</h2>
 <p>Güçlü yapay zekâ araçlarının çoğu ya ücretli, ya İngilizce, ya da kullanmak için kredi kartı istiyor. Öğrenciler, küçük işletmeler ve yazılıma yeni başlayanlar için bu ciddi bir engel.</p>
-<p><b>Coder-tr</b> bu engeli kaldırmak için doğdu: dünyadaki ücretsiz yapay zekâ modellerini tek bir sade, Türkçe arayüzde topluyor. Hesap açmadan, kart girmeden, anahtar uğraşmadan açıp kullanabilirsin.</p>
+<p><b>Code-Tr</b> bu engeli kaldırmak için doğdu: dünyadaki ücretsiz yapay zekâ modellerini tek bir sade, Türkçe arayüzde topluyor. Hesap açmadan, kart girmeden, anahtar uğraşmadan açıp kullanabilirsin.</p>
 
 <h2>Neler yapabilir?</h2>
 <ul>
@@ -14,7 +14,12 @@
 </ul>
 
 <h2>Nasıl ücretsiz?</h2>
-<p>Coder-tr yalnızca sağlayıcıların ücretsiz sunduğu modelleri kullanır; altyapı da ücretsiz planlar üzerinde çalışır. Bu yüzden günlük kullanım sınırları vardır. Reklam yok, verin satılmaz.</p>
+<p>Code-Tr yalnızca sağlayıcıların ücretsiz sunduğu modelleri kullanır; altyapı da ücretsiz planlar üzerinde çalışır. Bu yüzden günlük kullanım sınırları vardır. Reklam yok, verin satılmaz.</p>
+
+<h2>Neden bir ".com" adresimiz yok?</h2>
+<p>Bilerek. Code-Tr <b>açık kaynaklı ve kâr amacı gütmeyen</b> bir proje. Her kuruşu ve her saati, herkesin yapay zekâyı <b>ücretsiz</b> kullanabilmesine ayırıyoruz; pahalı bir alan adına, reklama ya da gösterişe değil.</p>
+<p>Bu yüzden şimdilik barındırma sağlayıcımızın güvenilir, HTTPS'li adresinde yaşıyoruz: <b>coder-tr.vercel.app</b>. Adres sade, ama altındaki altyapı dünyanın en büyük sitelerinin kullandığı altyapıyla aynı.</p>
+<div class="note">Kısacası: <b>parayı adrese değil, sana harcıyoruz.</b> Kodumuz açık; nasıl çalıştığımızı herkes görebilir, isteyen katkı verebilir. Bir gün kendi alan adımıza taşınırsak bu adres de seni otomatik olarak oraya yönlendirecek.</div>
 
 <h2>Gizliliğin</h2>
 <p>Giriş yapmazsan sohbetlerin sadece kendi tarayıcında kalır. Hesap açarsan sohbetlerin hesabına kaydedilir ve istediğin an hepsini silebilirsin. Ayrıntılar <a href="/gizlilik.html">Gizlilik Politikası</a>'nda.</p>
@@ -28,7 +33,7 @@
   <input id="cEmail" type="email" placeholder="E-postan (isteğe bağlı)" style="padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit">
   <input id="cWeb" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
   <textarea id="cMsg" rows="5" required placeholder="Mesajın" style="padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;resize:vertical"></textarea>
-  <button style="justify-self:start;border:0;border-radius:10px;padding:10px 18px;background:var(--accent);color:#fff;font:600 15px inherit;cursor:pointer">Gönder</button>
+  <button style="justify-self:start;border:0;border-radius:10px;padding:10px 18px;background:var(--grad);color:#fff;font:700 15px inherit;cursor:pointer">Gönder</button>
   <div id="cRes" style="font-size:14px;color:var(--muted)"></div>
 </form>
 <script>
@@ -44,4 +49,4 @@ document.getElementById("cf").onsubmit = async e => {
   }catch(err){ res.textContent = err.message; }
 };
 </script>
-<p style="margin-top:40px;color:var(--muted)">Coder-tr · Türkiye'de, öğrenciler tarafından, herkes için geliştirildi.</p>
+<p style="margin-top:40px;color:var(--muted)">Code-Tr · Türkiye'de, öğrenciler tarafından, herkes için geliştirildi.</p>

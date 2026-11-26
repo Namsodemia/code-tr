@@ -1,5 +1,5 @@
 #!/bin/bash
-# Coder.app baslaticisi: yerel sunucuyu baslatir ve arayuzu uygulama penceresinde acar.
+# Code-Tr.app baslaticisi: yerel sunucuyu baslatir ve arayuzu uygulama penceresinde acar.
 RES="$(cd "$(dirname "$0")/../Resources" && pwd)"
 VERSION="$(cat "$RES/VERSION" 2>/dev/null)"
 PORT=8777
@@ -15,7 +15,7 @@ if ! running_ok; then
   done
   sleep 0.5
   if [ ! -x /usr/bin/python3 ] || ! /usr/bin/python3 -c "import sys" >/dev/null 2>&1; then
-    osascript -e 'display dialog "Coder için Python gerekiyor. Açılan pencereden \"Komut Satırı Geliştirici Araçları\"nı yükleyip Coder'"'"'ı yeniden aç." buttons {"Tamam"} with icon caution' >/dev/null 2>&1
+    osascript -e 'display dialog "Code-Tr için Python gerekiyor. Açılan pencereden \"Komut Satırı Geliştirici Araçları\"nı yükleyip Code-Tr'"'"'yi yeniden aç." buttons {"Tamam"} with icon caution' >/dev/null 2>&1
     xcode-select --install >/dev/null 2>&1
     exit 1
   fi

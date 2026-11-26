@@ -35,7 +35,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 PORT = int(os.environ.get("CODER_PORT", "8777"))
 TOKEN = secrets.token_urlsafe(24)
 DATA_DIR = Path.home() / "Library" / "Application Support" / "Coder"
@@ -606,6 +606,19 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
             return
+        if re.fullmatch(r"/(icon-(32|64|192|512)\.png|fonts/fonts\.css|fonts/manrope-latin(-ext)?\.woff2)", path):
+            f = Path(ROOT, path.lstrip("/"))
+            if f.is_file():
+                data = f.read_bytes()
+                ctype = "image/png" if path.endswith(".png") else "text/css" if path.endswith(".css") else "font/woff2"
+                self.send_response(200)
+                self.send_header("Content-Type", ctype)
+                self.send_header("Content-Length", str(len(data)))
+                self.send_header("Cache-Control", "max-age=86400")
+                self.end_headers()
+                self.wfile.write(data)
+                return
+            return self.send_error(404)
         if path == "/health":
             return self._json({"ok": True, "app": "coder", "v": VERSION})
         if not self._authed():
@@ -652,7 +665,7 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/pick-folder":
             r = subprocess.run(["osascript", "-e",
-                                'POSIX path of (choose folder with prompt "Coder calisma klasorunu sec")'],
+                                'POSIX path of (choose folder with prompt "Code-Tr calisma klasorunu sec")'],
                                capture_output=True, text=True)
             folder = r.stdout.strip()
             if folder:

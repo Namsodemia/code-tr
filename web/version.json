@@ -1,15 +1,13 @@
 {
-  "version": "1.2.0",
-  "mac": "1.2.0",
+  "version": "1.3.0",
+  "mac": "1.3.0",
   "date": "2026-11-26",
   "notes": [
-    "Google ile tek tıkla giriş geldi; e-posta ve şifreyle de kayıt olabilirsin.",
-    "Hesabınla giriş yapınca sohbetlerin her cihazda seninle.",
-    "Yeni Görsel modu: yazdığını ücretsiz görsele çevir; kare, dikey, yatay ve gönderi boyutları. Sıra varsa geri sayım gösterilir.",
-    "Çok daha hızlı cevaplar: bir model meşgulse anında başka ücretsiz modele geçiliyor, 'yoğun' uyarısı yok.",
-    "Bir sorun olursa anlaşılır mesaj ve tek tıkla \"Tekrar dene\".",
-    "Yeni sürüm çıkınca \"Güncelle\" penceresi; tek tıkla en güncel hale geç.",
-    "Telefonda daha düzgün görünüm.",
-    "Hakkında sayfası, iletişim formu, Gizlilik Politikası (KVKK) ve Kullanım Şartları eklendi; hesabını ve tüm verilerini istediğin an silebilirsin."
+    "Yeni isim, yeni yüz: Coder-tr artık Code-Tr! Yeni logo, renkler ve baştan yenilenen tasarım.",
+    "Code-Tr'yi uygulama olarak yükle: Windows, Mac, Android ve iPhone'da tek tıkla, kendi simgesiyle.",
+    "Google ile tek tıkla giriş; sohbetlerin her cihazda seninle.",
+    "Görsel modu: yazdığını ücretsiz görsele çevir; gönderi, hikâye ve kapak boyutları.",
+    "Daha hızlı cevaplar: bir model meşgulse anında başka ücretsiz modele geçiliyor.",
+    "Yeni sürüm çıkınca \"Güncelle\" penceresi; Hakkında, Gizlilik (KVKK) ve Kullanım Şartları sayfaları."
   ]
 }

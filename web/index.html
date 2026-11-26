@@ -3,28 +3,42 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Coder-tr · Ücretsiz Türkçe yapay zekâ asistanı</title>
-<meta name="description" content="Coder-tr: ücretsiz, Türkçe yapay zekâ asistanı. Sohbet et, kod yazdır, PDF özetlet, görsel üret. Hesap ve kart gerekmez.">
+<title>Code-Tr · Ücretsiz Türkçe yapay zekâ asistanı</title>
+<meta name="description" content="Code-Tr: ücretsiz, Türkçe yapay zekâ asistanı. Sohbet et, kod yazdır, PDF özetlet, görsel üret. Hesap ve kart gerekmez.">
+<link rel="stylesheet" href="/fonts/fonts.css">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#f7f5f1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121316" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Code-Tr">
+<meta property="og:title" content="Code-Tr · Türkçe yapay zekâ asistanı">
+<meta property="og:description" content="Ücretsiz, Türkçe yapay zekâ asistanı: sohbet, kod ve görsel. Kart gerekmez.">
+<meta property="og:image" content="https://coder-tr.vercel.app/icon-512.png">
 <style>
 :root{
-  --bg:#f6f7f9; --side:#eef0f4; --panel:#ffffff; --line:#e3e6ec; --line2:#cfd4dd;
-  --text:#14171f; --muted:#5d6574; --faint:#98a0ae;
-  --accent:#0e9384; --accent-2:#0b7a6e; --accent-soft:#dcf3ef;
-  --user:#e9edf3; --code-bg:#eceff4; --pre-bg:#0f141b; --pre-text:#e3e9f1;
+  --bg:#f7f5f1; --side:#efece6; --panel:#ffffff; --line:#e5e0d7; --line2:#d3ccc0;
+  --text:#18191d; --muted:#5d5f66; --faint:#9a978f;
+  --accent:#f0641a; --accent-2:#d9530c; --accent-soft:#fdece0; --grad:linear-gradient(135deg,#ff8a1f,#f0500f);
+  --ink:#1c1e23; --ink-2:#33363d; --on-ink:#ffffff;
+  --user:#ece8e0; --code-bg:#efebe4; --pre-bg:#17181c; --pre-text:#ebe7df;
   --ok:#1f8a4c; --ok-soft:#e1f3e8; --warn:#9a5b00; --warn-soft:#fdf1dc; --err:#c0362c; --err-soft:#fbe4e1;
-  --shadow:0 1px 2px rgba(16,24,40,.06),0 10px 30px rgba(16,24,40,.08);
-  --display:"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Arial,sans-serif;
+  --shadow:0 1px 2px rgba(28,25,20,.05),0 12px 32px rgba(28,25,20,.08);
+  --display:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
   --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,"Helvetica Neue",Arial,sans-serif;
   --mono:"SF Mono","JetBrains Mono",Menlo,Monaco,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --bg:#0e1116; --side:#0a0c10; --panel:#161a21; --line:#232833; --line2:#323947;
-    --text:#e6eaf0; --muted:#9aa3b2; --faint:#6b7483;
-    --accent:#2cc5b2; --accent-2:#4fd6c5; --accent-soft:#11302d;
-    --user:#1d232d; --code-bg:#222833; --pre-bg:#080a0e; --pre-text:#e3e9f1;
+    --bg:#121316; --side:#0d0e10; --panel:#1b1d21; --line:#2a2c32; --line2:#3a3d45;
+    --text:#ecebe8; --muted:#a3a29d; --faint:#6f6e69;
+    --accent:#ff7a2e; --accent-2:#ff9350; --accent-soft:#3a2416; --grad:linear-gradient(135deg,#ff9a3c,#ff5f1a);
+    --ink:#ecebe8; --ink-2:#ffffff; --on-ink:#16171a;
+    --user:#24262b; --code-bg:#26282d; --pre-bg:#0b0c0e; --pre-text:#ebe7df;
     --ok:#5fd08d; --ok-soft:#15291f; --warn:#f0b35a; --warn-soft:#2e2414; --err:#ff8c80; --err-soft:#341b19;
-    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.45);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.45);
   }
 }
 *{box-sizing:border-box}
@@ -270,6 +284,81 @@ textarea#input::placeholder{color:var(--faint)}
   .menu{width:min(330px,calc(100vw - 24px))}
   .hint{display:none}
 }
+
+/* ===== Code-Tr marka katmani ===== */
+body{letter-spacing:-.005em}
+.logo{width:30px;height:30px;border-radius:8px;background:#fff url(/icon-64.png) center/100% no-repeat;box-shadow:0 0 0 1px var(--line)}
+.logo svg{display:none}
+.avatar{width:26px;height:26px;border-radius:7px;background:#fff url(/icon-64.png) center/100% no-repeat;box-shadow:0 0 0 1px var(--line)}
+.avatar svg{display:none}
+.brand b,.wm{font:800 19px/1 var(--display);letter-spacing:-.4px;color:var(--text)}
+.wm i,.brand b i{font-style:italic;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:2px}
+.newchat{color:var(--text);font-weight:700}
+.newchat .plus{background:var(--grad)}
+.newchat:hover{background:var(--line)}
+.chat-item.active{background:var(--panel);box-shadow:0 0 0 1px var(--line)}
+.empty h1{font:800 44px/1.1 var(--display);letter-spacing:-1.4px;display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+.empty h1 .spark{display:inline-block;width:52px;height:52px;border-radius:13px;background:#fff url(/icon-192.png) center/100% no-repeat;box-shadow:var(--shadow);font-size:0;color:transparent}
+.empty p{font-size:16px}
+.sug{border-radius:999px;padding:9px 16px;background:var(--panel);transition:.15s}
+.sug:hover{border-color:var(--accent);color:var(--text);transform:translateY(-1px)}
+.composer{border-radius:18px;padding:12px 14px 10px}
+.composer:focus-within{border-color:var(--accent);box-shadow:var(--shadow),0 0 0 3px var(--accent-soft)}
+.send{background:var(--grad);border-radius:11px;box-shadow:0 4px 12px rgba(240,90,20,.25)}
+.send:hover{filter:brightness(1.05);background:var(--grad)}
+.seg button.on{background:var(--ink);color:var(--on-ink)}
+.btn{border-radius:10px;font-weight:600}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--on-ink)}
+.btn.primary:hover{background:var(--ink-2);border-color:var(--ink-2)}
+.login-btn{background:var(--grad)!important;border:0!important;color:#fff!important}
+#authSubmit{background:var(--grad);border:0;color:#fff;padding:11px;font-size:15px;box-shadow:0 6px 18px rgba(240,90,20,.25)}
+#authSubmit:hover{filter:brightness(1.05)}
+.md h1,.md h2,.md h3,.md h4,.modal h2{font-family:var(--display);font-weight:800;letter-spacing:-.4px}
+.modal{border-radius:20px}
+.modal h2{font-size:26px}
+.av{background:var(--grad)}
+.dot.on{background:#22c55e}
+.foot-btn.dl{color:var(--text)}
+.foot-btn.dl b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.badge{background:var(--accent-soft);color:var(--accent)}
+.tool .ti{background:var(--accent-soft);color:var(--accent)}
+.gen-acts a:hover,.gen-acts button:hover{border-color:var(--accent)}
+::selection{background:var(--accent-soft)}
+
+/* ===== giris / tanitim ekrani ===== */
+.gate-hero{display:none}
+.modal-bg.locked{padding:0;place-items:stretch}
+.modal-bg.locked.on{display:grid;grid-template-columns:1.1fr .9fr}
+.locked .gate-hero{display:flex;flex-direction:column;justify-content:space-between;padding:48px 56px;background:
+  radial-gradient(1200px 600px at -10% -20%,rgba(255,138,31,.16),transparent 60%),
+  radial-gradient(800px 500px at 110% 120%,rgba(240,80,15,.10),transparent 60%),var(--side);border-right:1px solid var(--line);overflow:auto}
+.gate-hero .top-brand{display:flex;align-items:center;gap:12px}
+.gate-hero .top-brand .logo{width:40px;height:40px;border-radius:11px}
+.gate-hero .top-brand .wm{font-size:24px}
+.gate-hero h1{font:800 clamp(34px,4.2vw,56px)/1.04 var(--display);letter-spacing:-2px;margin:40px 0 16px;max-width:620px}
+.gate-hero h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gate-hero .lead{font-size:18px;color:var(--muted);max-width:540px;margin:0 0 32px}
+.feats{display:grid;gap:14px;max-width:560px}
+.feat{display:flex;gap:14px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.feat .fi2{width:36px;height:36px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:0 0 36px;font-size:17px}
+.feat b{display:block;font:700 15px var(--display);margin-bottom:2px}
+.feat span{color:var(--muted);font-size:14px;line-height:1.5}
+.gate-foot{display:flex;gap:16px;flex-wrap:wrap;color:var(--faint);font-size:13px;margin-top:32px}
+.gate-foot a{color:var(--muted);text-decoration:none}.gate-foot a:hover{color:var(--text)}
+.modal-bg.locked .modal{align-self:center;justify-self:center;width:min(440px,calc(100% - 40px));box-shadow:none;border:0;background:transparent;margin:32px 0}
+.locked .gate-brand{display:none!important}
+@media (max-width:900px){
+  .modal-bg.locked.on{grid-template-columns:1fr;overflow:auto}
+  .locked .gate-hero{padding:28px 22px;border-right:0;border-bottom:1px solid var(--line)}
+  .gate-hero h1{margin:24px 0 10px}
+  .feats,.gate-foot{display:none}
+  .modal-bg.locked .modal{margin:16px auto 32px}
+}
+/* uygulama yukle */
+.install-steps{display:grid;gap:10px;margin:6px 0 14px}
+.install-steps .st{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.install-steps .st b{font-family:var(--display)}
+.install-steps .n{width:24px;height:24px;border-radius:50%;background:var(--grad);color:#fff;display:grid;place-items:center;font:700 12px var(--display);flex:0 0 24px}
 </style>
 </head>
 <body>
@@ -277,7 +366,7 @@ textarea#input::placeholder{color:var(--faint)}
   <aside class="side" id="side">
     <div class="brand">
       <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 7L3.5 12l5 5M15.5 7l5 5-5 5"/></svg></div>
-      <b>Coder<span style="color:var(--accent)">-tr</span></b>
+      <b>Code-<i>Tr</i></b>
     </div>
     <button class="newchat" id="newChat"><span class="plus">+</span>Yeni sohbet</button>
     <div class="list-h">Sohbetler</div>
@@ -285,13 +374,13 @@ textarea#input::placeholder{color:var(--faint)}
     <div class="side-foot">
       <button class="foot-btn" id="openSettings"><span class="dot" id="statusDot"></span><span id="statusText">Bağlanıyor…</span></button>
       <button class="foot-btn" id="openSettings2">⚙︎&nbsp; Ayarlar</button>
-      <a class="foot-btn dl" id="dlMac" href="/Coder-mac.zip" download style="display:none;text-decoration:none">⤓&nbsp; Mac uygulamasını indir</a>
+      <button class="foot-btn dl" id="dlMac" style="display:none">⤓&nbsp; <b>Uygulamayı yükle</b></button>
       <div id="acctBox" style="display:none;border-top:1px solid var(--line);margin-top:6px;padding-top:8px">
         <button class="btn primary login-btn" id="loginBtn">Giriş yap / Kayıt ol</button>
         <button class="acct" id="acctBtn" style="display:none"><span class="av" id="avTxt">?</span><span class="who"><b id="whoName"></b><small id="whoMail"></small></span></button>
       </div>
       <div class="legal" id="legalLinks" style="display:none;flex-wrap:wrap"><a href="/hakkinda.html" target="_blank">Hakkında</a><a href="/gizlilik.html" target="_blank">Gizlilik</a><a href="/kullanim-sartlari.html" target="_blank">Şartlar</a><a href="#" id="newsLink">Yenilikler</a></div>
-      <div class="legal" style="color:var(--faint);padding-top:0">© 2026 Coder-tr · Türkiye'de geliştirildi</div>
+      <div class="legal" style="color:var(--faint);padding-top:0">© 2026 Code-Tr · Türkiye'de geliştirildi</div>
     </div>
   </aside>
 
@@ -318,7 +407,7 @@ textarea#input::placeholder{color:var(--faint)}
     <div class="composer-wrap">
       <div class="composer" id="composer">
         <div class="chips" id="chips"></div>
-        <textarea id="input" rows="1" placeholder="Coder-tr'ye bir şey sor…"></textarea>
+        <textarea id="input" rows="1" placeholder="Code-Tr'ye bir şey sor…"></textarea>
         <div class="bar">
           <button class="icon-btn" id="attachBtn" title="Görsel, PDF ya da dosya ekle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 11.5l-8.6 8.6a5 5 0 01-7.1-7.1l8.6-8.6a3.3 3.3 0 014.7 4.7l-8.6 8.6a1.7 1.7 0 01-2.4-2.4l8-8"/></svg></button>
           <input type="file" id="file" multiple hidden accept="image/*,.pdf,.txt,.md,.csv,.json,.py,.js,.ts,.tsx,.jsx,.html,.css,.php,.sql,.xml,.yml,.yaml,.sh,.swift,.java,.c,.cpp,.h,.go,.rs,.rb">
@@ -344,9 +433,22 @@ textarea#input::placeholder{color:var(--faint)}
 </div>
 
 <div class="modal-bg" id="authModal">
+  <section class="gate-hero" aria-label="Code-Tr hakkında">
+    <div>
+      <div class="top-brand"><div class="logo"></div><span class="wm">Code-<i>Tr</i></span></div>
+      <h1>Türkçe düşünen <em>yapay zekâ</em> asistanın.</h1>
+      <p class="lead">Sohbet et, kod yazdır, PDF özetlet, görsel üret. Ücretsiz, reklamsız ve kart gerektirmeden.</p>
+      <div class="feats">
+        <div class="feat"><div class="fi2">💬</div><div><b>Sohbet</b><span>Sorularına Türkçe, net ve hızlı cevaplar. Ekran görüntüsü ve PDF de anlar.</span></div></div>
+        <div class="feat"><div class="fi2">⌨︎</div><div><b>Kod</b><span>Kod yazar, hatanı bulur; klasörünü seçersen dosyalarını düzenler.</span></div></div>
+        <div class="feat"><div class="fi2">🎨</div><div><b>Görsel</b><span>Yazdığını görsele çevirir: gönderi, hikâye ve kapak boyutlarında.</span></div></div>
+      </div>
+    </div>
+    <div class="gate-foot"><span>© 2026 Code-Tr · Türkiye'de geliştirildi</span><a href="/hakkinda.html" target="_blank">Hakkında</a><a href="/gizlilik.html" target="_blank">Gizlilik</a><a href="/kullanim-sartlari.html" target="_blank">Şartlar</a></div>
+  </section>
   <div class="modal auth">
-    <div class="gate-brand"><div class="logo"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 7L3.5 12l5 5M15.5 7l5 5-5 5"/></svg></div><b style="font:700 20px var(--mono)">Coder<span style="color:var(--accent)">-tr</span></b></div>
-    <h2 id="authTitle">Coder-tr'ye hoş geldin</h2>
+    <div class="gate-brand"><div class="logo"></div><b class="wm">Code-<i>Tr</i></b></div>
+    <h2 id="authTitle">Code-Tr'ye hoş geldin</h2>
     <p class="sub">Giriş yaparsan sohbetlerin hesabına kaydedilir, her cihazda görürsün.</p>
     <div class="tabs"><button data-tab="login" class="on">Giriş yap</button><button data-tab="register">Kayıt ol</button></div>
     <button class="gbtn" id="googleBtn" style="display:none"><svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>Google ile devam et</button>
@@ -390,9 +492,21 @@ textarea#input::placeholder{color:var(--faint)}
     <div style="font-size:40px;line-height:1;margin:4px 0 10px">🚀</div>
     <span class="badge" id="updVer"></span>
     <h2>Yeni sürüm hazır</h2>
-    <p class="sub" id="updSub">Coder-tr güncellendi. Yenilikleri kullanmak için güncelle.</p>
+    <p class="sub" id="updSub">Code-Tr güncellendi. Yenilikleri kullanmak için güncelle.</p>
     <ul class="news" id="updList" style="text-align:left"></ul>
     <div class="modal-foot" style="justify-content:center"><button class="btn" data-close>Sonra</button><button class="btn primary" id="updGo">Güncelle</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="installModal">
+  <div class="modal auth">
+    <h2>Uygulamayı yükle</h2>
+    <p class="sub" id="instSub">Code-Tr'yi bilgisayarına uygulama olarak ekle; kendi penceresinde açılır, güncellemeler otomatik gelir.</p>
+    <div class="install-steps" id="instSteps"></div>
+    <details style="font-size:14px;color:var(--muted)"><summary style="cursor:pointer">İnternetsiz Mac sürümü (gelişmiş)</summary>
+      <p style="margin:8px 0">Mac'te Ollama ile internetsiz yerel modellerle çalışan sürüm. Zip'i aç, Code-Tr.app'i Uygulamalar'a taşı; ilk açılışta sağ tık → <b>Aç</b>.</p>
+      <a class="btn" href="/Code-Tr-mac.zip" download style="text-decoration:none;display:inline-block">Code-Tr-mac.zip indir</a></details>
+    <div class="modal-foot"><button class="btn" data-close>Kapat</button></div>
   </div>
 </div>
 
@@ -433,9 +547,9 @@ textarea#input::placeholder{color:var(--faint)}
     </div>
 
     <div class="sec" id="webSec" style="display:none">
-      <h3>⤓ Mac uygulaması</h3>
-      <p>İnternetsiz yerel modeller, komut çalıştırma ve her tarayıcıda klasör erişimi için Mac uygulamasını indir. Zip'i aç, Coder.app'i Uygulamalar klasörüne taşı, ilk açılışta sağ tıklayıp <b>Aç</b> de.</p>
-      <a class="btn primary" href="/Coder-mac.zip" download style="text-decoration:none;display:inline-block">Coder-mac.zip indir</a>
+      <h3>⤓ Code-Tr'yi bilgisayarına / telefonuna yükle</h3>
+      <p>Code-Tr, Windows, Mac, Android ve iPhone'da tek tıkla uygulama olarak yüklenebilir; kendi simgesiyle açılır, güncellemeler kendiliğinden gelir.</p>
+      <button class="btn primary" id="installFromSettings">Uygulamayı yükle</button>
     </div>
 
     <div class="modal-foot"><button class="btn" id="sCancel">Kapat</button><button class="btn primary" id="sSave">Kaydet</button></div>
@@ -1093,7 +1207,7 @@ function buildMenu(){
   };
   group("Bulut · ücretsiz", models.cloud_ready ? models.cloud : [], models.cloud_ready ? "Ayarlar'dan model ekle." : "Ayarlar'dan ücretsiz bir API anahtarı ekle.");
   if(LOCAL) group("Bu Mac'te · internetsiz", models.local, models.ollama_ok ? "Yüklü model yok." : "Ollama çalışmıyor.");
-  else group("Bu Mac'te · internetsiz", [], 'İnternetsiz kullanım için <a href="/Coder-mac.zip" download>Mac uygulamasını indir</a>.');
+  else group("Bu Mac'te · internetsiz", [], 'İnternetsiz kullanım için <a href="#" onclick="openInstall();return false">uygulamayı yükle</a>.');
   const s = document.createElement("button"); s.className = "opt"; s.innerHTML = "<span>⚙︎ Model ekle / ayarlar…</span>";
   s.onclick = () => { m.style.display = "none"; openSettings(); }; m.appendChild(s);
 }
@@ -1166,7 +1280,7 @@ function setMode(m){
   $("#arBtn").style.display = m === "image" ? "flex" : "none";
   $("#modelBtn").parentElement.style.display = m === "image" ? "none" : "";
   $("#attachBtn").style.display = m === "image" ? "none" : "";
-  $("#input").placeholder = m === "agent" ? "Ne kodlayalım? (ör. bir yapılacaklar uygulaması yaz)" : m === "image" ? "Ne çizeyim? (ör. gün batımında İstanbul, sinematik)" : "Coder-tr'ye bir şey sor…";
+  $("#input").placeholder = m === "agent" ? "Ne kodlayalım? (ör. bir yapılacaklar uygulaması yaz)" : m === "image" ? "Ne çizeyim? (ör. gün batımında İstanbul, sinematik)" : "Code-Tr'ye bir şey sor…";
 }
 document.querySelectorAll("#modeSeg button").forEach(b => b.onclick = () => setMode(b.dataset.mode));
 function showWs(p){ workspace = p; $("#wsName").textContent = p ? (p.split("/").filter(Boolean).pop() || "/") : "Klasör seç (isteğe bağlı)"; $("#wsBtn").title = p || "Bir klasör seçersen dosyalarını okuyup düzenleyebilirim"; }
@@ -1270,7 +1384,7 @@ function imageActions(el, url, prompt, r){
   a.innerHTML = '<a target="_blank" rel="noopener">⤢ Büyük aç</a><button>⤓ İndir</button><button>↻ Yeniden üret</button>';
   a.children[0].href = url;
   a.children[1].onclick = async () => {
-    try{ const b = await (await fetch(url)).blob(); const l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = "coder-gorsel.jpg"; l.click(); setTimeout(() => URL.revokeObjectURL(l.href), 4000); }
+    try{ const b = await (await fetch(url)).blob(); const l = document.createElement("a"); l.href = URL.createObjectURL(b); l.download = "code-tr-gorsel.jpg"; l.click(); setTimeout(() => URL.revokeObjectURL(l.href), 4000); }
     catch(e){ window.open(url, "_blank"); }
   };
   a.children[2].onclick = () => { if(!busy) makeImage(prompt, r); };
@@ -1314,6 +1428,8 @@ const ACC = {
     if(this.user){
       $("#whoName").textContent = this.user.name; $("#whoMail").textContent = this.user.email;
       $("#avTxt").textContent = (this.user.name || "?").trim().charAt(0).toLocaleUpperCase("tr");
+      const g = $("#greet"); if(g && !g.dataset.base) g.dataset.base = g.textContent;
+      if(g) g.textContent = g.dataset.base + ", " + this.user.name.split(" ")[0];
     }
   },
   setTab(t){
@@ -1390,7 +1506,7 @@ const ACC = {
     if(!this.enabled || this.user) return;
     $("#authModal").classList.add("locked");
     this.open("register");
-    $("#authTitle").textContent = "Coder-tr'ye hoş geldin";
+    $("#authTitle").textContent = "Code-Tr'ye hoş geldin";
     $("#authModal .sub").textContent = "Ücretsiz hesabını oluştur ya da giriş yap; sohbet, kod ve görsel hemen seni bekliyor.";
   },
   async init(){
@@ -1424,11 +1540,11 @@ function showUpdate(v, local){
   if(updShownFor === v.version || $("#updModal").classList.contains("on")) return;
   updShownFor = v.version;
   $("#updVer").textContent = "Sürüm " + (local ? v.mac : v.version);
-  $("#updSub").textContent = local ? "Mac uygulamasının yeni sürümü çıktı. İndirip eskisinin yerine koyman yeterli." : "Coder-tr güncellendi. Yenilikleri kullanmak için güncelle.";
+  $("#updSub").textContent = local ? "Mac uygulamasının yeni sürümü çıktı. İndirip eskisinin yerine koyman yeterli." : "Code-Tr güncellendi. Yenilikleri kullanmak için güncelle.";
   $("#updList").innerHTML = (v.notes || []).map(n => "<li>" + esc(n) + "</li>").join("");
   $("#updGo").textContent = local ? "Güncelle (indir)" : "Güncelle";
   $("#updGo").onclick = () => {
-    if(local){ window.open("https://coder-tr.vercel.app/Coder-mac.zip", "_blank"); closeModal("updModal"); toast("İndirilen Coder.app'i Uygulamalar klasörüne taşıyıp eskisinin yerine koy."); return; }
+    if(local){ window.open("https://coder-tr.vercel.app/Code-Tr-mac.zip", "_blank"); closeModal("updModal"); toast("İndirilen Coder.app'i Uygulamalar klasörüne taşıyıp eskisinin yerine koy."); return; }
     store.set("coder.seen", v.version);
     if(busy){ toast("Cevap bitince güncellenecek…"); const w = setInterval(() => { if(!busy){ clearInterval(w); location.reload(); } }, 500); return; }
     location.reload();
@@ -1459,6 +1575,28 @@ async function checkNews(){
 setInterval(checkUpdate, 5 * 60 * 1000);
 document.addEventListener("visibilitychange", () => { if(!document.hidden) checkUpdate(); });
 
+/* ---------------- uygulama olarak yukleme (PWA) ---------------- */
+let installEvt = null;
+const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; });
+window.addEventListener("appinstalled", () => { installEvt = null; $("#dlMac").style.display = "none"; toast("Code-Tr yüklendi! Masaüstünden ya da başlat menüsünden açabilirsin."); });
+if("serviceWorker" in navigator && !LOCAL) navigator.serviceWorker.register("/sw.js").catch(() => {});
+async function openInstall(){
+  if(installEvt){ installEvt.prompt(); const r = await installEvt.userChoice.catch(() => ({})); installEvt = null; if(r.outcome === "accepted") return; }
+  const ua = navigator.userAgent, iOS = /iPhone|iPad|iPod/.test(ua), android = /Android/.test(ua);
+  const safari = /Safari/.test(ua) && !/Chrome|CriOS|Edg|FxiOS|Firefox/.test(ua), edge = /Edg\//.test(ua), firefox = /Firefox|FxiOS/.test(ua);
+  let steps;
+  if(iOS) steps = [["Safari'de aç", "Bu sayfayı iPhone/iPad'de <b>Safari</b> ile aç."], ["Paylaş", "Alttaki <b>Paylaş</b> (kare ve ok) simgesine dokun."], ["Ana Ekrana Ekle", "<b>Ana Ekrana Ekle → Ekle</b>'ye dokun. Code-Tr ana ekranına gelir."]];
+  else if(android) steps = [["Menü", "Chrome'da sağ üstteki <b>⋮</b> menüsüne dokun."], ["Yükle", "<b>Uygulamayı yükle</b> (ya da <b>Ana ekrana ekle</b>) seçeneğine dokun."], ["Hazır", "Code-Tr uygulama çekmecende kendi simgesiyle görünür."]];
+  else if(safari) steps = [["Dosya menüsü", "Safari'de üstteki <b>Dosya</b> menüsünü aç."], ["Dock'a Ekle", "<b>Dock'a Ekle…</b> seçeneğine tıkla, sonra <b>Ekle</b>."], ["Hazır", "Code-Tr Dock'ta ve Uygulamalar klasöründe görünür."]];
+  else if(firefox) steps = [["Chrome ya da Edge", "Firefox uygulama yüklemeyi desteklemiyor. Bu sayfayı <b>Chrome</b> ya da <b>Edge</b> ile aç."], ["Yükle", "Adres çubuğunun sağındaki <b>yükle</b> simgesine tıkla."], ["Hazır", "Code-Tr masaüstüne ve başlat menüsüne eklenir."]];
+  else steps = [["Yükle simgesi", "Adres çubuğunun sağındaki <b>⊕ / monitör</b> simgesine tıkla" + (edge ? " (Edge'de <b>Uygulamalar → Bu siteyi uygulama olarak yükle</b>)." : ".")], ["Görmüyorsan", "Sağ üstteki <b>⋮</b> menüsünden <b>Yayınla, kaydet ve paylaş → Sayfayı uygulama olarak yükle</b> (ya da <b>Code-Tr'yi yükle</b>)."], ["Hazır", "Code-Tr masaüstünde, başlat menüsünde / Uygulamalar'da kendi simgesiyle açılır."]];
+  $("#instSteps").innerHTML = steps.map((s, i) => '<div class="st"><span class="n">' + (i + 1) + '</span><div><b>' + s[0] + '</b><br><span style="color:var(--muted);font-size:14px">' + s[1] + '</span></div></div>').join("");
+  openModal("installModal");
+}
+$("#dlMac").onclick = openInstall;
+$("#installFromSettings").onclick = () => { $("#settings").classList.remove("on"); openInstall(); };
+
 /* ---------------- baslat ---------------- */
 (async function init(){
   const h = new Date().getHours();
@@ -1467,7 +1605,7 @@ document.addEventListener("visibilitychange", () => { if(!document.hidden) check
   if(window.innerWidth < 760) $("#side").classList.add("hidden");
   if(!LOCAL) checkNews();
   if(!LOCAL){
-    $("#dlMac").style.display = ""; $("#localSec").style.display = "none"; $("#webSec").style.display = ""; $("#legalLinks").style.display = "";
+    $("#dlMac").style.display = standalone() ? "none" : ""; $("#localSec").style.display = "none"; $("#webSec").style.display = ""; $("#legalLinks").style.display = "";
     try{
       const cfg = await (await fetch("/api/config")).json();
       WEB.shared = !!cfg.shared; ACC.google = !!cfg.google;
@@ -1482,7 +1620,7 @@ document.addEventListener("visibilitychange", () => { if(!document.hidden) check
   try{ const s = await (await api("/api/settings")).json(); showWs(LOCAL ? (s.workspace || "") : ""); }catch(e){}
   newChat();
   await loadModels();
-  if(!model && !(WEB.shared && !LOCAL) && !$("#authModal").classList.contains("locked")) openSettings();
+  if(!model && LOCAL) openSettings();
   if(LOCAL) checkNews();
 })();
 </script>

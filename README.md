@@ -1,6 +1,5 @@
-<p align="center"><img src="mac/icon.png" width="96" alt="Coder-tr"></p>
+<p align="center"><img src="brand/wordmark.png" width="420" alt="Code-Tr"></p>
 
-<h1 align="center">Coder-tr</h1>
 <p align="center"><b>Ücretsiz, Türkçe yapay zekâ asistanı</b> — sohbet et, kod yazdır, PDF özetlet, görsel üret.</p>
 <p align="center"><a href="https://coder-tr.vercel.app">coder-tr.vercel.app</a></p>
 
@@ -8,7 +7,7 @@
 
 ## Neden?
 
-Güçlü yapay zekâ araçlarının çoğu ücretli, İngilizce ya da kredi kartı istiyor. Coder-tr, dünyadaki ücretsiz modelleri tek bir sade, Türkçe arayüzde toplar: öğrenciler, küçük işletmeler ve yazılıma yeni başlayanlar için.
+Güçlü yapay zekâ araçlarının çoğu ücretli, İngilizce ya da kredi kartı istiyor. Code-Tr, dünyadaki ücretsiz modelleri tek bir sade, Türkçe arayüzde toplar: öğrenciler, küçük işletmeler ve yazılıma yeni başlayanlar için.
 
 ## Özellikler
 
@@ -51,8 +50,12 @@ build.sh            Mac uygulamasını ve web sitesini üretir
 
 ## Mac uygulaması
 
-`./build.sh install` → `/Applications/Coder.app`. Yerel modeller için [Ollama](https://ollama.com) kurulu olmalı. Uygulama imzasız olduğundan ilk açılışta sağ tık → **Aç**.
+`./build.sh install` → `/Applications/Code-Tr.app`. Yerel modeller için [Ollama](https://ollama.com) kurulu olmalı. Uygulama imzasız olduğundan ilk açılışta sağ tık → **Aç**.
+
+## Yazı tipi
+
+[Manrope](https://fonts.google.com/specimen/Manrope), SIL Open Font License 1.1.
 
 ## Lisans
 
-[MIT](LICENSE) © 2026 Coder-tr
+[MIT](LICENSE) © 2026 Code-Tr

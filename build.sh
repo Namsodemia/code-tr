@@ -7,17 +7,19 @@ cd "$(dirname "$0")"
 VERSION=$(grep -m1 '^VERSION' web/server.py | cut -d'"' -f2)
 rm -rf dist site && mkdir -p dist site
 
-APP=dist/Coder.app
+APP="dist/Code-Tr.app"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp mac/launcher.sh "$APP/Contents/MacOS/Coder" && chmod +x "$APP/Contents/MacOS/Coder"
 cp web/server.py web/index.html "$APP/Contents/Resources/"
+mkdir -p "$APP/Contents/Resources/fonts" && cp web/fonts/* "$APP/Contents/Resources/fonts/"
+cp brand/icon-32.png brand/icon-64.png brand/icon-192.png brand/icon-512.png "$APP/Contents/Resources/"
 echo "$VERSION" > "$APP/Contents/Resources/VERSION"
 
 # simge
 ICONSET=$(mktemp -d)/Coder.iconset; mkdir -p "$ICONSET"
 for s in 16 32 128 256 512; do
-  sips -z $s $s mac/icon.png --out "$ICONSET/icon_${s}x${s}.png" >/dev/null
-  sips -z $((s*2)) $((s*2)) mac/icon.png --out "$ICONSET/icon_${s}x${s}@2x.png" >/dev/null
+  sips -z $s $s brand/app-icon-1024.png --out "$ICONSET/icon_${s}x${s}.png" >/dev/null
+  sips -z $((s*2)) $((s*2)) brand/app-icon-1024.png --out "$ICONSET/icon_${s}x${s}@2x.png" >/dev/null
 done
 iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/Coder.icns"
 
@@ -25,9 +27,9 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>CFBundleName</key><string>Coder</string>
-  <key>CFBundleDisplayName</key><string>Coder</string>
-  <key>CFBundleIdentifier</key><string>app.coder.desktop</string>
+  <key>CFBundleName</key><string>Code-Tr</string>
+  <key>CFBundleDisplayName</key><string>Code-Tr</string>
+  <key>CFBundleIdentifier</key><string>app.codetr.desktop</string>
   <key>CFBundleVersion</key><string>$VERSION</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
   <key>CFBundleExecutable</key><string>Coder</string>
@@ -38,12 +40,15 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </dict></plist>
 PLIST
 codesign --force --deep -s - "$APP" >/dev/null 2>&1 || true
-(cd dist && ditto -c -k --keepParent Coder.app Coder-mac.zip)
+(cd dist && ditto -c -k --keepParent Code-Tr.app Code-Tr-mac.zip)
 
 # web sitesi (Vercel)
 sed "s/__CODER_VERSION__/$VERSION/g" web/index.html > site/index.html
-cp dist/Coder-mac.zip site/Coder-mac.zip
-cp mac/icon.png site/icon.png
+cp dist/Code-Tr-mac.zip site/Code-Tr-mac.zip
+cp brand/icon-32.png brand/icon-64.png brand/icon-192.png brand/icon-512.png brand/icon-maskable-512.png brand/apple-touch-icon.png site/
+cp brand/icon-512.png site/icon.png
+mkdir -p site/fonts && cp web/fonts/* site/fonts/
+cp web/manifest.webmanifest web/sw.js site/
 mkdir -p site/api && cp web/api/*.js site/api/
 cp web/version.json site/version.json
 CONTACT=$(cat mac/contact.txt 2>/dev/null || echo "iletisim@coder-tr.vercel.app")
@@ -65,20 +70,28 @@ cat > site/vercel.json <<'JSON'
       {"key": "Referrer-Policy", "value": "no-referrer"},
       {"key": "X-Frame-Options", "value": "DENY"}
     ]},
+    {"source": "/sw.js", "headers": [
+      {"key": "Cache-Control", "value": "no-cache"},
+      {"key": "Service-Worker-Allowed", "value": "/"}
+    ]},
+    {"source": "/fonts/(.*)", "headers": [
+      {"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}
+    ]},
     {"source": "/version.json", "headers": [
       {"key": "Access-Control-Allow-Origin", "value": "*"},
       {"key": "Cache-Control", "value": "no-store"}
     ]},
-    {"source": "/Coder-mac.zip", "headers": [
-      {"key": "Content-Disposition", "value": "attachment; filename=Coder-mac.zip"}
+    {"source": "/Code-Tr-mac.zip", "headers": [
+      {"key": "Content-Disposition", "value": "attachment; filename=Code-Tr-mac.zip"}
     ]}
   ]
 }
 JSON
-echo "Surum $VERSION hazir: dist/Coder-mac.zip ($(du -h dist/Coder-mac.zip | cut -f1)), site/"
+echo "Surum $VERSION hazir: dist/Code-Tr-mac.zip ($(du -h dist/Code-Tr-mac.zip | cut -f1)), site/"
 
 if [ "$1" = "install" ]; then
   pkill -f "Coder.app/Contents/Resources/coder_gui.py" 2>/dev/null || true
-  rm -rf /Applications/Coder.app && cp -R "$APP" /Applications/Coder.app
-  echo "/Applications/Coder.app guncellendi."
+  rm -rf /Applications/Coder.app /Applications/Code-Tr.app && cp -R "$APP" /Applications/Code-Tr.app
+  [ -L "$HOME/Desktop/Coder.app" ] && rm -f "$HOME/Desktop/Coder.app" && ln -s /Applications/Code-Tr.app "$HOME/Desktop/Code-Tr.app"
+  echo "/Applications/Code-Tr.app guncellendi."
 fi
