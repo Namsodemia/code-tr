@@ -1348,6 +1348,8 @@ async function loadModels(){
   }catch(e){ models = {local: [], cloud: [], ollama_ok: false, cloud_ready: false}; }
   const all = [...models.cloud, ...models.local];
   if(!store.get("coder.autoDefault", false) && models.cloud.some(m => m.id === "cloud:auto")){ model = "cloud:auto"; store.set("coder.autoDefault", true); }
+  // eski ayarlardan kalan yonlendirici secimi -> Otomatik
+  if(/openrouter\/free$/.test(model) && models.cloud.some(m => m.id === "cloud:auto")) model = "cloud:auto";
   if(!all.find(m => m.id === model)) model = (models.cloud_ready && models.cloud[0] ? models.cloud[0].id : (models.local[0] || {}).id) || "";
   store.set("coder.model", model);
   const cur = all.find(m => m.id === model);
