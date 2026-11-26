@@ -21,15 +21,58 @@ async function loadKB() {
   kbCache = list; kbAt = Date.now();
   return list;
 }
-export async function searchKB(q, n = 3) {
+export async function searchKB(q, n = 4) {
   const qk = keywords(q);
   if (!qk.length) return [];
   const scored = (await loadKB()).map(e => {
-    const ek = e.k || keywords(e.q);
+    const ek = e.k || keywords(e.q + " " + e.a);
     const hit = qk.filter(w => ek.includes(w)).length;
-    return {e, score: hit / Math.max(3, Math.min(qk.length, ek.length))};
-  }).filter(x => x.score >= 0.34).sort((a, b) => b.score - a.score).slice(0, n);
-  return scored.map(x => ({q: x.e.q, a: x.e.a}));
+    const titleHit = qk.filter(w => keywords(e.q).includes(w)).length;
+    return {e, hit, score: (hit + titleHit * 0.5) / Math.max(2, Math.min(qk.length, 8))};
+  }).filter(x => x.hit >= Math.min(2, qk.length) && x.score >= 0.34)
+    .sort((a, b) => b.score - a.score).slice(0, n);
+  return scored.map(x => ({q: x.e.q, a: x.e.a, src: x.e.src || ""}));
+}
+
+// Metni ~900 karakterlik, cumle sinirinda bolunmus parcalara ayir.
+function chunks(text, size = 900) {
+  const sents = String(text).replace(/\s+/g, " ").split(/(?<=[.!?])\s+/);
+  const out = []; let cur = "";
+  for (const s of sents) {
+    if ((cur + " " + s).length > size && cur) { out.push(cur.trim()); cur = ""; }
+    cur += " " + s;
+  }
+  if (cur.trim()) out.push(cur.trim());
+  return out.filter(c => c.length > 40).slice(0, 120);
+}
+function htmlToText(html) {
+  return String(html)
+    .replace(/<(script|style|noscript|svg|nav|footer|header|form)[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<br\s*\/?>|<\/(p|div|li|h[1-6]|tr)>/gi, ". ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ").replace(/(\.\s*){2,}/g, ". ").trim();
+}
+// Yalnizca herkese acik http(s) adresleri (yerel ag / sunucu ici adresler engellenir).
+function safeUrl(u) {
+  try {
+    const x = new URL(u);
+    if (!/^https?:$/.test(x.protocol)) return null;
+    const h = x.hostname.toLowerCase();
+    if (h === "localhost" || h.endsWith(".local") || h.endsWith(".internal") || /^(127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|0\.|\[?::1\]?$|\[?f[cd])/.test(h)) return null;
+    return x.toString();
+  } catch { return null; }
+}
+async function storeDoc(title, text, src) {
+  const parts = chunks(text);
+  const sid = randomToken(8);
+  for (let i = 0; i < parts.length; i++) {
+    const id = sid + "-" + i;
+    await redis("HSET", "learn:kb", id, JSON.stringify({id, sid, q: title, a: parts[i], src, k: keywords(title + " " + parts[i]), t: Date.now()}));
+  }
+  await redis("HSET", "learn:sources", sid, JSON.stringify({sid, title, src, parts: parts.length, chars: text.length, t: Date.now()}));
+  kbCache = null;
+  return {sid, parts: parts.length};
 }
 
 export async function GET(req) {
@@ -47,7 +90,18 @@ export async function GET(req) {
     const recent = (await redis("LRANGE", "learn:feedback", 0, 29) || []).map(x => { try { return JSON.parse(x); } catch { return null; } }).filter(Boolean);
     return json({items, stats: {kb: Number(kb) || 0, up: Number(up) || 0, down: Number(down) || 0}, recent});
   }
-  if (action === "kb") return json({items: await loadKB()});
+  if (action === "kb") return json({items: (await loadKB()).filter(e => !e.sid)});
+  if (action === "sources") {
+    const h = await redis("HGETALL", "learn:sources") || [];
+    const list = [];
+    for (let i = 0; i < h.length; i += 2) { try { list.push(JSON.parse(h[i + 1])); } catch {} }
+    return json({items: list.sort((a, b) => b.t - a.t)});
+  }
+  if (action === "export") {
+    // Hugging Face veri seti icin JSONL (soru-cevap ve belge parcalari)
+    const lines = (await loadKB()).map(e => JSON.stringify({instruction: e.q, output: e.a, source: e.src || "topluluk"})).join("\n");
+    return new Response(lines + "\n", {headers: {"Content-Type": "application/jsonl; charset=utf-8", "Content-Disposition": "attachment; filename=code-tr-veri.jsonl", "Cache-Control": "no-store"}});
+  }
   return json({error: "Bilinmeyen işlem"}, 400);
 }
 
@@ -94,6 +148,35 @@ export async function POST(req) {
       kbCache = null;
     }
     return json({ok: true});
+  }
+  if (action === "add_text") {
+    const title = clip(b.title, 200) || clip(b.text, 80);
+    const text = clip(b.text, 200000);
+    if (text.length < 10) return json({error: "En az bir cümle yaz."}, 400);
+    return json({ok: true, ...(await storeDoc(title, text, ""))});
+  }
+  if (action === "add_url") {
+    const url = safeUrl(clip(b.url, 2000));
+    if (!url) return json({error: "Geçerli, herkese açık bir http(s) bağlantısı yaz."}, 400);
+    let res;
+    try { res = await fetch(url, {redirect: "follow", headers: {"User-Agent": "Code-Tr-Ogrenici/1.0 (+https://coder-tr.vercel.app)"}, signal: AbortSignal.timeout(15000)}); }
+    catch { return json({error: "Sayfa açılamadı."}, 502); }
+    if (!res.ok) return json({error: "Sayfa açılamadı (" + res.status + ")."}, 502);
+    const type = res.headers.get("content-type") || "";
+    if (!/text\/|html|json|xml/.test(type)) return json({error: "Bu bağlantı bir web sayfası değil (" + type.split(";")[0] + "). PDF'leri metin olarak yapıştırabilirsin."}, 400);
+    const raw = (await res.text()).slice(0, 2000000);
+    const title = clip(b.title, 200) || clip((raw.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1], 200).replace(/\s+/g, " ") || url;
+    const text = /html/.test(type) ? htmlToText(raw) : raw;
+    if (text.length < 50) return json({error: "Sayfada okunabilir metin bulunamadı."}, 400);
+    return json({ok: true, title, ...(await storeDoc(title, text.slice(0, 200000), url))});
+  }
+  if (action === "remove_source") {
+    const sid = clip(b.sid, 40);
+    const all = await loadKB();
+    const ids = all.filter(e => e.sid === sid).map(e => e.id);
+    if (ids.length) await redis("HDEL", "learn:kb", ...ids);
+    await redis("HDEL", "learn:sources", sid); kbCache = null;
+    return json({ok: true, removed: ids.length});
   }
   if (action === "forget") {
     await redis("HDEL", "learn:kb", clip(b.id, 40)); kbCache = null;

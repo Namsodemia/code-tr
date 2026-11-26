@@ -539,6 +539,19 @@ body{letter-spacing:-.005em}
     <h2>🧠 Öğrenme paneli</h2>
     <p class="sub">Kullanıcıların gönderdiği bilgileri onayla; onaylananlar Code-Tr'nin topluluk hafızasına girer.</p>
     <div class="stats" id="lStats"></div>
+    <div class="sec">
+      <h3>📚 Code-Tr'yi eğit</h3>
+      <p>Cümleler ya da bağlantılar ekle; Code-Tr bunları okuyup hafızasına alır ve ilgili sorularda bu bilgilerle cevap verir.</p>
+      <div class="field"><label>Başlık (isteğe bağlı)</label><input id="eTitle" maxlength="200" placeholder="ör. Code-Tr hakkında sık sorulanlar"></div>
+      <div class="field"><label>Bilgi / cümleler</label><textarea id="eText" style="min-height:110px;border:1px solid var(--line2);background:var(--bg);border-radius:9px;padding:8px 10px;font:inherit;resize:vertical" placeholder="Doğru bilgileri cümleler halinde yaz. Uzun metin de yapıştırabilirsin."></textarea></div>
+      <button class="btn primary" id="eAddText">Bilgiyi öğret</button>
+      <div class="field" style="margin-top:14px"><label>Bağlantıdan öğren</label><input id="eUrl" type="url" placeholder="https://…"></div>
+      <button class="btn primary" id="eAddUrl">Linkten öğren</button>
+      <div class="status" id="eStatus"></div>
+      <h3 style="margin:16px 0 8px;font-size:14px">Öğretilen kaynaklar</h3>
+      <div id="eSources"></div>
+      <p class="fine" style="text-align:left"><a href="/api/learn?action=export" download>⤓ Tüm öğrenilenleri veri seti olarak indir (JSONL)</a>; Hugging Face'e yüklenip kendi modelimizi eğitmek için.</p>
+    </div>
     <h3 style="margin:6px 0 10px">Onay bekleyenler</h3>
     <div id="lPending"></div>
     <details style="margin-top:14px"><summary style="cursor:pointer;font-weight:700">Topluluk hafızası</summary><div id="lKB" style="margin-top:10px"></div></details>
@@ -905,7 +918,7 @@ async function webRun(req, emit, signal){
   // Ogrenen Code-Tr: benzer sorular icin onaylanmis topluluk bilgisini getir
   const lastUser = [...req.messages].reverse().find(m => m.role === "user");
   const notes = (!LOCAL && lastUser) ? await fetchNotes(lastUser.content) : [];
-  if(notes.length) msgs.unshift({role: "system", content: "Topluluk bilgisi (Code-Tr kullanıcılarının onaylanmış katkıları):\n" + notes.map(n => "- Soru: " + n.q + "\n  Doğru bilgi: " + n.a).join("\n")});
+  if(notes.length) msgs.unshift({role: "system", content: "Topluluk bilgisi (Code-Tr kullanıcılarının onaylanmış katkıları):\n" + notes.map(n => "- Konu: " + n.q + "\n  Bilgi: " + n.a + (n.src ? "\n  Kaynak: " + n.src : "")).join("\n")});
   let busyShown = false;
   WEB.onLocalProgress = r => emit({type: "local_progress", r});
   WEB.onBusy = null; void busyShown;
@@ -1794,7 +1807,33 @@ async function openLearn(){
     }
   }catch(e){ $("#lPending").innerHTML = '<div class="notice err">' + esc(e.message) + '</div>'; }
 }
-$("#learnBtn").onclick = openLearn;
+async function loadSources(){
+  try{
+    const items = (await (await fetch("/api/learn?action=sources")).json()).items || [];
+    const box = $("#eSources"); box.innerHTML = items.length ? "" : '<p class="sub" style="margin:0">Henüz kaynak yok.</p>';
+    for(const it of items){
+      const d = document.createElement("div"); d.className = "learn-item"; d.style.display = "flex"; d.style.gap = "10px"; d.style.alignItems = "center";
+      d.innerHTML = '<div style="flex:1;min-width:0"><div class="q" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div><div class="meta" style="margin:2px 0 0"></div></div><button class="btn">Sil</button>';
+      d.querySelector(".q").textContent = it.title;
+      d.querySelector(".meta").textContent = (it.src ? it.src + " · " : "Yazılı bilgi · ") + it.parts + " parça · " + new Date(it.t).toLocaleDateString("tr-TR");
+      d.querySelector("button").onclick = async () => { if(!confirm("Bu kaynak Code-Tr'nin hafızasından silinsin mi?")) return;
+        await fetch("/api/learn?action=remove_source", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({sid: it.sid})}); d.remove(); };
+      box.appendChild(d);
+    }
+  }catch(e){}
+}
+async function teachPost(action, body, btn){
+  const st = $("#eStatus"); st.textContent = action === "add_url" ? "Sayfa okunuyor…" : "Öğreniliyor…"; btn.disabled = true;
+  try{
+    const r = await fetch("/api/learn?action=" + action, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+    const j = await r.json(); if(!r.ok) throw new Error(j.error || "Olmadı");
+    st.textContent = "✓ Öğrenildi: " + (j.title || body.title || "bilgi") + " (" + j.parts + " parça)"; loadSources(); return true;
+  }catch(e){ st.textContent = "✕ " + e.message; return false; }
+  finally{ btn.disabled = false; }
+}
+$("#eAddText").onclick = async () => { if(await teachPost("add_text", {title: $("#eTitle").value, text: $("#eText").value}, $("#eAddText"))){ $("#eText").value = ""; $("#eTitle").value = ""; } };
+$("#eAddUrl").onclick = async () => { if(await teachPost("add_url", {url: $("#eUrl").value, title: $("#eTitle").value}, $("#eAddUrl"))){ $("#eUrl").value = ""; } };
+$("#learnBtn").onclick = () => { openLearn(); loadSources(); };
 
 /* ---------------- uygulama olarak yukleme (PWA) ---------------- */
 let installEvt = null;
