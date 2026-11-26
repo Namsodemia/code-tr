@@ -1842,6 +1842,21 @@ async function makeVideo(prompt){
   try{
     say("Video düzenleyici hazırlanıyor… (ilk seferde ~30 MB iner)");
     const ff = await getFF();
+    if(MOTION_RX.test(prompt)){
+      const r = await makeMotion(prompt, item, el, say);
+      const url = URL.createObjectURL(new Blob([r.data], {type: "video/mp4"}));
+      const nCard = (r.plan.kartlar || []).length, nEmph = (r.plan.vurgu || []).length;
+      const ozet = "**Kinetik tipografi hazır** (" + r.styleName + " stil): " + r.words.length + " kelime konuşmayla eş zamanlı animasyonlandı, " + nEmph + " anahtar kelime vurgulandı" + (nCard ? ", " + nCard + " infografik fon sahnesi eklendi" : "") + ".";
+      box.innerHTML = md(ozet) + '<video controls playsinline style="max-width:min(100%,520px);max-height:560px;border-radius:12px;display:block;background:#000"></video>';
+      box.querySelector("video").src = url;
+      const acts = document.createElement("div"); acts.className = "gen-acts";
+      const assUrl = URL.createObjectURL(new Blob([r.ass], {type: "text/plain"}));
+      acts.innerHTML = '<a download="code-tr-motion.mp4">⤓ Videoyu indir (' + (r.data.length / 1048576).toFixed(1) + ' MB)</a><a download="code-tr-motion.ass">⤓ Animasyon dosyası (.ass)</a>';
+      acts.children[0].href = url; acts.children[1].href = assUrl;
+      box.after(acts);
+      aMsg.content = ozet + "\n\nDöküm: " + r.words.map(w => w.w).join(" ").slice(0, 1500) + "\n\n*(Video bu cihazda işlendi; sohbet geçmişinde saklanmaz.)*";
+      throw {done: true};
+    }
     const ext = ((item.name.match(/\.(\w{2,4})$/) || [])[1] || "mp4").toLowerCase();
     const input = "in." + ext;
     say("Video okunuyor…");
@@ -1883,12 +1898,160 @@ async function makeVideo(prompt){
     aMsg.content = (plan.aciklama || "Video hazırlandı.") + "\n\n*(Video bu cihazda işlendi; sohbet geçmişinde saklanmaz.)*";
     try{ await ff.deleteFile(input); await ff.deleteFile(plan.output); }catch(e){}
   }catch(e){
+    if(e && e.done){ /* motion akisi basariyla bitti */ }
+    else{
     box.innerHTML = "";
     const t = e.message || "Video işlenemedi.";
     aMsg.notices.push({text: t, err: true}); el.querySelector(".steps").appendChild(noticeEl(t, true));
+    }
   }
   current.messages.push(aMsg); current.updated = Date.now(); saveChats(); renderChats();
   busy = null; updateSend(); scrollDown();
+}
+
+/* ---------------- Motion: konusmaya senkron kinetik tipografi + infografik (Whisper + libass, cihazda) ---------------- */
+const MOTION_RX = /kinetik|tipograf|altyaz|motion|infografi|dinamik kurgu|konuşma(ya|yla| ile) (uyumlu|senkron)|caption|subtitle|reels yazı/i;
+const ASR = {pipe: null, loading: null};
+async function getASR(onProg){
+  if(ASR.pipe) return ASR.pipe;
+  if(!ASR.loading) ASR.loading = (async () => {
+    const tf = await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1/+esm");
+    const p = await tf.pipeline("automatic-speech-recognition", "onnx-community/whisper-small_timestamped",
+      {dtype: {encoder_model: "q8", decoder_model_merged: "q8"}, device: "wasm", progress_callback: x => { if(x.status === "progress" && onProg) onProg(x); }});
+    ASR.pipe = p; return p;
+  })();
+  try{ return await ASR.loading; }catch(e){ ASR.loading = null; throw e; }
+}
+const assEsc = t => String(t).replace(/[{}\\]/g, "").replace(/\n/g, " ").trim();
+const assTime = t => { t = Math.max(0, t); const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = (t % 60); return h + ":" + String(m).padStart(2, "0") + ":" + s.toFixed(2).padStart(5, "0"); };
+const STYLES = {
+  kurumsal: {fg: "&H00FFFFFF", acc: "&H001A64F0", dim: "&H50FFFFFF", bg: "&H002A1A12", bar: "&H001A64F0", pop: 108, move: 24, size: 0.058},
+  dinamik:  {fg: "&H00FFFFFF", acc: "&H0000C8FF", dim: "&H40FFFFFF", bg: "&H00200C0A", bar: "&H0000C8FF", pop: 124, move: 60, size: 0.068},
+  minimal:  {fg: "&H00FFFFFF", acc: "&H00FFFFFF", dim: "&H80FFFFFF", bg: "&H00181818", bar: "&H00FFFFFF", pop: 100, move: 10, size: 0.05},
+};
+// Kelimeleri soluk/noktalama ve en fazla 4 kelimelik gruplara bol
+function phrases(words){
+  const out = []; let cur = [];
+  words.forEach((w, i) => {
+    cur.push({...w, i});
+    const next = words[i + 1];
+    const pause = next ? next.s - w.e : 1;
+    if(cur.length >= 4 || /[.,!?;:]$/.test(w.w) || pause > 0.35 || !next){ out.push(cur); cur = []; }
+  });
+  return out;
+}
+function buildASS(words, plan, W, H, styleName){
+  const st = STYLES[styleName] || STYLES.kurumsal;
+  const fs = Math.round(Math.min(W, H) * st.size * (W < H ? 1.25 : 1)), big = Math.round(Math.min(W, H) * 0.2), mid = Math.round(Math.min(W, H) * 0.055);
+  const emph = new Set(plan.vurgu || []);
+  const L = [];
+  L.push("[Script Info]", "ScriptType: v4.00+", "PlayResX: " + W, "PlayResY: " + H, "WrapStyle: 2", "ScaledBorderAndShadow: yes", "",
+    "[V4+ Styles]",
+    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
+    "Style: Cap,Manrope ExtraBold," + fs + "," + st.acc + "," + st.fg + ",&H00000000,&H78000000,0,0,0,0,100,100,0,0,1," + Math.max(1, Math.round(fs / 22)) + "," + Math.round(fs / 14) + ",2," + Math.round(W * .06) + "," + Math.round(W * .06) + "," + Math.round(H * (W < H ? .2 : .1)) + ",1",
+    "Style: Big,Manrope ExtraBold," + big + "," + st.acc + "," + st.acc + ",&H00000000,&H00000000,0,0,0,0,100,100,-2,0,1,0,0,5,0,0,0,1",
+    "Style: Mid,Manrope ExtraBold," + mid + "," + st.fg + "," + st.fg + ",&H00000000,&H00000000,0,0,0,0,100,100,1,0,1,0,0,5,0,0,0,1",
+    "Style: Shape,Manrope ExtraBold,20,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1", "",
+    "[Events]", "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text");
+  // 1) Kinetik altyazi: soylenen kelime vurgu rengine doner; onemli kelimeler buyur
+  for(const ph of phrases(words)){
+    const s = ph[0].s, e = ph[ph.length - 1].e + 0.25;
+    let txt = "{\\fad(90,90)\\move(" + Math.round(W / 2) + "," + Math.round(H - H * (W < H ? .2 : .1) + st.move) + "," + Math.round(W / 2) + "," + Math.round(H - H * (W < H ? .2 : .1)) + ",0,180)\\fscx" + st.pop + "\\fscy" + st.pop + "\\t(0,200,\\fscx100\\fscy100)}";
+    let t = s;
+    for(const w of ph){
+      const gap = Math.max(0, Math.round((w.s - t) * 100)); const dur = Math.max(1, Math.round((w.e - w.s) * 100)); t = w.e;
+      const word = assEsc(w.w);
+      txt += (gap ? "{\\k" + gap + "}" : "") + (emph.has(w.i) ? "{\\k" + dur + "\\fscx118\\fscy118\\c" + st.acc + "&}" + word + "{\\fscx100\\fscy100}" : "{\\k" + dur + "}" + word) + " ";
+    }
+    L.push("Dialogue: 2," + assTime(s) + "," + assTime(e) + ",Cap,,0,0,0,," + txt.trim());
+  }
+  // 2) Infografik fon sahneleri: konusmaci gorunmez, marka fonu + buyuk deger + aciklama
+  for(const k of (plan.kartlar || []).slice(0, 12)){
+    const s = +k.start, e = +k.end; if(!(e > s)) continue;
+    L.push("Dialogue: 0," + assTime(s) + "," + assTime(e) + ",Shape,,0,0,0,,{\\an7\\pos(0,0)\\p1\\c" + st.bg + "&\\fad(220,220)}m 0 0 l " + W + " 0 " + W + " " + H + " 0 " + H + "{\\p0}");
+    L.push("Dialogue: 1," + assTime(s + .1) + "," + assTime(e) + ",Shape,,0,0,0,,{\\an7\\p1\\c" + st.bar + "&\\fad(150,150)\\move(" + Math.round(-W * .4) + "," + Math.round(H * .74) + "," + Math.round(W * .08) + "," + Math.round(H * .74) + ",0,350)}m 0 0 l " + Math.round(W * .3) + " 0 " + Math.round(W * .3) + " " + Math.max(6, Math.round(H * .012)) + " 0 " + Math.max(6, Math.round(H * .012)) + "{\\p0}");
+    L.push("Dialogue: 1," + assTime(s + .15) + "," + assTime(e) + ",Big,,0,0,0,,{\\an5\\pos(" + Math.round(W / 2) + "," + Math.round(H * .42) + ")\\fad(150,200)\\fscx60\\fscy60\\t(0,320,\\fscx105\\fscy105)\\t(320,460,\\fscx100\\fscy100)}" + assEsc(k.baslik || ""));
+    if(k.alt) L.push("Dialogue: 1," + assTime(s + .35) + "," + assTime(e) + ",Mid,,0,0,0,,{\\an5\\fad(200,200)\\move(" + Math.round(W / 2) + "," + Math.round(H * .6) + "," + Math.round(W / 2) + "," + Math.round(H * .57) + ",0,300)}" + assEsc(k.alt));
+  }
+  // 3) Kinetik basliklar: tek kelime/ifade ekranin ortasinda patlar
+  for(const b of (plan.basliklar || []).slice(0, 12)){
+    const s = +b.start, e = +b.end; if(!(e > s)) continue;
+    L.push("Dialogue: 1," + assTime(s) + "," + assTime(e) + ",Mid,,0,0,0,,{\\an5\\pos(" + Math.round(W / 2) + "," + Math.round(H * .3) + ")\\fad(80,150)\\fscx140\\fscy140\\t(0,220,\\fscx100\\fscy100)\\bord" + Math.round(mid / 12) + "\\3c&H000000&}" + assEsc(b.text));
+  }
+  return L.join("\n") + "\n";
+}
+// Yapay zeka yoksa basit plan: sayilar ve uzun kelimeler vurgulu, sayilar icin kart
+function heuristicPlan(words){
+  const vurgu = [], kartlar = [];
+  words.forEach((w, i) => {
+    const clean = w.w.replace(/[.,!?;:]/g, "");
+    if(/\d/.test(clean) || clean.length >= 9) vurgu.push(i);
+    if(/\d/.test(clean) && (!kartlar.length || w.s - kartlar[kartlar.length - 1].end > 4)){
+      const ctx = words.slice(Math.max(0, i - 3), i).map(x => x.w.replace(/[.,!?;:]/g, "")).join(" ");
+      kartlar.push({start: Math.max(0, w.s - .2), end: w.e + 2.2, baslik: clean, alt: ctx});
+    }
+  });
+  return {vurgu, kartlar, basliklar: []};
+}
+const MOTION_PROMPT = `Sen deneyimli bir motion designer ve kurgucusun. Sana bir videonun konuşma dökümünü kelime numaraları ve saniyeleriyle veriyorum.
+Görevin: kinetik tipografi ve infografik sahneler için bir kurgu planı çıkarmak. YALNIZCA şu JSON'u yaz:
+{"stil":"kurumsal|dinamik|minimal","vurgu":[kelime numaraları],"kartlar":[{"start":sn,"end":sn,"baslik":"kısa büyük ifade ya da sayı","alt":"2-5 kelimelik açıklama"}],"basliklar":[{"start":sn,"end":sn,"text":"1-3 kelimelik güçlü ifade"}]}
+Kurallar:
+- vurgu: anlam taşıyan anahtar kelimeler (sayılar, ürün adları, sonuçlar); toplam kelimelerin en fazla %20'si.
+- kartlar: konuşmacının görünmediği infografik fon sahneleri. Önemli sayı, yüzde, karşılaştırma ya da ana fikir geçtiği anlarda, söylendiği saniyeye denk gelsin; her biri 2-4 sn; aralarında en az 5 sn olsun; videonun %35'inden fazlasını kaplamasın.
+- basliklar: kartların olmadığı yerlerde, vurucu ifadeler için; seyrek kullan.
+- Tüm metinler Türkçe ve doğru yazımlı olsun; dökümdeki yanlış duyulmuş özel isimleri bağlamdan düzelt.
+- Kullanıcının isteğindeki stil tarifine uy (kurumsal/modern → kurumsal, enerjik/hızlı → dinamik, sade → minimal).`;
+async function makeMotion(prompt, item, el, say){
+  const ff = await getFF();
+  const ext = ((item.name.match(/\.(\w{2,4})$/) || [])[1] || "mp4").toLowerCase();
+  const input = "in." + ext;
+  say("Video okunuyor…");
+  await ff.writeFile(input, new Uint8Array(await item.file.arrayBuffer()));
+  FF.logs = []; await ff.exec(["-hide_banner", "-i", input]).catch(() => {});
+  const vs = FF.logs.join("\n").match(/Video:.*?(\d{3,5})x(\d{3,5})/);
+  let W = vs ? +vs[1] : 1280, H = vs ? +vs[2] : 720;
+  const rot = /rotate\s*:\s*-?90|displaymatrix: rotation of -?90/i.test(FF.logs.join("\n"));
+  if(rot) [W, H] = [H, W];
+  // 1) ses -> metin (kelime zamanlariyla)
+  say("Konuşma çıkarılıyor…");
+  await ff.exec(["-hide_banner", "-y", "-i", input, "-vn", "-ac", "1", "-ar", "16000", "-f", "f32le", "audio.raw"]);
+  const raw = await ff.readFile("audio.raw"); await ff.deleteFile("audio.raw").catch(() => {});
+  const audio = new Float32Array(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength));
+  if(audio.length < 16000 * 0.5) throw new Error("Videoda konuşma bulunamadı (ses yok ya da çok kısa).");
+  const asr = await getASR(x => say("Ses tanıma modeli hazırlanıyor… %" + Math.round(x.progress || 0) + " (yalnızca ilk seferde ~250 MB)"));
+  say("Konuşma yazıya dökülüyor… (" + Math.round(audio.length / 16000) + " sn ses, biraz sürebilir)");
+  const res = await asr(audio, {language: "turkish", task: "transcribe", return_timestamps: "word", chunk_length_s: 30, stride_length_s: 5});
+  const words = (res.chunks || []).map(c => ({w: c.text.trim(), s: c.timestamp[0], e: c.timestamp[1] ?? (c.timestamp[0] + .3)})).filter(w => w.w);
+  if(!words.length) throw new Error("Konuşma anlaşılamadı.");
+  // 2) yapay zeka kurgu plani
+  say("Motion tasarımcısı kurguyu planlıyor…");
+  let plan = null;
+  try{
+    let reply = "";
+    const doc = words.map((w, i) => i + ":" + w.w + "@" + w.s.toFixed(2)).join(" ").slice(0, 14000);
+    const m = String(model).startsWith("webllm:") ? model : (WEB.settings().cloud_key ? model : "cloud:auto");
+    await webStream(WEB.settings(), m.replace(/^cloud:/, ""), [{role: "system", content: MOTION_PROMPT},
+      {role: "user", content: "İstek: " + prompt + "\nVideo: " + W + "x" + H + ", " + words[words.length - 1].e.toFixed(1) + " sn\nDöküm (numara:kelime@saniye):\n" + doc}], t => { reply += t; }, null);
+    plan = parseJSONLoose(reply);
+  }catch(e){}
+  if(!plan || !Array.isArray(plan.vurgu)) plan = heuristicPlan(words);
+  const styleName = /dinamik|enerji|hızlı|tiktok/i.test(prompt) ? "dinamik" : /minimal|sade/i.test(prompt) ? "minimal" : (plan.stil in STYLES ? plan.stil : "kurumsal");
+  // 3) ASS uret ve isle
+  const ass = buildASS(words, plan, W, H, styleName);
+  await ff.createDir("/fonts").catch(() => {});
+  await ff.writeFile("/fonts/Manrope.ttf", new Uint8Array(await (await fetch("/fonts/Manrope-ExtraBold.ttf")).arrayBuffer()));
+  await ff.writeFile("motion.ass", new TextEncoder().encode(ass));
+  const hasAudio = /Audio:/.test(FF.logs.join("\n")) || audio.length > 0;
+  say("Kinetik tipografi işleniyor… %0");
+  const onProg = ({progress}) => say("Kinetik tipografi işleniyor… %" + Math.max(0, Math.min(100, Math.round(progress * 100))) + " (cihazında)");
+  ff.on("progress", onProg); FF.logs = [];
+  const code = await ff.exec(["-hide_banner", "-y", "-i", input, "-vf", "ass=motion.ass:fontsdir=/fonts", "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-pix_fmt", "yuv420p", ...(hasAudio ? ["-c:a", "aac", "-b:a", "160k"] : []), "-movflags", "+faststart", "out.mp4"], 20 * 60 * 1000);
+  ff.off("progress", onProg);
+  if(code !== 0) throw new Error("Video işlenemedi: " + FF.logs.slice(-3).join(" ").slice(0, 200));
+  const data = await ff.readFile("out.mp4");
+  await ff.deleteFile(input).catch(() => {}); await ff.deleteFile("out.mp4").catch(() => {});
+  return {data, ass, words, plan, styleName};
 }
 
 /* ---------------- Ogrenen Code-Tr ---------------- */

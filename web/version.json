@@ -1,12 +1,12 @@
 {
-  "version": "1.5.0",
-  "mac": "1.5.0",
+  "version": "1.6.0",
+  "mac": "1.6.0",
   "date": "2026-11-26",
   "notes": [
-    "🎬 Yeni Video modu: videonu ekle, ne istediğini Türkçe yaz (kes, dikey yap, yazı ekle, GIF'e çevir, sesi ayır…). İşlem tamamen senin cihazında, ücretsiz ve açık kaynak FFmpeg ile yapılır.",
-    "📚 Code-Tr'yi eğit: yöneticiler cümleler ve bağlantılarla Code-Tr'ye yeni bilgiler öğretebilir; Code-Tr ilgili sorularda bu bilgileri kaynağıyla kullanır.",
-    "🧠 Öğrenen Code-Tr: cevapları 👍/👎 ile değerlendir, yanlışsa \"Doğrusunu öğret\".",
-    "💻 Code-Tr Yerel: yapay zekâyı kendi cihazında, internetsiz ve bağımsız çalıştır.",
-    "⚡ Otomatik (en iyi) model, daha iyi Türkçe cevaplar ve ↻ Yeniden yanıtla."
+    "🎬✨ Kinetik tipografi: videona \"konuşmayla uyumlu kinetik tipografi\" ya da \"infografik\" yaz; Code-Tr konuşmayı kelime kelime yazıya döker, motion tasarımcısı gibi kurgular.",
+    "📊 İnfografik fon sahneleri: önemli sayılar ve fikirler, konuşmacının görünmediği marka fonunda büyük animasyonlu kartlarla gösterilir.",
+    "🎨 Üç stil: kurumsal, dinamik, minimal. Animasyon dosyasını (.ass) da indirip düzenleyebilirsin.",
+    "🔒 Her şey cihazında: ses tanıma (Whisper) ve video işleme açık kaynak, ücretsiz; videon hiçbir sunucuya yüklenmez.",
+    "🛠 Düzeltme: kendi API anahtarınla da artık her zaman ücretsiz model kullanılıyor."
   ]
 }
