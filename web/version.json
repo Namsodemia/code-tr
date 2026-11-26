@@ -1,12 +1,12 @@
 {
-  "version": "1.15.1",
-  "mac": "1.15.1",
+  "version": "1.16.0",
+  "mac": "1.16.0",
   "date": "2026-11-26",
   "notes": [
+    "Animasyonlar yumuşadı: hareketler daha yavaş, yumuşak başlar yumuşak durur; sert geçişler ve zıplayan altyazı kaldırıldı",
+    "Her marka özgün: \"marka: X\" yaz, o markanın rengi ve fontu kalıcı olur; \"#8E5A3F\" ya da \"font: Gabarito\" yazarsan onu kullanır",
     "Referans şablonu (gri zeminli kartlar) artık sen \"infografik\" demedikçe seçilmez; videolar kinetik, çerçeveli, bölünmüş ya da sade çıkar",
     "Grafikler hiçbir zaman videoyu tam ekran kesmez",
-    "Yapay zekâ ile video üret: \"... videosu üret\" yaz ya da fotoğraf ekleyip \"canlandır\" de; açık kaynak Wan 2.2, ücretsiz",
-    "Motion grafikler artık 60 fps: daha akıcı, daha yumuşak animasyon",
-    "Yazdığın her talimat uygulanır: \"ilk 5 sn kes\", \"son 3 saniyeyi sil\", \"sarı altyazı\", \"büyük harf\", \"altyazı olmasın\" kurguyla birlikte çalışır"
+    "Yapay zekâ ile video üret: \"... videosu üret\" yaz ya da fotoğraf ekleyip \"canlandır\" de; açık kaynak Wan 2.2, ücretsiz"
   ]
 }

@@ -2224,7 +2224,16 @@ async function makeMotion(prompt, item, el, say, brand = null){
     say("Motion tasarımcısı kurguyu planlıyor…");
     const plan = await planMotion(prompt, words, W, H);
     const same = /aynı (tarz|stil)|öncekiyle aynı|aynısı/i.test(prompt), prevLook = store.get("coder.look", {});
-    const look = brand ? null : (same && prevLook.font ? prevLook : MO.pickLook(prevLook, prompt, plan.gorunum || {})); if(look) store.set("coder.look", look);
+    // Her marka özgün: "marka: X" yazılırsa o markanın rengi/fontu saklanır ve hep aynı kalır; diğer markalardan farklı seçilir
+    const bm = prompt.match(/marka\s*[:=]?\s*([A-Za-zÇĞİÖŞÜçğıöşü0-9&' -]{2,30}?)(?:[,.\n]|$)/i), bkey = bm ? bm[1].trim().toLocaleLowerCase("tr") : "";
+    const bl = store.get("coder.brandLooks", {});
+    let look = brand ? null : (same && prevLook.font ? prevLook : MO.pickLook(prevLook, prompt, plan.gorunum || {}));
+    if(look && bkey){
+      if(bl[bkey]) look = {...look, pal: bl[bkey].pal, font: bl[bkey].font, hex: look.hex || bl[bkey].hex, cap: bl[bkey].cap};
+      else { const used = Object.values(bl); for(let k = 0; k < 12 && used.some(u => u.pal === look.pal || u.font === look.font); k++) look = MO.pickLook({...prevLook, pal: look.pal, font: look.font}, prompt, plan.gorunum || {}); }
+      bl[bkey] = {pal: look.pal, font: look.font, hex: look.hex, cap: look.cap}; store.set("coder.brandLooks", bl);
+    }
+    if(look) store.set("coder.look", look);
     const styleName = /dinamik|enerji|hızlı|tiktok/i.test(prompt) ? "dinamik" : /minimal|sade/i.test(prompt) ? "minimal" : (MO.PALETTES[plan.stil] ? plan.stil : "kurumsal");
     const data = await MO.renderFast({file: item.file, W, H, words, plan, palette: styleName, brand, look, cut: !/kesme|boşluk(ları)? (bırak|kalsın)|olduğu gibi|hiç kesme/i.test(prompt), wish: MO.parseWishes(prompt), onStep: say});
     const ass = MO.buildCaptions(words, plan, W, H, brand ? MO.brandPalette(brand) : MO.PALETTES[styleName]);

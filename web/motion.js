@@ -17,7 +17,7 @@ const PAL = {
   orman: {navy: "#1f3d2b", red: "#7fb33a"}, gece: {navy: "#10141f", red: "#3d7bff"},
 };
 const FONTS = ["Montserrat", "Archivo", "Sora", "Space Grotesk", "Outfit", "Plus Jakarta Sans", "Barlow Condensed", "Bricolage Grotesque", "Lexend", "Manrope"];
-const BGS = ["gradient", "solid", "grid", "editorial"], WIPES = ["diag", "bars", "iris", "slide", "none"], CAPS = ["pop", "glide", "twolayer", "karaoke", "left"];
+const BGS = ["gradient", "solid", "grid", "editorial"], WIPES = ["none", "none", "diag"], CAPS = ["pop", "glide", "twolayer", "karaoke", "left"], SOFT_CAPS = ["glide", "glide", "twolayer", "karaoke", "left"];
 export const FORMATS = ["info", "kinetik", "cerceve", "sade", "bolunmus"];
 // Kullanicinin istegindeki kelimeler once gelir; yazmadigi her sey bir oncekinden farkli secilir.
 export function pickLook(prev = {}, prefer = "", ai = {}){
@@ -29,18 +29,22 @@ export function pickLook(prev = {}, prefer = "", ai = {}){
   const colors = {mavi: "okyanus", lacivert: "lacivert", kurumsal: "lacivert", yeşil: "zumrut", mor: "murekkep", sarı: "komur", siyah: "komur", bordo: "bordo", pembe: "bordo", kırmızı: "lacivert", doğa: "orman"};
   const ck = Object.keys(colors).find(k => q.includes(k));
   const palKey = PAL[ai.renk] ? ai.renk : ck ? colors[ck] : pick(Object.keys(PAL), prev.pal);
-  const cap = CAPS.includes(ai.altyazi) ? ai.altyazi : has(/karaoke/) ? "karaoke" : has(/kelime kelime|yumuşak|soft|zarif/) ? "glide" : has(/sola|sol hizalı/) ? "left" : has(/iki katman|büyük altyazı|vurgulu/) ? "twolayer" : has(/zıpla|pop/) ? "pop" : pick(CAPS, prev.cap);
+  const cap = CAPS.includes(ai.altyazi) ? ai.altyazi : has(/karaoke/) ? "karaoke" : has(/kelime kelime|yumuşak|soft|zarif/) ? "glide" : has(/sola|sol hizalı/) ? "left" : has(/iki katman|büyük altyazı|vurgulu/) ? "twolayer" : has(/zıpla|pop/) ? "pop" : pick(SOFT_CAPS, prev.cap);
   const font = FONTS.includes(ai.font) ? ai.font : has(/dar|condensed/) ? "Barlow Condensed" : has(/modern|teknoloji/) ? "Space Grotesk" : pick(FONTS, prev.font);
-  return {fmt, pal: palKey, font, bg: pick(BGS, prev.bg), wipe: pick(WIPES, prev.wipe), cap, full: /arka ?plansız|şeffaf|seffaf|kesme|kesmesin/i.test(prefer) ? "none" : /tam ekran/i.test(prefer) ? "all" : ""};
+  const hex = (String(prefer).match(/#[0-9a-f]{6}\b/gi) || []).slice(0, 2);
+  const fm = String(prefer).match(/font\s*[:=]\s*([A-Za-zÇĞİÖŞÜçğıöşü ]{3,30}?)(?:[,.\n]|$)/i);
+  return {fmt, pal: palKey, font: fm ? fm[1].trim() : font, hex: hex.length ? hex : null, bg: pick(BGS, prev.bg), wipe: pick(WIPES, prev.wipe), cap, full: /arka ?plansız|şeffaf|seffaf|kesme|kesmesin/i.test(prefer) ? "none" : /tam ekran/i.test(prefer) ? "all" : ""};
 }
-export function lookPalette(l){ const c = PAL[l.pal] || PAL.lacivert; return {bg1: "#f5f5f3", bg2: "#e8e8e4", navy: c.navy, red: c.red, gray: "#5f6368", line: "#d0d0cc", card: "#ffffff"}; }
+export function lookPalette(l){ const c = l.hex ? {navy: l.hex[0], red: l.hex[1] || l.hex[0]} : (PAL[l.pal] || PAL.lacivert); return {bg1: "#f5f5f3", bg2: "#e8e8e4", navy: c.navy, red: c.red, gray: "#5f6368", line: "#d0d0cc", card: "#ffffff"}; }
 export function brandPalette(b){ return {bg1: "#f6f6f4", bg2: "#ecebe7", navy: b.c1, red: b.c2, gray: "#5f6368", line: "#d4d4d0", card: "#ffffff"}; }
 
 // ---------- yardimcilar ----------
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
-const easeOut = t => 1 - Math.pow(1 - clamp(t), 3);
+// Yumuşak: yavaş başlar, yavaş durur (sert "çat" girişler yok)
+const easeOut = t => { t = clamp(t); return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
+const SLOW = 1.6;
 const easeBack = t => { if(STYLE.glow || STYLE.noback) return easeOut(t); t = clamp(t); const c = 1.6; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
-const prog = (t, start, dur) => clamp((t - start) / dur);
+const prog = (t, start, dur) => clamp((t - start * SLOW) / (dur * SLOW));
 function rr(ctx, x, y, w, h, r){ r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 function font(ctx, size, weight = 800){ ctx.font = (STYLE.italic ? "italic " : "") + weight + " " + Math.round(size) + "px " + (STYLE.font ? '"' + STYLE.font + '", ' : "") + "Montserrat, Manrope, sans-serif"; }
 function spaced(ctx, text, x, y, spacing){ let cx = x; for(const ch of text){ ctx.fillText(ch, cx, y); cx += ctx.measureText(ch).width + spacing; } return cx - x; }
@@ -404,12 +408,12 @@ function drawCaptionGlow(ctx, W, H, t, groups, emph, P, onScene){
   const y = bottom - f2 * .75;
   const pad = 14 * s, nEm = STYLE.nobox ? 0 : parts.filter(p => emph.has(p.w.i)).length;
   let x = cx - (total * k + nEm * pad * 2) / 2;
-  const out = clamp((g.en - t) / .12);
+  const out = easeOut(clamp((g.en - t) / .22));
   ctx.save(); ctx.textBaseline = "middle"; ctx.textAlign = "left"; ctx.lineJoin = "round";
   for(const p of parts){
-    const a = clamp((t - p.w.s + .04) / .12);
+    const a = easeOut(clamp((t - p.w.s + .06) / .28));
     if(a > 0){
-      const dy = (1 - easeOut(a)) * 14 * s, em = emph.has(p.w.i) && !STYLE.nobox; if(em) x += pad;
+      const dy = (1 - a) * 10 * s, em = emph.has(p.w.i) && !STYLE.nobox; if(em) x += pad;
       ctx.globalAlpha = a * out;
       if(em){ ctx.fillStyle = P.red; ctx.fillRect(x - 10 * s, y - f2 * .62 + dy, p.wd + 20 * s, f2 * 1.2); }
       else { ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = Math.max(2, f2 * .09); ctx.strokeText(p.t, x, y + dy); }
@@ -517,7 +521,7 @@ function drawCaption(ctx, W, H, t, groups, emph, P, onScene){
 function drawLowerThird(ctx, W, H, t, it, P){
   if(!it || !it.ad) return; const a = +(it.start || .5), b = +(it.end || a + 4.5); if(t < a || t > b) return;
   const s = Math.min(W, H) / 1080, bx = W * .06, by = H * (W < H ? .6 : .72), bw = Math.min(W * .62, 560 * s), bh = 96 * s;
-  const pin = easeOut(clamp((t - a) / .35)), pout = clamp((b - t) / .25), x = bx - (1 - pin) * (bw + bx);
+  const pin = easeOut(clamp((t - a) / .7)), pout = easeOut(clamp((b - t) / .5)), x = bx - (1 - pin) * (bw + bx);
   ctx.save(); ctx.globalAlpha = pout;
   ctx.fillStyle = "#fff"; ctx.fillRect(x, by, bw, bh); ctx.fillStyle = P.red; ctx.fillRect(x, by, 7 * s, bh + (STYLE.glow ? 30 : 26) * s);
   ctx.fillStyle = P.navy; fitText(ctx, it.ad, bw - 50 * s, 44 * s, 800); ctx.textBaseline = "middle"; ctx.fillText(it.ad, x + 26 * s, by + bh / 2 + 2 * s);
@@ -602,7 +606,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
   const n = Math.max(1, Math.floor(outDur * FPS));
   function* times(){ for(let i = 0; i < n; i++) yield toSrc(i / FPS); }
   // Yumuşak yeniden kadraj: her iki altyazı grubunda bir %7 içeri/dışarı, .6 sn yumuşak geçiş (pop zoom değil)
-  const zoomAt = t => { let k = 0; for(let g = 0; g < groups.length; g++){ if(groups[g].st <= t) k = g; else break; } const tgt = Math.floor(k / 2) % 2 ? 1.07 : 1, from = Math.floor(Math.max(0, k - 1) / 2) % 2 ? 1.07 : 1, p = easeOut(clamp((t - (groups[k] ? groups[k].st : 0)) / .6)); return from + (tgt - from) * p; };
+  const zoomAt = t => { let k = 0; for(let g = 0; g < groups.length; g++){ if(groups[g].st <= t) k = g; else break; } const tgt = Math.floor(k / 2) % 2 ? 1.05 : 1, from = Math.floor(Math.max(0, k - 1) / 2) % 2 ? 1.05 : 1, p = easeOut(clamp((t - (groups[k] ? groups[k].st : 0)) / 1.6)); return from + (tgt - from) * p; };
   const drawVid = (src, t) => { const z = zoomAt(t); if(z === 1) return ctx.drawImage(src, 0, 0, W, H); const sw = W / z, sh = H / z; ctx.drawImage(src, (W - sw) / 2, (H - sh) * .4, sw, sh, 0, 0, W, H); };
   let i = 0, t0 = performance.now();
   const fmt = brand ? "info" : (look && look.fmt) || "info", S = Math.min(W, H) / 1080;
@@ -628,11 +632,11 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
         drawCaption(ctx, W, H, t, groups, emph, P, !!sc);
       } else if(src) drawVid(src, t);
       if(fmt === "kinetik"){
-        const b = bigWords.find(x => t >= x.s - .05 && t < x.s + .9);
-        if(b){ const k = easeOut(clamp((t - b.s + .05) / .14)), o = clamp((b.s + .9 - t) / .15), txt = b.w.replace(/[.,!?;:…]+$/, "").toLocaleUpperCase("tr");
-          const fs = fitText(ctx, txt, W * .9, 230 * S, 900), y = H * .42;
+        const b = bigWords.find(x => t >= x.s - .05 && t < x.s + 1.1);
+        if(b){ const k = easeOut(clamp((t - b.s + .05) / .45)), o = easeOut(clamp((b.s + 1.1 - t) / .35)), txt = b.w.replace(/[.,!?;:…]+$/, "").toLocaleUpperCase("tr");
+          const fs = fitText(ctx, txt, W * .84, 170 * S, 900), y = H * .42;
           ctx.save(); ctx.globalAlpha = o; ctx.fillStyle = P.red; ctx.fillRect(0, y - fs * .62, W * k, fs * 1.24);
-          ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(txt, W / 2 + (1 - k) * -80 * S, y); ctx.restore(); }
+          ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.globalAlpha = o * k; ctx.fillText(txt, W / 2 + (1 - k) * -30 * S, y); ctx.restore(); }
       }
       if(fmt !== "bolunmus") drawCaption(ctx, W, H, t, groups, emph, P, false);
       drawLowerThird(ctx, W, H, t, plan.isim, P);
@@ -641,9 +645,9 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
       continue;
     }
     const sc = scenes.find(x => t >= x.start && t < x.end);
-    const fadeOut = sc ? clamp((sc.end - t) / .25) : 0;
+    const fadeOut = sc ? easeOut(clamp((sc.end - t) / .5)) : 0;
     if(!sc || sc.ov || fadeOut < 1){ if(wc) drawVid(wc.canvas, t); else { ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H); } }
-    if(sc){ drawScene(sctx, W, H, sc, t - sc.start, P); ctx.save(); ctx.globalAlpha = sc.ov ? fadeOut * clamp((t - sc.start) / .25) : fadeOut; ctx.drawImage(scv, 0, 0); ctx.restore(); }
+    if(sc){ drawScene(sctx, W, H, sc, t - sc.start, P); ctx.save(); ctx.globalAlpha = sc.ov ? fadeOut * easeOut(clamp((t - sc.start) / .6)) : fadeOut; ctx.drawImage(scv, 0, 0); ctx.restore(); }
     drawCaption(ctx, W, H, t, groups, emph, P, !!sc && fadeOut > .5);
     drawLowerThird(ctx, W, H, t, plan.isim, P);
     await vsrc.add(t, 1 / FPS);
