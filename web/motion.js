@@ -7,7 +7,7 @@ export const PALETTES = {
   dinamik:  {bg1: "#fff7f0", bg2: "#ffe6d4", navy: "#1a1a1a", red: "#f0641a", gray: "#6a5a50", line: "#e8cdb8", card: "#ffffff"},
   minimal:  {bg1: "#f7f7f7", bg2: "#ececec", navy: "#111111", red: "#111111", gray: "#777777", line: "#d6d6d6", card: "#ffffff"},
 };
-const FPS = 30;
+let FPS = 30;
 // Glow Up modu: marka rengi/fontu, pop-scale yok, golge yok, guvenli alan, tam ekran sahnede altyazi yok.
 let STYLE = {};
 // Her video farkli gorunsun: font, renk, zemin, gecis ve altyazi dili her seferinde degisir (son kullanilan tekrarlanmaz).
@@ -561,6 +561,8 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
   const scv = new OffscreenCanvas(W, H); const sctx = scv.getContext("2d");
   const output = new MB.Output({format: new MB.Mp4OutputFormat({fastStart: "in-memory"}), target: new MB.BufferTarget()});
   const vsrc = new MB.CanvasSource(out, {codec: "avc", bitrate: MB.QUALITY_HIGH, latencyMode: "quality", hardwareAcceleration: "prefer-hardware", keyFrameInterval: 2});
+  // Akıcı hareket: kaynak 50+ fps ise 60 fps işle
+  FPS = 60;  // grafikler her zaman 60 fps (kaynak 30 fps olsa da animasyonlar akıcı)
   output.addVideoTrack(vsrc, {frameRate: FPS});
   // atlama kurgu: zaman eşlemesi (kaynak <-> çıkış)
   const ts0 = Math.min(dur - .5, wish.trimStart || 0), te0 = Math.max(ts0 + .5, dur - (wish.trimEnd || 0));

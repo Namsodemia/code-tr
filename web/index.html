@@ -1850,7 +1850,8 @@ async function makeVideo(prompt, brand = null){
   if(LOCAL){ toast("Video modu şimdilik web sürümünde: coder-tr.vercel.app"); return; }
   if(ACC.enabled && !ACC.user){ ACC.gate(); return; }
   const item = pending.find(p => p.media);
-  if(!item){ toast("Önce 📎 ile bir video ekle."); $("#attachBtn").click(); return; }
+  if(!item && !brand){ const img = pending.find(p => /^image\//.test(p.type || "")); if(prompt && (img || /üret|oluştur|yap|canlandır|hareketlendir|çek|video ?su/i.test(prompt))) return makeAIVideo(prompt, img); }
+  if(!item){ toast("Önce 📎 ile bir video ekle (ya da \"... videosu üret\" yaz, fotoğraf eklersen onu canlandırırım)."); $("#attachBtn").click(); return; }
   askNotify();
   if(!prompt){ $("#input").focus(); toast("Videoda ne yapmamı istediğini yaz."); return; }
   if(!current) newChat();
@@ -2236,6 +2237,66 @@ async function makeMotion(prompt, item, el, say, brand = null){
   }
 }
 
+/* ---------------- Yapay zekâ ile video üretimi (açık kaynak Wan 2.2, Hugging Face ücretsiz GPU) ---------------- */
+const WAN_SPACES = ["zerogpu-aoti/wan2-2-fp8da-aoti-faster", "r3gm/wan2-2-fp8da-aoti-preview"];
+async function makeAIVideo(prompt, img){
+  if(busy) return;
+  if(ACC.enabled && !ACC.user){ ACC.gate(); return; }
+  askNotify();
+  if(!current) newChat(); if(!chats.includes(current)) chats.unshift(current);
+  if(img){ pending = pending.filter(p => p !== img); renderChips(); }
+  $("#input").value = ""; autosize();
+  const userMsg = {role: "user", content: "🎞 " + prompt, atts: img ? [{name: img.name, type: img.type}] : []};
+  current.messages.push(userMsg); if(current.title === "Yeni sohbet") current.title = ("🎞 " + prompt).slice(0, 48);
+  $("#empty").style.display = "none"; $("#thread").appendChild(userEl(userMsg));
+  const el = assistantEl(); $("#thread").appendChild(el); scrollDown(true);
+  const box = el.querySelector(".md"), t0 = performance.now();
+  const say = t => { box.innerHTML = '<div class="thinking"><span class="spin"></span>' + esc(t) + ' <span style="opacity:.6">(' + Math.round((performance.now() - t0) / 1000) + ' sn)</span></div>'; scrollDown(); };
+  const tick = setInterval(() => { const x = box.querySelector(".thinking"); if(x) say(x.firstChild.nextSibling.textContent); }, 1000);
+  busy = {abort(){}}; updateSend();
+  const aMsg = {role: "assistant", content: "", notices: []};
+  try{
+    const en = await enhancePrompt(prompt);
+    const vertical = /dikey|reels|tiktok|shorts|story|9:16/i.test(prompt);
+    let blob;
+    if(img){ say("Fotoğrafın hazırlanıyor…"); blob = await (await fetch(img.data || img.preview)).blob(); }
+    else {
+      say("Önce sahnenin ilk karesi çiziliyor…");
+      const r = vertical ? {w: 480, h: 832} : {w: 832, h: 480};
+      for(let k = 0; k < 4 && !blob; k++){
+        const res = await fetch(imageUrl(en + ", cinematic film still, high detail", r, Math.floor(Math.random() * 1e9)));
+        if(res.ok && /image/.test(res.headers.get("content-type") || "")) blob = await res.blob();
+        else { say("Görsel servisi yoğun, " + (k + 1) + ". deneme…"); await new Promise(z => setTimeout(z, 12000)); }
+      }
+      if(!blob) throw new Error("İlk kare çizilemedi (görsel servisi yoğun). Biraz sonra tekrar dene.");
+    }
+    const {Client, handle_file} = await import("https://cdn.jsdelivr.net/npm/@gradio/client@2.7.2/+esm");
+    let out = null, lastErr = "";
+    for(const sp of WAN_SPACES){
+      try{
+        say("Wan 2.2 videoyu üretiyor… (ücretsiz GPU, genelde 1–2 dk)");
+        const c = await Client.connect(sp);
+        const job = c.submit("/generate_video", {input_image: handle_file(blob), prompt: en + ", smooth natural motion, cinematic", steps: 6, duration_seconds: /uzun|5 ?sn|5 saniye/i.test(prompt) ? 5 : 3.5, guidance_scale: 1, guidance_scale_2: 1, seed: 42, randomize_seed: true});
+        for await (const m of job){
+          if(m.type === "status" && m.stage === "pending" && m.queue && m.position != null) say("Sırada " + (m.position + 1) + ". (ücretsiz GPU kuyruğu)…");
+          if(m.type === "status" && m.stage === "error") throw new Error(m.message || "GPU hatası");
+          if(m.type === "data"){ out = m.data[0]; break; }
+        }
+        if(out) break;
+      }catch(e){ lastErr = String(e.message || e); if(/quota|exceeded|GPU/i.test(lastErr)) break; }
+    }
+    if(!out) throw new Error(/quota|exceeded/i.test(lastErr) ? "Ücretsiz GPU kotası bu saat için doldu. Bir süre sonra tekrar dene." : "Video üretilemedi: " + (lastErr || "bilinmeyen hata"));
+    say("Video indiriliyor…");
+    const vb = await (await fetch(out.url)).blob(); const url = URL.createObjectURL(new Blob([vb], {type: "video/mp4"}));
+    const sure = Math.round((performance.now() - t0) / 1000);
+    box.innerHTML = md("**Video hazır** (" + sure + " sn) · açık kaynak Wan 2.2 ile üretildi" + (img ? ", fotoğrafın canlandırıldı" : "") + ". Üstüne altyazı/kurgu istersen indirip Video modunda tekrar ekle.") + '<video controls autoplay loop muted playsinline style="max-width:min(100%,520px);max-height:560px;border-radius:12px;display:block;background:#000"></video>';
+    box.querySelector("video").src = url;
+    const acts = document.createElement("div"); acts.className = "gen-acts"; acts.innerHTML = '<a download="code-tr-ai-video.mp4">⤓ Videoyu indir</a>'; acts.querySelector("a").href = url; box.appendChild(acts);
+    aMsg.content = "🎞 Yapay zekâ videosu üretildi (" + sure + " sn)."; notifyDone("Videon hazır", "Wan 2.2 videonu üretti");
+  }catch(e){ box.innerHTML = md("⚠︎ " + (e.message || e)); aMsg.content = "⚠︎ " + (e.message || e); }
+  clearInterval(tick); current.messages.push(aMsg); saveChats(); busy = null; updateSend();
+}
+
 /* ---------------- Sesli komut + sesli yanit ---------------- */
 const VOICE = {
   rec: null, listening: false, tts: store.get("coder.tts", false), handsFree: false, finalText: "",
@@ -2423,7 +2484,7 @@ function notifyDone(title, body){
   try{ const a = new AudioContext(), o = a.createOscillator(), g = a.createGain(); o.frequency.value = 880; g.gain.setValueAtTime(.12, a.currentTime); g.gain.exponentialRampToValueAtTime(.001, a.currentTime + .5); o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + .5); }catch(e){}
   if(!document.hidden) return;
   const old = document.title; document.title = "✓ " + title; addEventListener("focus", () => { document.title = old; }, {once: true});
-  try{ if("Notification" in window && Notification.permission === "granted") new Notification(title, {body, icon: "/icons/icon-192.png"}); }catch(e){}
+  try{ if("Notification" in window && Notification.permission === "granted") new Notification(title, {body, icon: "/icon-192.png"}); }catch(e){}
 }
 
 /* ---------------- uygulama olarak yukleme (PWA) ---------------- */

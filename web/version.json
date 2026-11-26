@@ -1,12 +1,12 @@
 {
-  "version": "1.14.0",
-  "mac": "1.14.0",
+  "version": "1.15.0",
+  "mac": "1.15.0",
   "date": "2026-11-26",
   "notes": [
+    "Yapay zekâ ile video üret: \"... videosu üret\" yaz ya da fotoğraf ekleyip \"canlandır\" de; açık kaynak Wan 2.2, ücretsiz",
+    "Motion grafikler artık 60 fps: daha akıcı, daha yumuşak animasyon",
     "Yazdığın her talimat uygulanır: \"ilk 5 sn kes\", \"son 3 saniyeyi sil\", \"sarı altyazı\", \"büyük harf\", \"altyazı olmasın\" kurguyla birlikte çalışır",
     "Profesyonel kurgu: konuşmadaki sessiz boşluklar otomatik kesilir (ses ve altyazı birlikte); istemezsen \"boşlukları kesme\" yaz",
-    "Kesme yerine yumuşak yeniden kadraj: cümle değişince görüntü hafifçe içeri/dışarı kayar",
-    "Video artık senin isteğine göre kurgulanır: sade, kinetik dev yazı, çerçeveli haber, bölünmüş ekran ya da infografik; renk, font ve altyazıyı yazdığın kelimelerden seçer",
-    "Bir şey belirtmezsen her video bir öncekinden farklı formatta çıkar"
+    "Kesme yerine yumuşak yeniden kadraj: cümle değişince görüntü hafifçe içeri/dışarı kayar"
   ]
 }
