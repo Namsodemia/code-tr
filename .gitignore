@@ -1,0 +1,12 @@
+# derleme ciktilari
+dist/
+site/
+deploy/
+# gizli bilgiler
+.env*
+.vercel/
+# sistem / python
+.DS_Store
+__pycache__/
+*.pyc
+mac/icon.svg.png

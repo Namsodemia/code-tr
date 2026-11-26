@@ -1,0 +1,47 @@
+<h1>Coder-tr hakkında</h1>
+<p class="date">Türkçe konuşan herkes için ücretsiz yapay zekâ asistanı</p>
+
+<h2>Neden geliştirdik?</h2>
+<p>Güçlü yapay zekâ araçlarının çoğu ya ücretli, ya İngilizce, ya da kullanmak için kredi kartı istiyor. Öğrenciler, küçük işletmeler ve yazılıma yeni başlayanlar için bu ciddi bir engel.</p>
+<p><b>Coder-tr</b> bu engeli kaldırmak için doğdu: dünyadaki ücretsiz yapay zekâ modellerini tek bir sade, Türkçe arayüzde topluyor. Hesap açmadan, kart girmeden, anahtar uğraşmadan açıp kullanabilirsin.</p>
+
+<h2>Neler yapabilir?</h2>
+<ul>
+  <li><b>Sohbet:</b> soru sor, metin yazdır, PDF özetlet, ekran görüntüsündeki hatayı açıklat.</li>
+  <li><b>Kod:</b> kod yazdır; bilgisayarındaki bir klasörü seçersen dosyalarını okuyup düzenler.</li>
+  <li><b>Görsel:</b> yazdığını ücretsiz olarak görsele çevirir; Instagram gönderisi, hikâye, kapak boyutlarında.</li>
+  <li><b>Mac uygulaması:</b> internetsiz, kendi bilgisayarında çalışan modellerle de kullanılabilir.</li>
+</ul>
+
+<h2>Nasıl ücretsiz?</h2>
+<p>Coder-tr yalnızca sağlayıcıların ücretsiz sunduğu modelleri kullanır; altyapı da ücretsiz planlar üzerinde çalışır. Bu yüzden günlük kullanım sınırları vardır. Reklam yok, verin satılmaz.</p>
+
+<h2>Gizliliğin</h2>
+<p>Giriş yapmazsan sohbetlerin sadece kendi tarayıcında kalır. Hesap açarsan sohbetlerin hesabına kaydedilir ve istediğin an hepsini silebilirsin. Ayrıntılar <a href="/gizlilik.html">Gizlilik Politikası</a>'nda.</p>
+
+<h2 id="iletisim">İletişim</h2>
+<p>Öneri, hata bildirimi ya da KVKK kapsamındaki taleplerin için bu formu kullan. Cevap almak istiyorsan e-postanı da yaz.</p>
+<form id="cf" style="display:grid;gap:10px;max-width:560px">
+  <select id="cTopic" style="padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit">
+    <option value="oneri">Öneri</option><option value="hata">Hata bildirimi</option><option value="kvkk">KVKK / veri talebi</option><option value="genel">Diğer</option>
+  </select>
+  <input id="cEmail" type="email" placeholder="E-postan (isteğe bağlı)" style="padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit">
+  <input id="cWeb" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+  <textarea id="cMsg" rows="5" required placeholder="Mesajın" style="padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;resize:vertical"></textarea>
+  <button style="justify-self:start;border:0;border-radius:10px;padding:10px 18px;background:var(--accent);color:#fff;font:600 15px inherit;cursor:pointer">Gönder</button>
+  <div id="cRes" style="font-size:14px;color:var(--muted)"></div>
+</form>
+<script>
+document.getElementById("cf").onsubmit = async e => {
+  e.preventDefault();
+  const res = document.getElementById("cRes"); res.textContent = "Gönderiliyor…";
+  try{
+    const r = await fetch("/api/contact", {method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({topic: cTopic.value, email: cEmail.value, message: cMsg.value, website: cWeb.value})});
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error || "Gönderilemedi");
+    res.textContent = "Teşekkürler, mesajın bize ulaştı ✓"; cMsg.value = "";
+  }catch(err){ res.textContent = err.message; }
+};
+</script>
+<p style="margin-top:40px;color:var(--muted)">Coder-tr · Türkiye'de, öğrenciler tarafından, herkes için geliştirildi.</p>
