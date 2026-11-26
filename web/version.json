@@ -1,11 +1,11 @@
 {
-  "version": "1.7.0",
-  "mac": "1.7.0",
+  "version": "1.7.1",
+  "mac": "1.7.1",
   "date": "2026-11-26",
   "notes": [
+    "🎬 Motion düzeltmesi: her videoda mutlaka infografik sahneler çıkıyor; yapay zekâ plan veremezse sahneler konuşmadan otomatik çıkarılıyor (adımlar, sayılar, seçenekler, kapanış alıntısı).",
     "🎬 Yeni motion motoru: röportaj videolarına profesyonel kurumsal kurgu. İsim etiketi, kelime kelime beliren altyazı ve konuşmacının kaybolduğu infografik sahneler.",
     "📊 8 sahne şablonu: adım listesi, kaynak kartları, sayı + simgeler, rapor grafiği, zaman çizelgesi, baştan sona yol, faz sütunları, alıntı.",
-    "⚡ 3 kat daha hızlı: ses tanıma ekran kartında, video kodlama donanımla yapılıyor (30 sn'lik video ~30 sn'de).",
-    "🔒 Her şey cihazında, ücretsiz ve açık kaynak; videon hiçbir sunucuya yüklenmez."
+    "⚡ 3 kat daha hızlı: ses tanıma ekran kartında, video kodlama donanımla yapılıyor (30 sn'lik video ~30 sn'de)."
   ]
 }

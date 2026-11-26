@@ -211,6 +211,11 @@ const SCENES = {
       ctx.fillStyle = last ? "#fff" : P.navy; fitText(ctx, it.label || "", bw - 24 * s, 28 * s, 800); ctx.fillText(it.label || "", bx + 14 * s, base - h + 44 * s); ctx.restore();
     });
   },
+  // Sade baslik sahnesi: ust baslik + iki satir buyuk baslik + kirmizi cizgi
+  baslik(ctx, L, t, P, d){
+    const {x, w, s} = L; const y = header(ctx, {...L, y: L.y + 120 * s}, t, P, d);
+    const p = easeOut(prog(t, .5, .5)); ctx.fillStyle = P.red; ctx.fillRect(x, y + 10 * s, w * .28 * p, 8 * s);
+  },
   // Lacivert fonda alinti
   alinti(ctx, L, t, P, d, W, H){
     const {x, w, s} = L; const y = H * .38;
