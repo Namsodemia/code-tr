@@ -43,7 +43,7 @@ export function brandPalette(b){ return {bg1: "#f6f6f4", bg2: "#ecebe7", navy: b
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 // Yumuşak: yavaş başlar, yavaş durur (sert "çat" girişler yok)
 const easeOut = t => { t = clamp(t); return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
-const SLOW = 1.6;
+let SLOW = 1.6;
 const easeBack = t => { if(STYLE.glow || STYLE.noback) return easeOut(t); t = clamp(t); const c = 1.6; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
 const prog = (t, start, dur) => clamp((t - start * SLOW) / (dur * SLOW));
 function rr(ctx, x, y, w, h, r){ r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
@@ -275,12 +275,40 @@ function layout(W, H){
   return {x: (W - cw) / 2, y: H * .15, w: cw, s};
 }
 // Editoryal tipografi: kart, ikon, yildiz yok. Buyuk temiz yazi, ince cizgiler, buyuk rakam. (Donanim sablonundan bagimsiz dil)
-function typoScene(ctx, L, t, P, d, W, H){
+// ---- Video basina konsept: yerlesim, giris hareketi, motif, boyut, tempo (yapay zeka tasarlar) ----
+export const CONCEPT_OPTS = {yerlesim: ["ust", "orta", "alt", "sol"], giris: ["fade", "rise", "slide", "mask", "type"], motif: ["line", "dots", "wave", "leaf", "pulse", "circle", "frame", "none"], boyut: ["kucuk", "orta", "buyuk"], tempo: ["yavas", "orta", "canli"]};
+export function pickConcept(prev = {}, ai = {}){
+  const out = {};
+  for(const [k, arr] of Object.entries(CONCEPT_OPTS)){ out[k] = arr.includes(ai[k]) ? ai[k] : (c => c[Math.floor(Math.random() * c.length)])(arr.filter(v => v !== prev[k])); }
+  return out;
+}
+function motif(ctx, kind, x, y, w, s, p, col){
+  if(!kind || kind === "none" || p <= 0) return;
+  ctx.save(); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2.5 * s; ctx.lineCap = "round"; ctx.globalAlpha *= .9;
+  const n = 60, L = Math.floor(n * p);
+  if(kind === "line"){ ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w * p, y); ctx.stroke(); }
+  else if(kind === "dots"){ for(let i = 0; i < 12 * p; i++){ ctx.beginPath(); ctx.arc(x + i * w / 12, y, 3.5 * s, 0, 7); ctx.fill(); } }
+  else if(kind === "wave"){ ctx.beginPath(); for(let i = 0; i <= L; i++){ const u = i / n; ctx.lineTo(x + u * w, y + Math.sin(u * Math.PI * 4) * 10 * s); } ctx.stroke(); }
+  else if(kind === "pulse"){ ctx.beginPath(); for(let i = 0; i <= L; i++){ const u = i / n, k = (u * 5) % 1; const dy = k > .4 && k < .48 ? -26 : k >= .48 && k < .56 ? 18 : 0; ctx.lineTo(x + u * w, y + dy * s); } ctx.stroke(); }
+  else if(kind === "leaf"){ ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + w * .5 * p, y - 18 * s, x + w * .9 * p, y - 4 * s); ctx.stroke();
+    for(let i = 1; i <= 5 * p; i++){ const lx = x + i * w * .16, ly = y - 8 * s * Math.sin(i / 5 * Math.PI); ctx.beginPath(); ctx.ellipse(lx, ly - 10 * s * (i % 2 ? 1 : -1), 13 * s, 5.5 * s, (i % 2 ? -.6 : .6), 0, 7); ctx.fill(); } }
+  else if(kind === "circle"){ ctx.beginPath(); ctx.arc(x + w * .82, y - 120 * s, 90 * s, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * p); ctx.stroke(); }
+  else if(kind === "frame"){ const c = 26 * s * p; ctx.beginPath(); ctx.moveTo(x - 20 * s, y - 330 * s + c); ctx.lineTo(x - 20 * s, y - 330 * s); ctx.lineTo(x - 20 * s + c, y - 330 * s); ctx.moveTo(x + w + 20 * s - c, y + 30 * s); ctx.lineTo(x + w + 20 * s, y + 30 * s); ctx.lineTo(x + w + 20 * s, y + 30 * s - c); ctx.stroke(); }
+  ctx.restore();
+}
+function typoScene(ctx, L0, t, P, d, W, H){
+  const C = STYLE.concept || {};
+  const sz = C.boyut === "kucuk" ? .82 : C.boyut === "buyuk" ? 1.22 : 1;
+  const L = {...L0}; if(C.yerlesim === "orta") L.y = H * .28; else if(C.yerlesim === "alt") L.y = H * .42; else if(C.yerlesim === "sol"){ L.x = W * .07; L.w = W * .62; }
+  L.s = L0.s * sz;
+  const ent = (p, i = 0) => { const g = C.giris || "rise"; return g === "slide" ? {dx: (1 - p) * -60 * L.s, dy: 0} : g === "fade" ? {dx: 0, dy: 0} : {dx: 0, dy: (1 - p) * 16 * L.s}; };
   const {x, w, s} = L, OV = STYLE.ov, ink = OV ? "#ffffff" : P.navy, sub = OV ? "rgba(255,255,255,.8)" : P.gray;
   const center = STYLE.align === "center", ax = center ? x + w / 2 : x;
   const items = (d.items || []).map(i => typeof i === "string" ? i : (i.label || "")).filter(Boolean);
   if(!items.length){ if(d.bas) items.push(d.bas); if(d.son) items.push(d.son); if(d.label && !d.adet) items.push(d.label); if(d.alt) items.push(d.alt); }
   const stroke = (txt, xx, yy) => { if(OV){ ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = Math.max(2, parseInt(ctx.font.match(/(\d+)px/)[1]) * .07); ctx.lineJoin = "round"; ctx.strokeText(txt, xx, yy); } ctx.fillText(txt, xx, yy); };
+  if(OV && !STYLE.glow){ const a = easeOut(prog(t, 0, .5)) * .5, y0 = L.y - 90 * s, y1 = L.y + 720 * s, g = ctx.createLinearGradient(0, y0, 0, y1);
+    g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(.25, "rgba(0,0,0," + a + ")"); g.addColorStop(.75, "rgba(0,0,0," + a + ")"); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.fillRect(0, y0, W, y1 - y0); }
   ctx.save(); ctx.textAlign = center ? "center" : "left"; ctx.textBaseline = "alphabetic";
   let y = L.y + 40 * s;
   const pe = easeOut(prog(t, .05, .4));
@@ -288,8 +316,14 @@ function typoScene(ctx, L, t, P, d, W, H){
   ctx.globalAlpha = pe; ctx.fillStyle = OV ? "#ffffff" : P.red; ctx.fillRect(center ? ax - 20 * s : ax, y + 18 * s, 40 * s * pe, 3 * s);
   y += 90 * s;
   [[d.title1, ink, 74], [d.title2, OV ? "#ffffff" : P.red, 74]].forEach(([txt, col, sz], i) => { if(!txt) return;
-    const size = fitText(ctx, txt, w, sz * s, 800), p = easeOut(prog(t, .12 + i * .12, .5));
-    ctx.globalAlpha = p; ctx.fillStyle = col; font(ctx, size, 800); stroke(txt, ax, y + (1 - p) * 16 * s); y += size * 1.12; });
+    const size = fitText(ctx, txt, w, sz * s, 800), p = easeOut(prog(t, .12 + i * .12, .5)), e = ent(p);
+    let shown = txt; if(C.giris === "type") shown = txt.slice(0, Math.ceil(txt.length * clamp(prog(t, .12 + i * .25, .9))));
+    ctx.globalAlpha = C.giris === "mask" || C.giris === "type" ? 1 : p; ctx.fillStyle = col; font(ctx, size, 800);
+    if(C.giris === "mask"){ ctx.save(); ctx.beginPath(); ctx.rect(center ? ax - w / 2 : ax - 10 * s, y - size, w + 20 * s, size * 1.25); ctx.clip(); stroke(txt, ax, y + (1 - p) * size); ctx.restore(); }
+    else if(shown) stroke(shown, ax + e.dx, y + e.dy);
+    y += size * 1.12; });
+  motif(ctx, C.motif, center ? ax - w / 2 : ax, y + 4 * s, w, s, easeOut(prog(t, .35, 1.2)), OV ? "rgba(255,255,255,.85)" : P.red);
+  if(C.motif && C.motif !== "none") y += 26 * s;
   if(d.adet && !items.length){ const p = easeOut(prog(t, .45, .6)), n = Math.round((parseInt(d.adet) || 0) * p);
     ctx.globalAlpha = p; ctx.fillStyle = OV ? "#ffffff" : P.red; font(ctx, 220 * s, 300); stroke(String(n), ax, y + 200 * s);
     if(d.label){ ctx.fillStyle = sub; font(ctx, 30 * s, 600); stroke(String(d.label), ax, y + 250 * s); } ctx.restore(); return; }
@@ -297,8 +331,11 @@ function typoScene(ctx, L, t, P, d, W, H){
   items.slice(0, 5).forEach((it, i) => {
     const p = easeOut(prog(t, .45 + i * .35, .55)); if(p <= 0) return;
     const last = i === Math.min(items.length, 5) - 1, size = fitText(ctx, it, w, 44 * s, last ? 800 : 600);
+    const e = ent(p, i);
     ctx.globalAlpha = p; ctx.fillStyle = OV ? "rgba(255,255,255,.5)" : P.line; ctx.fillRect(center ? ax - w / 2 : ax, y, w * p, 1.5 * s);
-    ctx.fillStyle = last ? (OV ? "#ffffff" : P.red) : ink; font(ctx, size, last ? 800 : 600); stroke(it, ax, y + 30 * s + size * .9 + (1 - p) * 12 * s);
+    ctx.fillStyle = last ? (OV ? "#ffffff" : P.red) : ink; font(ctx, size, last ? 800 : 600);
+    const shownIt = C.giris === "type" ? it.slice(0, Math.ceil(it.length * p)) : it;
+    stroke(shownIt, ax + e.dx, y + 30 * s + size * .9 + e.dy);
     y += size + 60 * s;
   });
   ctx.restore();
@@ -577,8 +614,10 @@ export function parseWishes(q){
 export async function renderFast({file, W, H, words, plan, palette = "kurumsal", brand = null, look = null, cut = false, wish = {}, onStep = () => {}}){
   if(typeof VideoEncoder === "undefined") throw new Error("NO_WEBCODECS");
   const MB = await import("/vendor/mediabunny/mediabunny.min.mjs");
-  STYLE = brand ? {glow: true, font: brand.font, italic: !!brand.italic, nobox: !!brand.nobox, lower: !!brand.lower, typo: brand.id !== "donanim"} : {};
-  if(!brand && look) STYLE = {font: look.font, bg: look.bg, wipe: look.wipe, cap: look.cap, noback: look.cap !== "pop", typo: !look.cards, align: look.align};
+  SLOW = 1.6;
+  STYLE = brand ? {glow: true, font: brand.font, italic: !!brand.italic, nobox: !!brand.nobox, lower: !!brand.lower, typo: brand.id !== "donanim", concept: (plan.__concept || null)} : {};
+  if(!brand && look) STYLE = {font: look.font, bg: look.bg, wipe: look.wipe, cap: look.cap, noback: look.cap !== "pop", typo: !look.cards, align: look.align, concept: look.concept};
+  if(look && look.concept) SLOW = look.concept.tempo === "yavas" ? 1.9 : look.concept.tempo === "canli" ? 1.2 : 1.55;
   const P = brand ? brandPalette(brand) : look ? lookPalette(look) : (PALETTES[palette] || PALETTES.kurumsal);
   await loadFonts();
   if(!brand && look && look.font !== "Montserrat"){ onStep("Font yükleniyor (" + look.font + ")…"); await loadBrandFont(look.font); }

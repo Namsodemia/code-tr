@@ -1,12 +1,12 @@
 {
-  "version": "1.17.0",
-  "mac": "1.17.0",
+  "version": "1.18.0",
+  "mac": "1.18.0",
   "date": "2026-11-26",
   "notes": [
+    "Her videoya özel konsept: yapay zekâ içeriğe bakıp yerleşimi, giriş hareketini (maske, yazılma, kayma…), motifi (yaprak, nabız, dalga, çember…), boyutu ve temposu tasarlar; bir önceki videoyu tekrarlamaz",
+    "Videonun üstündeki yazılar daha okunaklı",
     "Yeni görsel dil: kart, ikon ve yıldız yerine editoryal tipografi (büyük temiz yazı, ince çizgiler, büyük rakam); Donanım tarzı kartlar yalnız \"kart\" dersen",
     "Hata düzeltildi: grafikler artık gerçekten videonun üstüne şeffaf biner, videoyu tam ekran kesmez",
-    "Bölünmüş ekranda grafikler okunur boyutta, altyazı üst yarıda; zıplayan altyazı istenmedikçe yok",
-    "Animasyonlar yumuşadı: hareketler daha yavaş, yumuşak başlar yumuşak durur; sert geçişler ve zıplayan altyazı kaldırıldı",
-    "Her marka özgün: \"marka: X\" yaz, o markanın rengi ve fontu kalıcı olur; \"#8E5A3F\" ya da \"font: Gabarito\" yazarsan onu kullanır"
+    "Bölünmüş ekranda grafikler okunur boyutta, altyazı üst yarıda; zıplayan altyazı istenmedikçe yok"
   ]
 }
