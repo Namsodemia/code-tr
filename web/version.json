@@ -1,12 +1,12 @@
 {
-  "version": "1.19.0",
-  "mac": "1.19.0",
+  "version": "1.20.0",
+  "mac": "1.20.0",
   "date": "2026-11-26",
   "notes": [
+    "Kanca başlığı: ilk 2-3 saniyede yapay zekânın konuşmadan yazdığı merak uyandıran büyük başlık (izleyici ilk 3 saniyede karar veriyor)",
+    "Kadraj ritmi: geniş, orta, yakın arasında her 1-2 saniyede yumuşak geçiş; video hep canlı kalır",
     "İki yeni profesyonel altyazı: kelimeden kelimeye yumuşakça kayan vurgu kutusu ve konuşulan kelimeyi parlatan spot ışığı",
     "Altyazılar daha büyük ve okunaklı",
-    "Her videoya özel konsept: yapay zekâ içeriğe bakıp yerleşimi, giriş hareketini (maske, yazılma, kayma…), motifi (yaprak, nabız, dalga, çember…), boyutu ve temposu tasarlar; bir önceki videoyu tekrarlamaz",
-    "Videonun üstündeki yazılar daha okunaklı",
-    "Yeni görsel dil: kart, ikon ve yıldız yerine editoryal tipografi (büyük temiz yazı, ince çizgiler, büyük rakam); Donanım tarzı kartlar yalnız \"kart\" dersen"
+    "Her videoya özel konsept: yapay zekâ içeriğe bakıp yerleşimi, giriş hareketini (maske, yazılma, kayma…), motifi (yaprak, nabız, dalga, çember…), boyutu ve temposu tasarlar; bir önceki videoyu tekrarlamaz"
   ]
 }

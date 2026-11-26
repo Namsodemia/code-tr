@@ -696,7 +696,21 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
   const n = Math.max(1, Math.floor(outDur * FPS));
   function* times(){ for(let i = 0; i < n; i++) yield toSrc(i / FPS); }
   // Yumuşak yeniden kadraj: her iki altyazı grubunda bir %7 içeri/dışarı, .6 sn yumuşak geçiş (pop zoom değil)
-  const zoomAt = t => { let k = 0; for(let g = 0; g < groups.length; g++){ if(groups[g].st <= t) k = g; else break; } const tgt = Math.floor(k / 2) % 2 ? 1.05 : 1, from = Math.floor(Math.max(0, k - 1) / 2) % 2 ? 1.05 : 1, p = easeOut(clamp((t - (groups[k] ? groups[k].st : 0)) / 1.6)); return from + (tgt - from) * p; };
+  // Kadraj ritmi (genis / orta / yakin): her altyazi grubunda (~1-2 sn) yumusak gecis; Glow Up'ta daha hafif
+  const ZL = brand ? [1, 1.04, 1, 1.07] : [1, 1.06, 1.12, 1.04];
+  const zoomAt = t => { let k = 0; for(let g = 0; g < groups.length; g++){ if(groups[g].st <= t) k = g; else break; } const tgt = ZL[k % 4], from = ZL[(k + 3) % 4], p = easeOut(clamp((t - (groups[k] ? groups[k].st : 0)) / .9)); return from + (tgt - from) * p; };
+  // Kanca basligi: ilk ~2.6 sn buyuk baslik (yapay zeka konusmadan yazar)
+  const hook = String(plan.hook || "").trim().slice(0, 48);
+  const drawHook = t => {
+    if(!hook || t > 2.8) return; const a = easeOut(clamp(t / .45)) * easeOut(clamp((2.8 - t) / .4)), s2 = Math.min(W, H) / 1080;
+    const words2 = hook.split(/\s+/), lines = []; let cur = "";
+    font(ctx, 92 * s2, 800); for(const w of words2){ const tr = cur ? cur + " " + w : w; if(ctx.measureText(tr).width > W * .82 && cur){ lines.push(cur); cur = w; } else cur = tr; } if(cur) lines.push(cur);
+    ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+    lines.slice(0, 3).forEach((ln, i) => { const p = easeOut(clamp((t - i * .12) / .5)), yy = H * .22 + i * 100 * s2 + (1 - p) * 18 * s2;
+      ctx.globalAlpha = a * p; font(ctx, 92 * s2, 800); ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = 9 * s2; ctx.strokeText(ln, W / 2, yy);
+      ctx.fillStyle = i === lines.length - 1 && lines.length > 1 ? P.red : "#ffffff"; ctx.fillText(ln, W / 2, yy); });
+    ctx.restore();
+  };
   const drawVid = (src, t) => { const z = zoomAt(t); if(z === 1) return ctx.drawImage(src, 0, 0, W, H); const sw = W / z, sh = H / z; ctx.drawImage(src, (W - sw) / 2, (H - sh) * .4, sw, sh, 0, 0, W, H); };
   let i = 0, t0 = performance.now();
   const fmt = brand ? "info" : (look && look.fmt) || "info", S = Math.min(W, H) / 1080;
@@ -736,7 +750,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
           ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.globalAlpha = o * k; ctx.fillText(txt, W / 2 + (1 - k) * -30 * S, y); ctx.restore(); }
       }
       if(fmt !== "bolunmus") drawCaption(ctx, W, H, t, groups, emph, P, false);
-      drawLowerThird(ctx, W, H, t, plan.isim, P);
+      drawLowerThird(ctx, W, H, t, plan.isim, P); drawHook(t); drawHook(t);
       await vsrc.add(t, 1 / FPS);
       if(++i % 15 === 0){ const fps = i / ((performance.now() - t0) / 1000); onStep("Video işleniyor… %" + Math.round(i / n * 100) + " · " + fps.toFixed(0) + " kare/sn"); }
       continue;
