@@ -12,7 +12,7 @@ export async function isMember(u) {
   return (await redis("SISMEMBER", "team:glowup", normEmail(u.email))) === 1;
 }
 export async function GET(req) {
-  if (!dbReady()) return json({member: false});
+  if (!dbReady) return json({member: false});
   const u = await currentUser(req);
   if (!(await isMember(u))) return json({member: false});
   const out = {member: true, brands: await brands()};
