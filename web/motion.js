@@ -520,7 +520,15 @@ function drawLowerThird(ctx, W, H, t, it, P){
   if(it.unvan){ const p2 = easeOut(clamp((t - a - .25) / .3)); ctx.globalAlpha = pout * p2; ctx.fillStyle = P.navy; ctx.fillRect(x, by + bh, bw * .62 * p2, 30 * s); ctx.fillStyle = "#fff"; font(ctx, 19 * s, 800); ctx.fillText(it.unvan, x + 22 * s, by + bh + 15 * s); }
   ctx.restore();
 }
-export async function renderFast({file, W, H, words, plan, palette = "kurumsal", brand = null, look = null, onStep = () => {}}){
+// Sessiz boslukları kes (atlama kurgu): kelimeler arası > .55 sn boşluk kısaltılır.
+export function speechSegments(words, dur){
+  if(!words.length) return [[0, dur]];
+  const seg = []; let a = Math.max(0, words[0].s - .2), b = words[0].e;
+  for(let k = 1; k < words.length; k++){ const w = words[k]; if(w.s - b > .55){ seg.push([a, Math.min(dur, b + .15)]); a = Math.max(0, w.s - .12); } b = Math.max(b, w.e); }
+  seg.push([a, Math.min(dur, b + .45)]);
+  return seg.filter(x => x[1] - x[0] > .05);
+}
+export async function renderFast({file, W, H, words, plan, palette = "kurumsal", brand = null, look = null, cut = false, onStep = () => {}}){
   if(typeof VideoEncoder === "undefined") throw new Error("NO_WEBCODECS");
   const MB = await import("/vendor/mediabunny/mediabunny.min.mjs");
   STYLE = brand ? {glow: true, font: brand.font, italic: !!brand.italic, nobox: !!brand.nobox, lower: !!brand.lower} : {};
@@ -531,7 +539,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
   if(brand){ onStep("Marka fontu yükleniyor (" + brand.font + ")…"); await loadBrandFont(brand.font, brand.italic); }
   const scenes = (plan.sahneler || []).filter(sc => SCENES[sc.type] && +sc.end > +sc.start).map(sc => ({...sc, start: +sc.start, end: +sc.end})).sort((a, b) => a.start - b.start).slice(0, 14);
   plan.sahneler = scenes;
-  const groups = captionGroups(words), emph = new Set(plan.vurgu || []);
+  let groups = captionGroups(words); const emph = new Set(plan.vurgu || []);
   const input = new MB.Input({source: new MB.BlobSource(file), formats: MB.ALL_FORMATS});
   const vt = await input.getPrimaryVideoTrack(); const at = await input.getPrimaryAudioTrack();
   if(!vt) throw new Error("Videoda görüntü bulunamadı.");
@@ -541,12 +549,39 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
   const output = new MB.Output({format: new MB.Mp4OutputFormat({fastStart: "in-memory"}), target: new MB.BufferTarget()});
   const vsrc = new MB.CanvasSource(out, {codec: "avc", bitrate: MB.QUALITY_HIGH, latencyMode: "quality", hardwareAcceleration: "prefer-hardware", keyFrameInterval: 2});
   output.addVideoTrack(vsrc, {frameRate: FPS});
-  let asrc = null;
-  if(at){ asrc = new MB.EncodedAudioPacketSource(at.codec); output.addAudioTrack(asrc); }
+  // atlama kurgu: zaman eşlemesi (kaynak <-> çıkış)
+  const segs = cut ? speechSegments(words, dur) : [[0, dur]];
+  const outDur = segs.reduce((a, x) => a + x[1] - x[0], 0), saved = dur - outDur;
+  const toOut = ts => { let acc = 0; for(const [a, b] of segs){ if(ts < a) return acc; if(ts <= b) return acc + ts - a; acc += b - a; } return acc; };
+  const toSrc = to => { let acc = 0; for(const [a, b] of segs){ if(to <= acc + b - a) return a + to - acc; acc += b - a; } return segs[segs.length - 1][1]; };
+  if(cut && saved > .3){
+    words.forEach(w => { w.s = toOut(w.s); w.e = Math.max(w.s + .05, toOut(w.e)); });
+    scenes.forEach(sc => { sc.start = toOut(sc.start); sc.end = toOut(sc.end); });
+    groups = captionGroups(words);
+  }
+  plan.__kesilen = Math.max(0, saved);
+  let asrc = null, abuf = null;
+  if(at && cut && saved > .3){
+    try{
+      const codec = await MB.getFirstEncodableAudioCodec(["aac", "opus"]);
+      const ac = new OfflineAudioContext(1, 1, 48000); const src = await ac.decodeAudioData(await file.arrayBuffer());
+      const sr = src.sampleRate, ch = src.numberOfChannels, len = segs.reduce((a, [x, y]) => a + Math.round((y - x) * sr), 0);
+      abuf = new AudioBuffer({length: Math.max(1, len), numberOfChannels: ch, sampleRate: sr});
+      const fade = Math.round(sr * .012);
+      for(let c = 0; c < ch; c++){ const inp = src.getChannelData(c), outp = abuf.getChannelData(c); let o = 0;
+        for(const [x, y] of segs){ const i0 = Math.round(x * sr), i1 = Math.min(inp.length, Math.round(y * sr));
+          for(let k = i0; k < i1; k++){ const d = Math.min(k - i0, i1 - 1 - k); outp[o++] = inp[k] * (d < fade ? d / fade : 1); } } }
+      if(codec){ asrc = new MB.AudioBufferSource({codec, bitrate: 160e3}); output.addAudioTrack(asrc); } else abuf = null;
+    }catch(e){ console.warn("Ses kesilemedi, kesme kapatıldı:", e); abuf = null; asrc = null; }
+    if(!abuf) return renderFast({file, W, H, words: words.map(w => ({...w, s: toSrc(w.s), e: toSrc(w.e)})), plan, palette, brand, look, cut: false, onStep});
+  } else if(at){ asrc = new MB.EncodedAudioPacketSource(at.codec); output.addAudioTrack(asrc); }
   await output.start();
   const sink = new MB.CanvasSink(vt, {width: W, height: H, fit: "cover", poolSize: 2});
-  const n = Math.max(1, Math.floor(dur * FPS));
-  function* times(){ for(let i = 0; i < n; i++) yield i / FPS; }
+  const n = Math.max(1, Math.floor(outDur * FPS));
+  function* times(){ for(let i = 0; i < n; i++) yield toSrc(i / FPS); }
+  // Yumuşak yeniden kadraj: her iki altyazı grubunda bir %7 içeri/dışarı, .6 sn yumuşak geçiş (pop zoom değil)
+  const zoomAt = t => { let k = 0; for(let g = 0; g < groups.length; g++){ if(groups[g].st <= t) k = g; else break; } const tgt = Math.floor(k / 2) % 2 ? 1.07 : 1, from = Math.floor(Math.max(0, k - 1) / 2) % 2 ? 1.07 : 1, p = easeOut(clamp((t - (groups[k] ? groups[k].st : 0)) / .6)); return from + (tgt - from) * p; };
+  const drawVid = (src, t) => { const z = zoomAt(t); if(z === 1) return ctx.drawImage(src, 0, 0, W, H); const sw = W / z, sh = H / z; ctx.drawImage(src, (W - sw) / 2, (H - sh) * .4, sw, sh, 0, 0, W, H); };
   let i = 0, t0 = performance.now();
   const fmt = brand ? "info" : (look && look.fmt) || "info", S = Math.min(W, H) / 1080;
   const half = fmt === "bolunmus" ? new OffscreenCanvas(W, Math.round(H / 2)) : null;
@@ -569,7 +604,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
         if(src){ if(sc) crop(src, 0, 0, W, H / 2); else ctx.drawImage(src, 0, 0, W, H); }
         if(sc){ const hc = half.getContext("2d"); drawScene(hc, W, H / 2, {...sc, ov: false}, t - sc.start, P); const k = easeOut(clamp((t - sc.start) / .35)); ctx.drawImage(half, 0, H / 2 + (1 - k) * H / 2); ctx.fillStyle = P.red; ctx.fillRect(0, H / 2 - 4 * S, W * k, 8 * S); }
         drawCaption(ctx, W, H, t, groups, emph, P, !!sc);
-      } else if(src) ctx.drawImage(src, 0, 0, W, H);
+      } else if(src) drawVid(src, t);
       if(fmt === "kinetik"){
         const b = bigWords.find(x => t >= x.s - .05 && t < x.s + .9);
         if(b){ const k = easeOut(clamp((t - b.s + .05) / .14)), o = clamp((b.s + .9 - t) / .15), txt = b.w.replace(/[.,!?;:…]+$/, "").toLocaleUpperCase("tr");
@@ -585,7 +620,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
     }
     const sc = scenes.find(x => t >= x.start && t < x.end);
     const fadeOut = sc ? clamp((sc.end - t) / .25) : 0;
-    if(!sc || sc.ov || fadeOut < 1){ if(wc) ctx.drawImage(wc.canvas, 0, 0, W, H); else { ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H); } }
+    if(!sc || sc.ov || fadeOut < 1){ if(wc) drawVid(wc.canvas, t); else { ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H); } }
     if(sc){ drawScene(sctx, W, H, sc, t - sc.start, P); ctx.save(); ctx.globalAlpha = sc.ov ? fadeOut * clamp((t - sc.start) / .25) : fadeOut; ctx.drawImage(scv, 0, 0); ctx.restore(); }
     drawCaption(ctx, W, H, t, groups, emph, P, !!sc && fadeOut > .5);
     drawLowerThird(ctx, W, H, t, plan.isim, P);
@@ -593,7 +628,8 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
     if(++i % 15 === 0){ const fps = i / ((performance.now() - t0) / 1000); onStep("Video işleniyor… %" + Math.round(i / n * 100) + " · " + fps.toFixed(0) + " kare/sn (donanım hızlandırmalı)"); }
   }
   vsrc.close(); STYLE = {};
-  if(at && asrc){
+  if(abuf && asrc){ onStep("Ses ekleniyor…"); await asrc.add(abuf); asrc.close(); }
+  else if(at && asrc){
     onStep("Ses ekleniyor…");
     const ps = new MB.EncodedPacketSink(at); const cfg = await at.getDecoderConfig(); let first = true;
     for await (const pk of ps.packets()){ await asrc.add(pk, first ? {decoderConfig: cfg} : undefined); first = false; }
