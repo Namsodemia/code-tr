@@ -401,6 +401,14 @@ body{letter-spacing:-.005em}
 .ide-card small{display:block;color:var(--muted);font-size:13px;line-height:1.45}
 .ide-card .go{margin-left:auto;color:var(--accent);font-weight:700;white-space:nowrap}
 #ideToggle.on{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.ide-b.link{color:var(--ok);border-color:var(--ok-soft);font-weight:600}
+.share-link{display:flex;gap:8px;align-items:center;border:1px solid var(--ok);background:var(--ok-soft);border-radius:12px;padding:10px 12px;margin:12px 0}
+.share-link code{flex:1;font:600 14px var(--mono);color:var(--ok);word-break:break-all;user-select:all}
+.share-acts{display:flex;flex-wrap:wrap;gap:8px}
+.share-acts .btn,.share-acts a.btn{text-decoration:none;color:var(--text);flex:1 1 auto;text-align:center}
+.share-list .it{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:13.5px}
+.share-list .it a{flex:1;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.share-list .it small{color:var(--faint)}
 .ide-b.ai{color:var(--accent);border-color:var(--accent-soft);font-weight:600}
 .ide-ai{right:0;left:auto;top:36px;bottom:auto;max-height:none;min-width:210px;z-index:20}
 .ide-ai small{float:right;color:var(--faint)}
@@ -614,6 +622,7 @@ body{letter-spacing:-.005em}
       <button class="ide-b" id="ideDl" title="Projeyi zip olarak bilgisayarına ya da telefonuna indir">⤓ İndir</button>
       <button class="ide-b" id="ideSaveBtn" title="Kaydet (⌘/Ctrl+S)" disabled>💾<span class="lbl"> Kaydet</span></button>
       <button class="ide-b" id="idePrevBtn" title="HTML projesini canlı önizle">▶<span class="lbl"> Önizle</span></button>
+      <button class="ide-b link" id="ideShareBtn" title="Projeyi Code-Tr linkiyle müşterine gönder">🔗<span class="lbl"> Müşteriye gönder</span></button>
       <button class="ide-b go" id="idePubBtn" title="Projeyi internete yükle">⇪<span class="lbl"> Yayınla</span></button>
       <button class="icon-btn" id="ideClose" title="Editörü kapat (sohbete dön)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
@@ -762,6 +771,11 @@ body{letter-spacing:-.005em}
     <h2>⇪ Yayınla</h2>
     <p class="sub">Projeni internete yükle ve Google'da bulunabilir yap. Giriş her zaman senin hesabınla, senin tarafından yapılır; Code-Tr parolanı ya da anahtarını görmez, saklamaz.</p>
     <div class="pub-check" id="pubCheck"></div>
+    <div class="pub-opt" style="border-color:var(--ok)">
+      <h3>🔗 Müşteriye link gönder <small>en hızlısı · Code-Tr adresiyle</small></h3>
+      <p>Projeni <code>coder-tr.vercel.app/p/…</code> linkiyle anında yayınla, WhatsApp ya da e-postayla gönder. Başka hesap gerekmez.</p>
+      <div class="row"><button class="btn primary" id="pubShare">Link oluştur</button></div>
+    </div>
     <div class="pub-opt" id="pubNetlify" style="display:none">
       <h3>⚡ Tek tıkla yayınla <small>Netlify · ücretsiz</small></h3>
       <p>Açılan pencerede Netlify hesabınla giriş yap (yoksa ücretsiz aç). Proje yüklenir, adresin hazır olur; sonraki yayınlar aynı adresi günceller. Giriş izni yalnız bu sekmenin belleğinde durur, sayfayı kapatınca silinir.</p>
@@ -795,6 +809,17 @@ body{letter-spacing:-.005em}
         <li>Üstteki arama kutusuna ana sayfa adresini yazıp <b>Dizine eklenmesini iste</b>. Google'da görünmesi genelde birkaç gün sürer.</li>
       </ol>
     </details>
+    <div class="modal-foot"><button class="btn" data-close>Kapat</button></div>
+  </div>
+</div>
+<div class="modal-bg" id="shareModal">
+  <div class="modal">
+    <h2>🔗 Müşteriye gönder</h2>
+    <p class="sub">Projen <b>coder-tr.vercel.app</b> üzerinde kendi linkiyle açılır. Linki WhatsApp ya da e-postayla gönder; müşterin hesap açmadan siteyi görür. Projeyi değiştirince "Linki güncelle" de, link aynı kalır.</p>
+    <div class="row" id="shareRow" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn primary" id="shareGo">Link oluştur</button><span class="status" id="shareStatus"></span></div>
+    <div id="shareOut"></div>
+    <p class="fine" style="text-align:left;margin:10px 0 0">Linki bilen herkes görebilir, Google'da çıkmaz. En fazla 8 MB ve 300 dosya; her dosya en fazla 600 KB. Kalıcı ve aranabilir bir site için "⇪ Yayınla"yı kullan.</p>
+    <details class="pub-guide" style="margin-top:12px"><summary>Linklerim</summary><div class="share-list" id="shareList">Yükleniyor…</div></details>
     <div class="modal-foot"><button class="btn" data-close>Kapat</button></div>
   </div>
 </div>
@@ -1277,7 +1302,7 @@ function md(src, streaming){
       i++;
       const code = body.join("\n");
       const canPrev = /^(html?|svg|xml)$/i.test(lang || "") || (!lang && /^\s*<(!doctype|html|svg|div|body)/i.test(code));
-      html.push('<div class="code"><div class="code-h"><span>' + esc(lang || "kod") + '</span><span>' + (canPrev ? '<button data-prev>▶ Önizle</button> ' : '') + '<button data-copy>Kopyala</button></span></div><pre><code>' + highlight(code) + "</code></pre></div>");
+      html.push('<div class="code"><div class="code-h"><span>' + esc(lang || "kod") + '</span><span>' + (canPrev ? '<button data-prev>▶ Önizle</button> ' + (LOCAL ? '' : '<button data-share title="Bu sayfayı Code-Tr linkiyle müşterine gönder">🔗 Link</button> ') : '') + '<button data-copy>Kopyala</button></span></div><pre><code>' + highlight(code) + "</code></pre></div>");
       continue;
     }
     if(/^\s*$/.test(l)){ i++; continue; }
@@ -3359,6 +3384,96 @@ async function netlifyDomain(site, d){
   const r = await fetch("https://api.netlify.com/api/v1/sites/" + site.id, {method: "PATCH", headers: {Authorization: "Bearer " + IDE.token, "Content-Type": "application/json"}, body: JSON.stringify({custom_domain: d})});
   if(!r.ok){ let m = ""; try{ m = (await r.json()).message || ""; }catch(e){} throw new Error("Alan adı bağlanamadı (" + r.status + ")" + (m ? ": " + m : "") + ". Netlify panelinden Domain management ile de ekleyebilirsin."); }
 }
+
+/* ---------- musteriye link: coder-tr.vercel.app/p/<kimlik>/ ---------- */
+const b64of = async blob => { const u8 = new Uint8Array(await blob.arrayBuffer()); let s = ""; for(let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+async function shareApi(body){
+  const r = await fetch("/api/share", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+  const j = await r.json().catch(() => ({}));
+  if(r.status === 401){ ACC.open("login"); throw new Error("Link oluşturmak için önce giriş yap."); }
+  if(!r.ok) throw new Error(j.error || "Bir sorun çıktı (" + r.status + ").");
+  return j;
+}
+function shareShow(url, name){
+  const msg = (name ? name + " — " : "") + "sitenin önizlemesi: " + url;
+  $("#shareOut").innerHTML = '<div class="share-link"><code>' + esc(url) + '</code></div><div class="share-acts">' +
+    '<button class="btn primary" id="shareCopy">Linki kopyala</button>' +
+    '<a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(msg) + '">WhatsApp</a>' +
+    '<a class="btn" href="mailto:?subject=' + encodeURIComponent((name || "Site") + " önizlemesi") + "&body=" + encodeURIComponent("Merhaba,\n\n" + msg + "\n") + '">E-posta</a>' +
+    '<a class="btn" target="_blank" rel="noopener" href="' + esc(url) + '">Aç</a></div>';
+  $("#shareCopy").onclick = async () => { try{ await navigator.clipboard.writeText(url); $("#shareCopy").textContent = "Kopyalandı ✓"; }catch(e){ prompt("Linki kopyala:", url); } };
+  if(navigator.share) { const b = document.createElement("button"); b.className = "btn"; b.textContent = "Paylaş…"; b.onclick = () => navigator.share({title: name || "Site", text: msg, url}).catch(() => {}); $(".share-acts").appendChild(b); }
+}
+async function shareList(){
+  const box = $("#shareList");
+  try{
+    const r = await fetch("/api/share"); const j = await r.json();
+    if(!r.ok){ box.textContent = j.error || "Giriş yapınca linklerin burada görünür."; return; }
+    if(!j.shares.length){ box.textContent = "Henüz link yok."; return; }
+    box.innerHTML = j.shares.map(x => '<div class="it"><a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.name) + ' <small>' + esc(x.url.replace(/^https?:\/\//, "")) + '</small></a><small>' + new Date(x.updated).toLocaleDateString("tr-TR") + '</small><button class="pj-x" data-sdel="' + esc(x.id) + '" title="Linki sil">×</button></div>').join("");
+  }catch(e){ box.textContent = "Liste alınamadı."; }
+}
+$("#shareList").addEventListener("click", async e => {
+  const b = e.target.closest("[data-sdel]"); if(!b) return;
+  if(!confirm("Bu link kalıcı olarak silinsin mi? Müşterin artık açamaz.")) return;
+  try{ await shareApi({action: "delete", id: b.dataset.sdel}); const m = store.get("coder.ide.shares", {}); for(const k in m) if(m[k].id === b.dataset.sdel) delete m[k]; store.set("coder.ide.shares", m); shareList(); ideShareOpenState(); }catch(err){ toast(err.message); }
+});
+function ideShareOpenState(){
+  const cur = WEB.dir ? (store.get("coder.ide.shares", {}))[WEB.dir.name] : null;
+  $("#shareGo").textContent = cur ? "Linki güncelle" : "Link oluştur"; $("#shareStatus").textContent = "";
+  if(cur) shareShow(cur.url, WEB.dir.name); else $("#shareOut").innerHTML = "";
+}
+// Sohbetteki HTML kod blogu: tek sayfalik link (ayni kod icin ayni link guncellenir)
+async function chatShare(code){
+  if(!ACC.user){ toast("Link oluşturmak için önce giriş yap (ücretsiz)."); ACC.open("login"); return; }
+  const html = /<html|<!doctype/i.test(code) ? code : '<!doctype html>\n<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Önizleme</title></head><body style="margin:0;font-family:system-ui">\n' + code + "\n</body></html>";
+  const name = ((html.match(/<title[^>]*>([^<]{1,80})<\/title>/i) || [])[1] || (current && current.title) || "Sayfa").trim();
+  const key = "h" + [...html].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7);
+  const map = store.get("coder.chat.shares", {}), cur = map[key];
+  $("#shareRow").style.display = "none"; $("#shareOut").innerHTML = '<div class="thinking"><span class="spin"></span>Link hazırlanıyor…</div>';
+  openModal("shareModal"); shareList();
+  try{
+    const st = await shareApi({action: "start", id: cur ? cur.id : "", name});
+    await shareApi({action: "file", id: st.id, ver: st.ver, path: "index.html", data: await b64of(new Blob([html]))});
+    await shareApi({action: "commit", id: st.id, ver: st.ver, files: [{path: "index.html", type: "text/html"}]});
+    map[key] = {id: st.id, url: st.url}; store.set("coder.chat.shares", map);
+    shareShow(st.url, name); shareList();
+  }catch(e){ $("#shareOut").innerHTML = '<div class="notice err">' + esc(e.message) + "</div>"; }
+}
+document.addEventListener("click", e => { const b = e.target.closest("[data-share]"); if(b) chatShare(b.closest(".code").querySelector("code").innerText); });
+async function ideOpenShare(){
+  if(!await idePrePublish()) return;
+  if(!ACC.user){ toast("Link oluşturmak için önce giriş yap (ücretsiz)."); ACC.open("login"); return; }
+  closeModal("pubModal"); $("#shareRow").style.display = "flex"; ideShareOpenState(); openModal("shareModal"); shareList();
+}
+$("#ideShareBtn").onclick = ideOpenShare;
+$("#pubShare").onclick = ideOpenShare;
+$("#shareGo").onclick = async () => {
+  const b = $("#shareGo"), say = t => { $("#shareStatus").textContent = t; };
+  b.disabled = true;
+  try{
+    const files = await ideCollect(); if(!files.length) throw new Error("Klasör boş.");
+    if(!files.some(f => /^index\.html?$/i.test(f[0]))) throw new Error("Kök klasörde index.html yok; link açılış sayfası olmadan çalışmaz.");
+    let total = 0; for(const [p, h] of files){ const f = await h.getFile(); if(f.size > 600 * 1024) throw new Error(p + " 600 KB'tan büyük; küçült ya da çıkar."); total += f.size; }
+    if(total > 8e6) throw new Error("Proje 8 MB'tan büyük; büyük görsel/videoları küçült.");
+    if(files.length > 300) throw new Error("300'den fazla dosya var.");
+    const map = store.get("coder.ide.shares", {}), cur = map[WEB.dir.name];
+    say("Hazırlanıyor…");
+    const st = await shareApi({action: "start", id: cur ? cur.id : "", name: WEB.dir.name});
+    const list = [];
+    for(let i = 0; i < files.length; i++){
+      const [p, h] = files[i]; const f = await h.getFile();
+      say("Yükleniyor " + (i + 1) + "/" + files.length + "…");
+      await shareApi({action: "file", id: st.id, ver: st.ver, path: p, data: await b64of(f)});
+      list.push({path: p, type: IDE_MIME[fext(p)] || (/\.html?$/i.test(p) ? "text/html" : /\.(md|txt|csv)$/i.test(p) ? "text/plain" : f.type || "application/octet-stream")});
+    }
+    await shareApi({action: "commit", id: st.id, ver: st.ver, files: list});
+    map[WEB.dir.name] = {id: st.id, url: st.url}; store.set("coder.ide.shares", map);
+    say("✓ " + (cur ? "Güncellendi" : "Hazır")); b.textContent = "Linki güncelle";
+    shareShow(st.url, WEB.dir.name); shareList();
+  }catch(e){ say(e.message); }
+  b.disabled = false;
+};
 /* ---------- yayinla ---------- */
 async function ideCollect(){
   const out = [];

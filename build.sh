@@ -82,6 +82,10 @@ echo '{"private": true, "type": "module"}' > site/package.json
 sed -i '' 's#<title>Coder</title>#<title>Coder</title>\n<link rel="icon" href="/icon.png">#' site/index.html
 cat > site/vercel.json <<'JSON'
 {
+  "rewrites": [
+    {"source": "/p/:id", "destination": "/api/site?id=:id&path="},
+    {"source": "/p/:id/:path*", "destination": "/api/site?id=:id&path=:path*"}
+  ],
   "headers": [
     {"source": "/(.*)", "headers": [
       {"key": "X-Content-Type-Options", "value": "nosniff"},
