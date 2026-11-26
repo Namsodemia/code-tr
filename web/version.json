@@ -1,13 +1,12 @@
 {
-  "version": "1.26.0",
-  "mac": "1.26.0",
+  "version": "1.28.0",
+  "mac": "1.28.0",
   "date": "2026-11-27",
   "notes": [
-    "Sayı animasyonu: konuşmada \"190 TL\", \"%30\", \"8 mühendis\" gibi bir sayı geçince ekranda sayarak büyükçe belirir",
-    "Otomatik vurgu: anahtar kelime seçilmemişse sayılar ve önemli kelimeler kendiliğinden vurgulanır; \"190 TL\" gibi ifadeler aynı satırda kalır",
+    "Glow Up kuralları: ham sese hiç dokunulmaz (\"sesi yükselt\" dense bile yalnız teklif edilir); başlık, sayı ve bilgi yazıları yüz bölgesine gelmez, alt bölgede durur",
+    "Sayı animasyonu ve otomatik vurgu (1.26)",
     "Editörü bulmak kolay: kenar çubuğunda \"‹/› Editör\" düğmesi ve açılış ekranında \"Editör: projeni aç\" kartı; tek tıkla Kod moduna geçip editörü açar",
     "Editörde yapay zekâ: kodu seç, \"✦ Yapay zekâ\" ile açıklat, hatalarını düzelttir, iyileştir ya da serbestçe sor (⌘/Ctrl+K); değişiklikler yine önce fark olarak gösterilir",
-    "Kendi alan adın: Yayınla penceresine siten.com yaz; Netlify'da otomatik bağlanır, GitHub Pages için CNAME eklenir, girmen gereken DNS kayıtları gösterilir",
-    "Telefon ve tablette editör: dar ekranda simgeli üst çubuk, dokunmatik \"Kaydet\" düğmesi, büyük dokunma alanları, açılır dosya ağacı"
+    "Kendi alan adın: Yayınla penceresine siten.com yaz; Netlify'da otomatik bağlanır, GitHub Pages için CNAME eklenir, girmen gereken DNS kayıtları gösterilir"
   ]
 }

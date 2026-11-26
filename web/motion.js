@@ -643,6 +643,9 @@ export function parseWishes(q){
   };
 }
 export async function renderFast({file, W, H, words, plan, palette = "kurumsal", brand = null, look = null, cut = false, zoom = true, wish = {}, onStep = () => {}}){
+  // Glow Up kurallari: ham sese HIC dokunma (kazanc yalniz teklif edilir); metin yuz bolgesine (ust-orta) gelmez
+  if(brand){ if(wish.loud) plan.__sesTeklif = true; wish = {...wish, loud: false}; if(plan.__concept && /ust|orta/.test(plan.__concept.yerlesim)) plan.__concept = {...plan.__concept, yerlesim: "alt"}; }
+  const faceSafe = !!brand;
   if(typeof VideoEncoder === "undefined") throw new Error("NO_WEBCODECS");
   const MB = await import("/vendor/mediabunny/mediabunny.min.mjs");
   SLOW = 1.6;
@@ -728,7 +731,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
     const s2 = Math.min(W, H) / 1080, p = easeOut(clamp((t - n.s + .1) / .6)), o = easeOut(clamp((n.s + 1.8 - t) / .4));
     const val = parseFloat(n.txt.replace("%", "").replace(/\.(?=\d{3})/g, "").replace(",", ".")), shown = isNaN(val) ? n.txt : n.txt.replace(/[\d.,]+/, (Math.round(val * easeOut(clamp((t - n.s + .1) / .9)) * (val % 1 ? 10 : 1)) / (val % 1 ? 10 : 1)).toLocaleString("tr-TR"));
     ctx.save(); ctx.globalAlpha = o * p; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic"; ctx.lineJoin = "round";
-    font(ctx, 200 * s2, 800); ctx.strokeStyle = "rgba(0,0,0,.5)"; ctx.lineWidth = 12 * s2; const y = H * .3 + (1 - p) * 20 * s2;
+    font(ctx, 200 * s2, 800); ctx.strokeStyle = "rgba(0,0,0,.5)"; ctx.lineWidth = 12 * s2; const y = H * (faceSafe ? .58 : .3) + (1 - p) * 20 * s2;
     ctx.strokeText(shown, W / 2, y); ctx.fillStyle = "#ffffff"; ctx.fillText(shown, W / 2, y);
     if(n.unit){ font(ctx, 54 * s2, 700); ctx.lineWidth = 7 * s2; const u = n.unit.toLocaleUpperCase("tr"); ctx.strokeText(u, W / 2, y + 70 * s2); ctx.fillStyle = P.red; ctx.fillText(u, W / 2, y + 70 * s2); }
     ctx.restore();
@@ -738,7 +741,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
     const words2 = hook.split(/\s+/), lines = []; let cur = "";
     font(ctx, 92 * s2, 800); for(const w of words2){ const tr = cur ? cur + " " + w : w; if(ctx.measureText(tr).width > W * .82 && cur){ lines.push(cur); cur = w; } else cur = tr; } if(cur) lines.push(cur);
     ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
-    lines.slice(0, 3).forEach((ln, i) => { const p = easeOut(clamp((t - i * .12) / .5)), yy = H * .22 + i * 100 * s2 + (1 - p) * 18 * s2;
+    lines.slice(0, 3).forEach((ln, i) => { const p = easeOut(clamp((t - i * .12) / .5)), yy = H * (faceSafe ? .5 : .22) + i * 100 * s2 + (1 - p) * 18 * s2;
       ctx.globalAlpha = a * p; font(ctx, 92 * s2, 800); ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = 9 * s2; ctx.strokeText(ln, W / 2, yy);
       ctx.fillStyle = i === lines.length - 1 && lines.length > 1 ? P.red : "#ffffff"; ctx.fillText(ln, W / 2, yy); });
     ctx.restore();
