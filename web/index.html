@@ -279,6 +279,11 @@ textarea#input::placeholder{color:var(--faint)}
 .gen-acts a,.gen-acts button{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:4px 10px;font-size:12.5px;color:var(--muted);text-decoration:none}
 .gen-acts a:hover,.gen-acts button:hover{color:var(--text)}
 .ar-pill{display:none}
+#micBtn.on{color:#fff;background:var(--err);animation:micp 1.2s ease-in-out infinite}
+@keyframes micp{0%,100%{box-shadow:0 0 0 0 rgba(192,54,44,.45)}50%{box-shadow:0 0 0 8px rgba(192,54,44,0)}}
+#ttsBtn .w1,#ttsBtn .w2{opacity:.25}
+#ttsBtn.on{color:var(--accent)} #ttsBtn.on .w1,#ttsBtn.on .w2{opacity:1}
+#ttsBtn.speaking .w2{animation:blink 1s steps(2) infinite}
 /* yenilikler */
 .news li{margin:6px 0}
 .badge{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;margin-bottom:8px}
@@ -420,6 +425,8 @@ body{letter-spacing:-.005em}
         <div class="chips" id="chips"></div>
         <textarea id="input" rows="1" placeholder="Code-Tr'ye bir şey sor…"></textarea>
         <div class="bar">
+          <button class="icon-btn" id="micBtn" title="Sesli komut (konuş, susunca gönderilir)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button>
+          <button class="icon-btn" id="ttsBtn" title="Sesli yanıt: kapalı"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H3v6h3l5 4z"/><path class="w1" d="M15.5 8.5a5 5 0 010 7"/><path class="w2" d="M18.5 5.5a9 9 0 010 13"/></svg></button>
           <button class="icon-btn" id="attachBtn" title="Görsel, PDF ya da dosya ekle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 11.5l-8.6 8.6a5 5 0 01-7.1-7.1l8.6-8.6a3.3 3.3 0 014.7 4.7l-8.6 8.6a1.7 1.7 0 01-2.4-2.4l8-8"/></svg></button>
           <input type="file" id="file" multiple hidden accept="image/*,video/*,audio/*,.pdf,.txt,.md,.csv,.json,.py,.js,.ts,.tsx,.jsx,.html,.css,.php,.sql,.xml,.yml,.yaml,.sh,.swift,.java,.c,.cpp,.h,.go,.rs,.rb">
           <div class="seg" id="modeSeg">
@@ -1346,6 +1353,8 @@ async function send(textOverride){
   addActions(el, aMsg.content, userMsg.content);
   current.messages.push(aMsg); current.updated = Date.now(); saveChats(); renderChats();
   busy = null; updateSend(); scrollDown();
+  if(VOICE.tts && aMsg.content) VOICE.speak(aMsg.content);
+  else if(VOICE.handsFree) setTimeout(() => VOICE.listen(), 400);
 }
 function approvalEl(ev){
   const d = document.createElement("div"); d.className = "approve";
@@ -2206,6 +2215,85 @@ async function makeMotion(prompt, item, el, say){
     return makeMotionSlow(prompt, item, el, say);
   }
 }
+
+/* ---------------- Sesli komut + sesli yanit ---------------- */
+const VOICE = {
+  rec: null, listening: false, tts: store.get("coder.tts", false), handsFree: false, finalText: "",
+  // Markdown/kod temizleyip okunabilir metin
+  plain(t){ return String(t).replace(/```[\s\S]*?```/g, " (kod bloğu ekranda) ").replace(/`([^`]+)`/g, "$1").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/[#*_>|~-]{1,}/g, " ").replace(/\s+/g, " ").trim(); },
+  voice(){ const vs = speechSynthesis.getVoices(); return vs.find(v => /tr[-_]TR/i.test(v.lang) && /Yelda|Google|Premium|Enhanced/i.test(v.name)) || vs.find(v => /^tr/i.test(v.lang)); },
+  speak(text){
+    if(!("speechSynthesis" in window)) return;
+    speechSynthesis.cancel();
+    const parts = this.plain(text).match(/[^.!?…]+[.!?…]*/g) || [];
+    const v = this.voice(); let left = parts.length;
+    $("#ttsBtn").classList.add("speaking");
+    parts.forEach(p => { const u = new SpeechSynthesisUtterance(p.trim()); u.lang = "tr-TR"; if(v) u.voice = v; u.rate = 1.05;
+      u.onend = u.onerror = () => { if(--left <= 0){ $("#ttsBtn").classList.remove("speaking"); if(this.handsFree) setTimeout(() => this.listen(), 350); } };
+      speechSynthesis.speak(u); });
+    if(!parts.length) $("#ttsBtn").classList.remove("speaking");
+  },
+  stopAll(){ try{ speechSynthesis.cancel(); }catch(e){} this.stopListen(); this.handsFree = false; $("#ttsBtn").classList.remove("speaking"); },
+  // Sesli komutlar: mod degistir, yeni sohbet, dur
+  command(t){
+    const x = t.toLocaleLowerCase("tr").replace(/[.!?,]/g, "").trim();
+    const m = {"sohbet": "chat", "kod": "agent", "görsel": "image", "resim": "image", "video": "video"};
+    const mm = x.match(/^(sohbet|kod|görsel|resim|video) (moduna|modu|moda)( geç| aç)?$/);
+    if(mm){ setMode(m[mm[1]]); toast(mm[1].charAt(0).toLocaleUpperCase("tr") + mm[1].slice(1) + " moduna geçildi"); return true; }
+    if(/^(yeni sohbet|yeni sohbet aç|temizle)$/.test(x)){ newChat(); toast("Yeni sohbet açıldı"); return true; }
+    if(/^(dur|sus|durdur|kapat|tamam bu kadar)$/.test(x)){ this.stopAll(); if(busy && busy.abort) busy.abort(); toast("Durduruldu"); return true; }
+    if(/^sesli (yanıt|cevap) (aç|kapat)$/.test(x)){ this.setTts(/aç$/.test(x)); return true; }
+    return false;
+  },
+  setTts(on){ this.tts = on; store.set("coder.tts", on); $("#ttsBtn").classList.toggle("on", on); $("#ttsBtn").title = "Sesli yanıt: " + (on ? "açık" : "kapalı"); if(!on){ try{ speechSynthesis.cancel(); }catch(e){} } toast("Sesli yanıt " + (on ? "açık" : "kapalı")); },
+  submit(text){
+    text = text.trim(); if(!text) return;
+    if(this.command(text)){ $("#input").value = ""; autosize(); if(this.handsFree) setTimeout(() => this.listen(), 500); return; }
+    $("#input").value = text; autosize();
+    if(!busy) send();
+  },
+  stopListen(){ this.listening = false; $("#micBtn").classList.remove("on"); try{ this.rec && this.rec.stop(); }catch(e){} },
+  async listen(){
+    if(this.listening) return this.stopListen();
+    try{ speechSynthesis.cancel(); }catch(e){}
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(SR) return this.listenWeb(SR);
+    return this.listenWhisper();
+  },
+  // Hizli yol: tarayicinin ses tanimasi (Chrome'da Google sunuculari)
+  listenWeb(SR){
+    const r = new SR(); this.rec = r; r.lang = "tr-TR"; r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
+    const before = $("#input").value; this.finalText = "";
+    r.onresult = e => { let interim = ""; for(let i = e.resultIndex; i < e.results.length; i++){ const t = e.results[i][0].transcript; if(e.results[i].isFinal) this.finalText += t; else interim += t; }
+      $("#input").value = (before ? before + " " : "") + this.finalText + interim; autosize(); };
+    r.onerror = e => { this.stopListen(); if(e.error === "not-allowed") toast("Mikrofon izni verilmedi. Adres çubuğundaki kilit simgesinden izin ver."); else if(e.error !== "no-speech" && e.error !== "aborted") toast("Ses tanıma hatası: " + e.error); };
+    r.onend = () => { const was = this.listening; this.stopListen(); if(was) this.submit($("#input").value); };
+    this.listening = true; $("#micBtn").classList.add("on"); this.handsFree = this.tts;
+    r.start();
+  },
+  // Gizli yol: cihazdaki Whisper (tarayici ses tanima sunmuyorsa)
+  async listenWhisper(){
+    let stream; try{ stream = await navigator.mediaDevices.getUserMedia({audio: true}); }catch(e){ toast("Mikrofon izni verilmedi."); return; }
+    const mr = new MediaRecorder(stream); const chunks = []; this.rec = mr;
+    this.listening = true; $("#micBtn").classList.add("on"); this.handsFree = this.tts;
+    // sessizlik algilama: 1,3 sn sessiz kalinca dur
+    const ac = new AudioContext(); const an = ac.createAnalyser(); ac.createMediaStreamSource(stream).connect(an); const buf = new Uint8Array(an.fftSize);
+    let quiet = 0, spoke = false; const tick = setInterval(() => { an.getByteTimeDomainData(buf); let m = 0; for(const v of buf) m = Math.max(m, Math.abs(v - 128));
+      if(m > 12){ spoke = true; quiet = 0; } else quiet += 100; if((spoke && quiet > 1300) || quiet > 8000) { try{ mr.stop(); }catch(e){} } }, 100);
+    mr.ondataavailable = e => chunks.push(e.data);
+    mr.onstop = async () => { clearInterval(tick); stream.getTracks().forEach(t => t.stop()); ac.close(); const was = this.listening; this.stopListen(); if(!was || !spoke) return;
+      toast("Yazıya dökülüyor…");
+      try{ const audio = await audio16k(new Blob(chunks)); const asr = await getASR(x => toast("Ses tanıma hazırlanıyor… %" + Math.round(x.progress || 0)));
+        const res = await asr(audio, {language: "turkish", task: "transcribe"}); this.submit(($("#input").value ? $("#input").value + " " : "") + (res.text || "")); }
+      catch(e){ toast("Ses yazıya dökülemedi."); } };
+    mr.start();
+  }
+};
+$("#micBtn").onclick = () => VOICE.listen();
+$("#ttsBtn").onclick = () => VOICE.setTts(!VOICE.tts);
+$("#ttsBtn").classList.toggle("on", VOICE.tts); $("#ttsBtn").title = "Sesli yanıt: " + (VOICE.tts ? "açık" : "kapalı");
+if("speechSynthesis" in window) speechSynthesis.onvoiceschanged = () => {};
+document.addEventListener("keydown", e => { if(e.key === "Escape" && (VOICE.listening || ($("#ttsBtn").classList.contains("speaking")))) VOICE.stopAll(); });
 
 /* ---------------- Ogrenen Code-Tr ---------------- */
 function openTeach(q, a){

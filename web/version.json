@@ -1,12 +1,12 @@
 {
-  "version": "1.7.2",
-  "mac": "1.7.2",
+  "version": "1.8.0",
+  "mac": "1.8.0",
   "date": "2026-11-26",
   "notes": [
+    "🎤 Sesli komut: mikrofona bas ve konuş, susunca gönderilir. \"Görsel moduna geç\", \"yeni sohbet\", \"dur\" gibi komutlar da çalışır.",
+    "🔊 Sesli yanıt: hoparlör düğmesini açınca Code-Tr cevaplarını Türkçe sesle okur; mikrofonla konuşursan cevaptan sonra seni tekrar dinler (eller serbest sohbet).",
     "🎬 Video modunda artık varsayılan profesyonel motion kurgusu: \"güzel, animasyonlu, alt yazılı bir video yap\" demen yeterli.",
     "⚡ Kendi API anahtarının hakkı dolduğunda otomatik olarak Code-Tr'nin yedekli ücretsiz modellerine geçiliyor; \"çok yoğun\" hatası çok daha az.",
-    "🎬 Motion düzeltmesi: her videoda mutlaka infografik sahneler çıkıyor; yapay zekâ plan veremezse sahneler konuşmadan otomatik çıkarılıyor (adımlar, sayılar, seçenekler, kapanış alıntısı).",
-    "🎬 Yeni motion motoru: röportaj videolarına profesyonel kurumsal kurgu. İsim etiketi, kelime kelime beliren altyazı ve konuşmacının kaybolduğu infografik sahneler.",
-    "📊 8 sahne şablonu: adım listesi, kaynak kartları, sayı + simgeler, rapor grafiği, zaman çizelgesi, baştan sona yol, faz sütunları, alıntı."
+    "🎬 Motion düzeltmesi: her videoda mutlaka infografik sahneler çıkıyor; yapay zekâ plan veremezse sahneler konuşmadan otomatik çıkarılıyor (adımlar, sayılar, seçenekler, kapanış alıntısı)."
   ]
 }
