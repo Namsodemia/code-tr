@@ -1,13 +1,13 @@
 {
-  "version": "1.27.0",
-  "mac": "1.27.0",
+  "version": "1.26.0",
+  "mac": "1.26.0",
   "date": "2026-11-27",
   "notes": [
+    "Sayı animasyonu: konuşmada \"190 TL\", \"%30\", \"8 mühendis\" gibi bir sayı geçince ekranda sayarak büyükçe belirir",
+    "Otomatik vurgu: anahtar kelime seçilmemişse sayılar ve önemli kelimeler kendiliğinden vurgulanır; \"190 TL\" gibi ifadeler aynı satırda kalır",
     "Editörü bulmak kolay: kenar çubuğunda \"‹/› Editör\" düğmesi ve açılış ekranında \"Editör: projeni aç\" kartı; tek tıkla Kod moduna geçip editörü açar",
     "Editörde yapay zekâ: kodu seç, \"✦ Yapay zekâ\" ile açıklat, hatalarını düzelttir, iyileştir ya da serbestçe sor (⌘/Ctrl+K); değişiklikler yine önce fark olarak gösterilir",
     "Kendi alan adın: Yayınla penceresine siten.com yaz; Netlify'da otomatik bağlanır, GitHub Pages için CNAME eklenir, girmen gereken DNS kayıtları gösterilir",
-    "Telefon ve tablette editör: dar ekranda simgeli üst çubuk, dokunmatik \"Kaydet\" düğmesi, büyük dokunma alanları, açılır dosya ağacı",
-    "Editör (1.23): dosya ağacı, sekmeler, canlı önizleme, Yayınla ve ⤓ İndir; Windows/Mac'te klasörünü doğrudan aç, telefon/tablette projeler tarayıcında saklanır",
-    "Ses: \"sesi yükselt\", \"sesi dengele\" ya da \"ses kısık\" yazarsan konuşma sesi dengelenir; yazmazsan sese dokunulmaz"
+    "Telefon ve tablette editör: dar ekranda simgeli üst çubuk, dokunmatik \"Kaydet\" düğmesi, büyük dokunma alanları, açılır dosya ağacı"
   ]
 }

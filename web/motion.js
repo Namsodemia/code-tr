@@ -457,7 +457,7 @@ function captionGroups(words){
   words.forEach((w, i) => { cur.push({...w, i}); const nx = words[i + 1], len = cur.reduce((a, x) => a + x.w.length + 1, 0);
     const hard = /[.!?…]$/.test(w.w) || !nx || nx.s - w.e > .35, soft = /[,;:]$/.test(w.w);
     const full = cur.length >= 4 || len + (nx ? nx.w.length : 0) > 24;
-    if(hard || ((soft || full) && !(NOEND.test(w.w.replace(/[.,!?;:…]+$/, "")) && cur.length < 5 && nx && nx.s - w.e < .35))){ groups.push(cur); cur = []; } });
+    if(hard || ((soft || full) && !((NOEND.test(w.w.replace(/[.,!?;:…]+$/, "")) || /^%?\d[\d.,]*%?$/.test(w.w)) && cur.length < 5 && nx && nx.s - w.e < .35))){ groups.push(cur); cur = []; } });
   // tek kelime kalan grubu (yakinsa) oncekine ekle
   for(let g = groups.length - 1; g > 0; g--){ const a = groups[g - 1], b = groups[g];
     if(b.length === 1 && b[0].s - a[a.length - 1].e < .4 && a.concat(b).reduce((x, w) => x + w.w.length + 1, 0) <= 30 && !/[.!?…]$/.test(a[a.length - 1].w)){ groups.splice(g - 1, 2, a.concat(b)); } }
@@ -659,6 +659,8 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
   scenes.forEach(sc => { sc.ov = full === "all" ? false : sc.type !== "alinti"; });
   plan.sahneler = scenes;
   let groups = captionGroups(words); const emph = new Set(plan.vurgu || []);
+  // Otomatik vurgu: yapay zeka secmediyse sayilar ve onemli uzun kelimeler (her ~3 grupta bir) vurgulanir
+  if(!emph.size){ let last = -9; words.forEach((w, k) => { const c = w.w.replace(/[.,!?;:…'’]+/g, ""); if((/\d/.test(c) || c.length >= 9) && k - last > 6){ emph.add(k); last = k; } }); }
   const input = new MB.Input({source: new MB.BlobSource(file), formats: MB.ALL_FORMATS});
   const vt = await input.getPrimaryVideoTrack(); const at = await input.getPrimaryAudioTrack();
   if(!vt) throw new Error("Videoda görüntü bulunamadı.");
@@ -716,6 +718,21 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
   const zoomAt = t => { if(!zoom) return 1; let k = 0; for(let g = 0; g < groups.length; g++){ if(groups[g].st <= t) k = g; else break; } const tgt = ZL[k % 4], from = ZL[(k + 3) % 4], p = easeOut(clamp((t - (groups[k] ? groups[k].st : 0)) / .9)); return from + (tgt - from) * p; };
   // Kanca basligi: ilk ~2.6 sn buyuk baslik (yapay zeka konusmadan yazar)
   const hook = String(plan.hook || "").trim().slice(0, 48);
+  // Sayi animasyonu: konusmada gecen sayi ustte buyukce sayarak belirir (yalniz grafik izinliyse)
+  const allowG = !(plan.__istek && plan.__istek.grafik === false) && !(wish && wish.noCaps && false);
+  const NUMRX = /^(%?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d+)?%?)$/;
+  const nums = [];
+  if(allowG) words.forEach((w, k) => { const c = w.w.replace(/[!?;:…]+$/, "").replace(/[.,]$/, ""); if(NUMRX.test(c) && (!nums.length || w.s - nums[nums.length - 1].s > 4) && w.s > 3){ const nx = words[k + 1] ? words[k + 1].w.replace(/[.,!?;:…]+$/, "") : ""; nums.push({s: w.s, txt: c, unit: /^(tl|lira|dolar|euro|yıl|yıllık|gün|kişi|ay|saat|dakika|km|kg|adet|bin|milyon|mühendis|ülke|şube|çeşit)/i.test(nx) ? nx : ""}); } });
+  const drawNum = (t, busy) => {
+    if(busy) return; const n = nums.find(x => t >= x.s - .1 && t < x.s + 1.8); if(!n) return;
+    const s2 = Math.min(W, H) / 1080, p = easeOut(clamp((t - n.s + .1) / .6)), o = easeOut(clamp((n.s + 1.8 - t) / .4));
+    const val = parseFloat(n.txt.replace("%", "").replace(/\.(?=\d{3})/g, "").replace(",", ".")), shown = isNaN(val) ? n.txt : n.txt.replace(/[\d.,]+/, (Math.round(val * easeOut(clamp((t - n.s + .1) / .9)) * (val % 1 ? 10 : 1)) / (val % 1 ? 10 : 1)).toLocaleString("tr-TR"));
+    ctx.save(); ctx.globalAlpha = o * p; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic"; ctx.lineJoin = "round";
+    font(ctx, 200 * s2, 800); ctx.strokeStyle = "rgba(0,0,0,.5)"; ctx.lineWidth = 12 * s2; const y = H * .3 + (1 - p) * 20 * s2;
+    ctx.strokeText(shown, W / 2, y); ctx.fillStyle = "#ffffff"; ctx.fillText(shown, W / 2, y);
+    if(n.unit){ font(ctx, 54 * s2, 700); ctx.lineWidth = 7 * s2; const u = n.unit.toLocaleUpperCase("tr"); ctx.strokeText(u, W / 2, y + 70 * s2); ctx.fillStyle = P.red; ctx.fillText(u, W / 2, y + 70 * s2); }
+    ctx.restore();
+  };
   const drawHook = t => {
     if(!hook || t > 2.8) return; const a = easeOut(clamp(t / .45)) * easeOut(clamp((2.8 - t) / .4)), s2 = Math.min(W, H) / 1080;
     const words2 = hook.split(/\s+/), lines = []; let cur = "";
@@ -767,7 +784,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
           ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.globalAlpha = o * k; ctx.fillText(txt, W / 2 + (1 - k) * -30 * S, y); ctx.restore(); }
       }
       if(fmt !== "bolunmus") drawCaption(ctx, W, H, t, groups, emph, P, false);
-      drawLowerThird(ctx, W, H, t, plan.isim, P); drawHook(t); drawHook(t);
+      drawLowerThird(ctx, W, H, t, plan.isim, P); drawHook(t); drawNum(t, false);
       await vsrc.add(t, 1 / FPS);
       if(++i % 15 === 0){ const fps = i / ((performance.now() - t0) / 1000); onStep("Video işleniyor… %" + Math.round(i / n * 100) + " · " + fps.toFixed(0) + " kare/sn"); }
       continue;
@@ -777,7 +794,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
     if(!sc || sc.ov || fadeOut < 1){ if(wc) drawVid(wc.canvas, t); else { ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H); } }
     if(sc){ drawScene(sctx, W, H, sc, t - sc.start, P); ctx.save(); ctx.globalAlpha = sc.ov ? fadeOut * easeOut(clamp((t - sc.start) / .6)) : fadeOut; ctx.drawImage(scv, 0, 0); ctx.restore(); }
     drawCaption(ctx, W, H, t, groups, emph, P, !!sc && fadeOut > .5);
-    drawLowerThird(ctx, W, H, t, plan.isim, P);
+    drawLowerThird(ctx, W, H, t, plan.isim, P); drawHook(t); drawNum(t, !!sc);
     await vsrc.add(t, 1 / FPS);
     if(++i % 15 === 0){ const fps = i / ((performance.now() - t0) / 1000); onStep("Video işleniyor… %" + Math.round(i / n * 100) + " · " + fps.toFixed(0) + " kare/sn (donanım hızlandırmalı)"); }
   }
