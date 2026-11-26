@@ -1,13 +1,13 @@
 {
-  "version": "1.25.0",
-  "mac": "1.25.0",
+  "version": "1.26.0",
+  "mac": "1.26.0",
   "date": "2026-11-27",
   "notes": [
+    "Editörde yapay zekâ: kodu seç, \"✦ Yapay zekâ\" ile açıklat, hatalarını düzelttir, iyileştir ya da serbestçe sor (⌘/Ctrl+K); değişiklikler yine önce fark olarak gösterilir",
+    "Kendi alan adın: Yayınla penceresine siten.com yaz; Netlify'da otomatik bağlanır, GitHub Pages için CNAME eklenir, girmen gereken DNS kayıtları gösterilir",
+    "Telefon ve tablette editör: dar ekranda simgeli üst çubuk, dokunmatik \"Kaydet\" düğmesi, büyük dokunma alanları, açılır dosya ağacı",
+    "Editör (1.23): dosya ağacı, sekmeler, canlı önizleme, Yayınla ve ⤓ İndir; Windows/Mac'te klasörünü doğrudan aç, telefon/tablette projeler tarayıcında saklanır",
     "Ses: \"sesi yükselt\", \"sesi dengele\" ya da \"ses kısık\" yazarsan konuşma sesi dengelenir; yazmazsan sese dokunulmaz",
-    "Uzun videolar (90 sn üstü) yarı sürede işlenir; kısa videolar akıcı 60 fps kalır",
-    "Ortak çalışma: Projeler — proje aç, e-postayla davet et, davet edilen kabul eder; projedeki sohbeti herkes görür ve birlikte yazar",
-    "Mobilde alt çubuk düzeldi: modlar ayrı satırda, gönder düğmesi her zaman görünür",
-    "Video: \"sıcak ton\", \"soğuk ton\", \"sinematik renk\", \"siyah beyaz\" yazarsan renk ayarlanır; yazmazsan renge dokunulmaz",
-    "Altyazı satırları anlama göre bölünür, \"ve, bir, için\" gibi kelimelerde kesilmez"
+    "Uzun videolar (90 sn üstü) yarı sürede işlenir; kısa videolar akıcı 60 fps kalır"
   ]
 }

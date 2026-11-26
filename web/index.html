@@ -391,6 +391,9 @@ body{letter-spacing:-.005em}
 .ide-b{border:1px solid var(--line);background:transparent;border-radius:8px;padding:4px 10px;font-size:13px;color:var(--muted);white-space:nowrap}
 .ide-b:hover{color:var(--text);border-color:var(--line2)}
 .ide-b.on{background:var(--accent-soft);color:var(--accent);border-color:transparent;font-weight:600}
+.ide-b.ai{color:var(--accent);border-color:var(--accent-soft);font-weight:600}
+.ide-ai{right:0;left:auto;top:36px;bottom:auto;max-height:none;min-width:210px;z-index:20}
+.ide-ai small{float:right;color:var(--faint)}
 .ide-b.go{background:var(--ink);color:var(--on-ink);border-color:var(--ink);font-weight:600}
 .ide-body{flex:1;display:flex;min-height:0}
 .ide-tree{width:210px;flex:0 0 210px;overflow:auto;border-right:1px solid var(--line);background:var(--side);font-size:13px;padding:6px 0}
@@ -479,6 +482,13 @@ body{letter-spacing:-.005em}
 }
 @media (max-width: 640px){
   #ideDl{display:none}
+  .ide-top .lbl{display:none}
+  .ide-b{min-width:36px;text-align:center}
+  .ide-top .spacer{min-width:0}
+  .ide-ai{position:fixed;left:8px;right:8px;top:52px;min-width:0}
+  #pubModal .modal{padding:18px 16px}
+  #pubModal .pub-opt .row .btn{flex:1 1 auto;text-align:center}
+  .pub-dns div{grid-template-columns:52px 44px 1fr}
   .ide-tree{width:62%;flex-basis:62%;position:absolute;z-index:3;top:0;bottom:0;left:0;box-shadow:var(--shadow)}
   .ide-body{position:relative}
   .ide-top{gap:4px;padding:0 6px}
@@ -487,7 +497,13 @@ body{letter-spacing:-.005em}
   .tn{padding-top:5px;padding-bottom:5px;font-size:14px}
   .ide-ed .cm-editor{font-size:14px}
 }
-@media (hover: none){ .ide-foot .kb{display:none} .ide-tab .x{width:24px;height:24px} }
+#ideSaveBtn{display:none}#ideSaveBtn:disabled{opacity:.45;cursor:default}
+@media (hover: none){ .ide-foot .kb{display:none} .ide-tab .x{width:24px;height:24px} #ideSaveBtn{display:inline-block}
+  .ide-b{min-height:36px;padding:6px 12px} .ide-tab{padding:9px 8px 9px 14px} .tn{padding-top:7px;padding-bottom:7px;font-size:14.5px} .ide-ai .opt{padding:11px 14px} }
+.pub-dns{font:12.5px var(--mono);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:8px 0}
+.pub-dns div{display:grid;grid-template-columns:70px 70px 1fr;gap:8px;padding:6px 10px;border-top:1px solid var(--line)}
+.pub-dns div:first-child{border-top:0;color:var(--faint);font-family:var(--sans);font-size:12px}
+.pub-dns code{user-select:all;word-break:break-all}
 </style>
 </head>
 <body>
@@ -574,12 +590,19 @@ body{letter-spacing:-.005em}
     <div class="ide-top">
       <button class="icon-btn" data-ide="tree" title="Dosya ağacını aç/kapat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg></button>
       <span class="nm" id="ideName">Editör</span>
-      <button class="ide-b" data-ide="home" title="Başka bir klasör ya da proje aç, yeni proje oluştur">📁 Aç</button>
+      <button class="ide-b" data-ide="home" title="Başka bir klasör ya da proje aç, yeni proje oluştur">📁<span class="lbl"> Aç</span></button>
       <input type="file" id="ideImpDir" webkitdirectory multiple hidden><input type="file" id="ideImpFiles" multiple hidden>
       <div class="spacer"></div>
+      <div class="rel"><button class="ide-b ai" id="ideAiBtn" title="Seçili kod ya da açık dosya hakkında yapay zekâya sor (⌘/Ctrl+K)">✦<span class="lbl"> Yapay zekâ</span></button>
+        <div class="menu ide-ai" id="ideAiMenu" style="display:none">
+          <button class="opt" data-ai="explain">Açıkla</button><button class="opt" data-ai="fix">Hataları bul ve düzelt</button>
+          <button class="opt" data-ai="improve">Daha iyi yap</button><button class="opt" data-ai="comment">Yorum satırları ekle</button>
+          <button class="opt" data-ai="free">Serbest sor… <small>⌘K</small></button>
+        </div></div>
       <button class="ide-b" id="ideDl" title="Projeyi zip olarak bilgisayarına ya da telefonuna indir">⤓ İndir</button>
-      <button class="ide-b" id="idePrevBtn" title="HTML projesini canlı önizle">▶ Önizle</button>
-      <button class="ide-b go" id="idePubBtn" title="Projeyi internete yükle">⇪ Yayınla</button>
+      <button class="ide-b" id="ideSaveBtn" title="Kaydet (⌘/Ctrl+S)" disabled>💾<span class="lbl"> Kaydet</span></button>
+      <button class="ide-b" id="idePrevBtn" title="HTML projesini canlı önizle">▶<span class="lbl"> Önizle</span></button>
+      <button class="ide-b go" id="idePubBtn" title="Projeyi internete yükle">⇪<span class="lbl"> Yayınla</span></button>
       <button class="icon-btn" id="ideClose" title="Editörü kapat (sohbete dön)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <div class="ide-body">
@@ -743,6 +766,12 @@ body{letter-spacing:-.005em}
       <ol><li><a href="https://github.com/new" target="_blank" rel="noopener">github.com/new</a> ile <b>Public</b> bir depo aç.</li><li><b>Add file → Upload files</b> ile zip'in <i>içindekileri</i> sürükle, <b>Commit</b>.</li><li><b>Settings → Pages</b>: Branch <b>main</b>, klasör <b>/ (root)</b>, <b>Save</b>. Birkaç dakikada <code>kullaniciadin.github.io/depo-adi</code> adresinde yayında.</li></ol>
     </div>
     <label class="pub-url">Sitenin adresi (sitemap için; Netlify'da otomatik dolar)<input id="pubUrl" placeholder="https://siten.netlify.app" inputmode="url"></label>
+    <div class="pub-opt">
+      <h3>🌐 Kendi alan adın <small>isteğe bağlı · ör. siten.com</small></h3>
+      <p>Alan adını yaz: Netlify ile yayınlarken otomatik bağlanır; GitHub Pages için zip'e <code>CNAME</code> dosyası eklenir; sitemap bu adresle oluşturulur. Sonra alan adını aldığın yerin (GoDaddy, Natro, Namecheap, Cloudflare…) DNS ayarlarına aşağıdaki kayıtları gir. Yayılması birkaç dakika ile birkaç saat sürer, HTTPS kendiliğinden açılır.</p>
+      <input id="pubDomain" placeholder="siten.com" inputmode="url" autocapitalize="off" spellcheck="false" style="width:100%;border:1px solid var(--line2);background:var(--bg);border-radius:9px;padding:7px 10px">
+      <div id="pubDns"></div>
+    </div>
     <details class="pub-guide"><summary>🔎 Google'da bulunmak: sitemap, robots ve Search Console rehberi</summary>
       <ol>
         <li><b>robots.txt</b> arama motorlarına siteyi tarayabileceklerini, <b>sitemap.xml</b> hangi sayfaların olduğunu söyler. Code-Tr ikisini de yüklemeye otomatik ekler (klasöründe zaten varsa seninkini kullanır). Sitemap için yukarıya sitenin adresini yaz.</li>
@@ -2911,7 +2940,7 @@ async function ideOpenFolder(handle){
   $("#ideName").innerHTML = esc(handle.name) + "<small>" + (handle.vfs ? "tarayıcıda" : "klasör") + "</small>";
   $("#ide").classList.remove("tree-off");
   await ideTree();
-  if(await ideExists("index.html")) await ideOpenFile("index.html");
+  if(await ideExists("index.html")){ await ideOpenFile("index.html"); if(window.innerWidth < 640) $("#ide").classList.add("tree-off"); }
   else ideRenderTabs();
 }
 async function ideNewProject(){
@@ -3072,6 +3101,7 @@ async function ideActivate(tab){
 }
 function ideRenderTabs(){
   const box = $("#ideTabs"); box.innerHTML = "";
+  $("#ideSaveBtn").disabled = !(IDE.active && IDE.active.dirty);
   for(const t of IDE.tabs){
     const b = document.createElement("button");
     b.className = "ide-tab" + (t === IDE.active ? " on" : "") + (t.dirty ? " dirty" : ""); b.title = t.path;
@@ -3120,8 +3150,10 @@ async function ideChanged(path){
 function ideContext(){
   if(!IDE.on || !WEB.dir) return "";
   const open = IDE.tabs.map(t => t.path + (t.dirty ? " (kaydedilmemiş değişiklik var)" : ""));
+  const sel = IDE.sel; IDE.sel = null;
   return "\n\nKullanıcı bu klasörü Code-Tr editöründe açtı." + (open.length ? " Açık sekmeler: " + open.join(", ") + "." : "") + (IDE.active ? " Şu an baktığı dosya: " + IDE.active.path + "." : "") +
-    "\nWeb projelerinde giriş sayfası index.html olsun; kullanıcı sonucu canlı önizlemede görür ve 'Yayınla' ile internete yükleyebilir. Göreli yollar kullan (css/style.css gibi).";
+    "\nWeb projelerinde giriş sayfası index.html olsun; kullanıcı sonucu canlı önizlemede görür ve 'Yayınla' ile internete yükleyebilir. Göreli yollar kullan (css/style.css gibi)." +
+    (sel ? "\n\nKullanıcının editörde seçtiği kod (" + sel.path + ", satır " + sel.a + "-" + sel.b + "):\n```\n" + sel.text.slice(0, 6000) + "\n```" : "");
 }
 
 /* ---------- canli onizleme (HTML projeleri) ---------- */
@@ -3190,7 +3222,7 @@ async function idePreview(){
 function ideTogglePrev(on){
   IDE.prev = on === undefined ? !IDE.prev : on;
   $("#ide").classList.toggle("prev-on", IDE.prev);
-  $("#idePrevBtn").textContent = IDE.prev ? "‹/› Kod" : "▶ Önizle";
+  $("#idePrevBtn").innerHTML = IDE.prev ? '‹/›<span class="lbl"> Kod</span>' : '▶<span class="lbl"> Önizle</span>';
   $("#idePrevBtn").classList.toggle("on", IDE.prev);
   if(IDE.prev) idePreview();
 }
@@ -3203,6 +3235,7 @@ window.addEventListener("message", async e => {
   if(t && IDE.active !== t) await ideActivate(t); else idePreview();
 });
 $("#idePrevBtn").onclick = () => ideTogglePrev();
+$("#ideSaveBtn").onclick = () => ideSave();
 $("#idePrevReload").onclick = () => idePreview();
 $("#ideClose").onclick = () => ideShow(false);
 $("#ideToggle").onclick = () => ideShow(!IDE.on);
@@ -3213,6 +3246,36 @@ function ideModeChanged(m){
   else if(can && IDE.wasOn){ IDE.wasOn = false; ideShow(true); }
 }
 
+
+/* ---------- editorde yapay zeka: secili kod / acik dosya kod ajanina baglamla gider ---------- */
+function ideSelection(){
+  const t = IDE.active; if(!t || t.kind !== "text") return null;
+  if(IDE.view){
+    const st = IDE.view.state, r = st.selection.main;
+    if(!r.empty){ const a = st.doc.lineAt(r.from).number, b = st.doc.lineAt(r.to).number; return {path: t.path, a, b, text: st.sliceDoc(r.from, r.to)}; }
+  } else { const ta = $("#ideCM textarea"); if(ta && ta.selectionEnd > ta.selectionStart){ const pre = ta.value.slice(0, ta.selectionStart); const a = pre.split("\n").length; const text = ta.value.slice(ta.selectionStart, ta.selectionEnd); return {path: t.path, a, b: a + text.split("\n").length - 1, text}; } }
+  return {path: t.path, a: 0, b: 0, text: ""};
+}
+function ideAsk(kind){
+  $("#ideAiMenu").style.display = "none";
+  const sel = ideSelection();
+  if(!sel){ toast("Önce bir dosya aç."); return; }
+  if(busy){ toast("Yapay zekâ şu an başka bir iş yapıyor; bitince tekrar dene."); return; }
+  const where = sel.text ? sel.path + " dosyasının " + (sel.a === sel.b ? sel.a + ". satırı" : sel.a + "-" + sel.b + ". satırları") : sel.path + " dosyası";
+  IDE.sel = sel.text ? sel : null;
+  const asks = {explain: where + " ne yapıyor? Türkçe, sade açıkla; değişiklik yapma.",
+    fix: where + " içindeki hataları bul ve düzelt. Önce dosyayı oku, sonra yalnız gereken yeri değiştir.",
+    improve: where + " daha okunur, hızlı ve güncel olsun; davranışı bozmadan iyileştir.",
+    comment: where + " için kısa, Türkçe açıklayıcı yorum satırları ekle; kodun kendisini değiştirme."};
+  if(mode !== "agent") setMode("agent");
+  if(window.innerWidth < 900) ideShow(false);
+  if(kind === "free"){ const i = $("#input"); i.value = where + ": "; autosize(); i.focus(); i.setSelectionRange(i.value.length, i.value.length); return; }
+  send(asks[kind]);
+}
+$("#ideAiBtn").onclick = e => { e.stopPropagation(); const m = $("#ideAiMenu"); m.style.display = m.style.display === "none" ? "" : "none"; };
+$("#ideAiMenu").addEventListener("click", e => { const b = e.target.closest("[data-ai]"); if(b) ideAsk(b.dataset.ai); });
+document.addEventListener("click", e => { if(!e.target.closest("#ideAiMenu,#ideAiBtn")) $("#ideAiMenu").style.display = "none"; });
+document.addEventListener("keydown", e => { if(IDE.on && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k" && e.target.closest && e.target.closest("#ide")){ e.preventDefault(); ideAsk("free"); } });
 /* ---------- fark (diff) ---------- */
 function lineDiff(a, b){
   const A = a.split("\n"), B = b.split("\n");
@@ -3251,6 +3314,32 @@ function diffEl(d){
   box.appendChild(dv); return box;
 }
 
+
+/* ---------- kendi alan adi ---------- */
+function ideDomain(){
+  const v = String($("#pubDomain").value || "").trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  return /^([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/.test(v) ? v : "";
+}
+function ideDnsHtml(){
+  const d = ideDomain(); if(!d){ $("#pubDns").innerHTML = $("#pubDomain").value.trim() ? '<p style="color:var(--err);margin:8px 0 0">Alan adını siten.com biçiminde yaz.</p>' : ""; return; }
+  const apex = d.split(".").length === 2 || /\.(com|net|org|gen|web|bel|k12|edu|av)\.tr$/.test(d) && d.split(".").length === 3;
+  const site = ((store.get("coder.ide.sites", {}))[WEB.dir ? WEB.dir.name : ""] || {}).url || "";
+  const nl = site ? site.replace(/^https?:\/\//, "") : "SITEN.netlify.app";
+  const rows = (title, list) => '<p style="margin:10px 0 2px"><b>' + title + '</b></p><div class="pub-dns"><div><span>Tür</span><span>Ad</span><span>Değer</span></div>' + list.map(r => "<div><span>" + r[0] + "</span><span>" + r[1] + "</span><code>" + esc(r[2]) + "</code></div>").join("") + "</div>";
+  const host = apex ? "@" : d.split(".")[0];
+  $("#pubDns").innerHTML =
+    rows("Netlify ile yayınladıysan", apex ? [["A", "@", "75.2.60.5"], ["CNAME", "www", nl]] : [["CNAME", host, nl]]) +
+    rows("GitHub Pages ile yayınladıysan", apex ? [["A", "@", "185.199.108.153"], ["A", "@", "185.199.109.153"], ["A", "@", "185.199.110.153"], ["A", "@", "185.199.111.153"], ["CNAME", "www", "KULLANICIADIN.github.io"]] : [["CNAME", host, "KULLANICIADIN.github.io"]]) +
+    '<p style="margin:8px 0 0;font-size:12.5px">GitHub Pages\'te ayrıca <b>Settings → Pages → Custom domain</b> kutusuna <code>' + esc(d) + '</code> yaz ve <b>Enforce HTTPS</b>\'i işaretle. Vercel Drop ile yüklediysen: proje → <b>Settings → Domains</b> → alan adını ekle, Vercel\'in gösterdiği kaydı gir.</p>';
+}
+$("#pubDomain").addEventListener("input", () => {
+  if(WEB.dir){ const m = store.get("coder.ide.domains", {}); m[WEB.dir.name] = $("#pubDomain").value.trim(); store.set("coder.ide.domains", m); }
+  ideDnsHtml();
+});
+async function netlifyDomain(site, d){
+  const r = await fetch("https://api.netlify.com/api/v1/sites/" + site.id, {method: "PATCH", headers: {Authorization: "Bearer " + IDE.token, "Content-Type": "application/json"}, body: JSON.stringify({custom_domain: d})});
+  if(!r.ok){ let m = ""; try{ m = (await r.json()).message || ""; }catch(e){} throw new Error("Alan adı bağlanamadı (" + r.status + ")" + (m ? ": " + m : "") + ". Netlify panelinden Domain management ile de ekleyebilirsin."); }
+}
 /* ---------- yayinla ---------- */
 async function ideCollect(){
   const out = [];
@@ -3273,7 +3362,9 @@ async function ideZip(base){
   const files = await ideCollect(); if(!files.length) throw new Error("Klasör boş.");
   const out = {}; let total = 0;
   for(const [p, h] of files){ const f = await h.getFile(); total += f.size; if(total > 100e6) throw new Error("Proje 100 MB'tan büyük; büyük video ve dosyaları çıkar."); out[p] = new Uint8Array(await f.arrayBuffer()); }
-  const extra = ideSeoFiles(base, Object.keys(out)); for(const k in extra) out[k] = cm.strToU8(extra[k]);
+  const dom = ideDomain(); if(dom) base = "https://" + dom;
+  const extra = ideSeoFiles(base, Object.keys(out)); if(dom && !out.CNAME) extra.CNAME = dom + "\n";
+  for(const k in extra) out[k] = cm.strToU8(extra[k]);
   return cm.zipSync(out, {level: 6});
 }
 async function idePrePublish(){
@@ -3304,6 +3395,7 @@ async function ideOpenPublish(){
   $("#pubDone").innerHTML = site ? '<div class="pub-done">Son yayın: <a href="' + esc(site.url) + '" target="_blank" rel="noopener">' + esc(site.url) + "</a></div>" : "";
   if(site && !$("#pubUrl").value) $("#pubUrl").value = site.url;
   $("#pubStatus").textContent = "";
+  $("#pubDomain").value = (store.get("coder.ide.domains", {}))[WEB.dir.name] || ""; ideDnsHtml();
   openModal("pubModal"); ideSeoCheck();
 }
 $("#idePubBtn").onclick = ideOpenPublish;
@@ -3359,6 +3451,9 @@ async function netlifyPublish(say){
     const r = await call("/deploys/" + dep.id); if(r.ok) dep = await r.json();
   }
   if(dep.state === "error") throw new Error(dep.error_message || "Netlify yayını tamamlayamadı.");
+  const dom = ideDomain();
+  if(dom && site.domain !== dom){ say("Alan adı bağlanıyor…"); await netlifyDomain(site, dom); site.domain = dom; sites[WEB.dir.name] = site; store.set("coder.ide.sites", sites); }
+  ideDnsHtml();
   return site;
 }
 $("#pubGo").onclick = async () => {
@@ -3368,6 +3463,7 @@ $("#pubGo").onclick = async () => {
     const site = await netlifyPublish(say);
     say("");
     $("#pubDone").innerHTML = '<div class="pub-done">✓ Yayında: <a href="' + esc(site.url) + '" target="_blank" rel="noopener">' + esc(site.url) + "</a>" +
+      (site.domain ? '<br>🌐 <b>' + esc(site.domain) + '</b> bağlandı; DNS kayıtlarını girince bu adresten açılır.' : "") +
       (site.admin ? ' · <a href="' + esc(site.admin) + '" target="_blank" rel="noopener">Netlify paneli</a>' : "") + "<br>Google'a eklemek için aşağıdaki rehberi izle (sitemap.xml hazır).</div>";
     $("#pubGo").textContent = "Netlify'da güncelle";
   }catch(e){ say(e.message); }
