@@ -12,7 +12,9 @@ const page = (status, title, msg) => new Response(
 export async function GET(req) {
   if (!dbReady) return page(503, "Şu an açılamıyor", "Birazdan tekrar dene.");
   const q = new URL(req.url).searchParams, id = String(q.get("id") || "");
-  let path = decodeURIComponent(String(q.get("path") || "")).replace(/^\/+/, "");
+  // Vercel yonlendirmesi :id ve :path'i sorgu olarak ekler (path coklu parcada "a/b" ya da tekrarli olabilir)
+  let path = q.getAll("path").join("/").replace(/^\/+/, "");
+  try { path = decodeURIComponent(path); } catch {}
   if (!/^[\w-]{4,20}$/.test(id) || path.split("/").includes("..")) return page(404, "Sayfa bulunamadı", "Link hatalı ya da silinmiş olabilir.");
   const s = await getJSON("share:" + id);
   if (!s || !s.ver) return page(404, "Sayfa bulunamadı", "Link hatalı ya da silinmiş olabilir.");

@@ -83,8 +83,9 @@ sed -i '' 's#<title>Coder</title>#<title>Coder</title>\n<link rel="icon" href="/
 cat > site/vercel.json <<'JSON'
 {
   "rewrites": [
-    {"source": "/p/:id", "destination": "/api/site?id=:id&path="},
-    {"source": "/p/:id/:path*", "destination": "/api/site?id=:id&path=:path*"}
+    {"source": "/p/:id", "destination": "/api/site"},
+    {"source": "/p/:id/", "destination": "/api/site"},
+    {"source": "/p/:id/:path+", "destination": "/api/site"}
   ],
   "headers": [
     {"source": "/(.*)", "headers": [
