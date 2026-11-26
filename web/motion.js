@@ -632,7 +632,7 @@ export function parseWishes(q){
     capColor: ck ? colors[ck] : "", upper: /büyük harf/.test(q), noCaps: /alt ?yazı (olmasın|yok|istemiyorum|ekleme)|altyazısız/.test(q),
   };
 }
-export async function renderFast({file, W, H, words, plan, palette = "kurumsal", brand = null, look = null, cut = false, wish = {}, onStep = () => {}}){
+export async function renderFast({file, W, H, words, plan, palette = "kurumsal", brand = null, look = null, cut = false, zoom = true, wish = {}, onStep = () => {}}){
   if(typeof VideoEncoder === "undefined") throw new Error("NO_WEBCODECS");
   const MB = await import("/vendor/mediabunny/mediabunny.min.mjs");
   SLOW = 1.6;
@@ -689,7 +689,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
           for(let k = i0; k < i1; k++){ const d = Math.min(k - i0, i1 - 1 - k); outp[o++] = inp[k] * (d < fade ? d / fade : 1); } } }
       if(codec){ asrc = new MB.AudioBufferSource({codec, bitrate: 160e3}); output.addAudioTrack(asrc); } else abuf = null;
     }catch(e){ console.warn("Ses kesilemedi, kesme kapatıldı:", e); abuf = null; asrc = null; }
-    if(!abuf) return renderFast({file, W, H, words: words.map(w => ({...w, s: toSrc(w.s), e: toSrc(w.e)})), plan, palette, brand, look, cut: false, wish: {...wish, trimStart: 0, trimEnd: 0}, onStep});
+    if(!abuf) return renderFast({file, W, H, words: words.map(w => ({...w, s: toSrc(w.s), e: toSrc(w.e)})), plan, palette, brand, look, cut: false, zoom, wish: {...wish, trimStart: 0, trimEnd: 0}, onStep});
   } else if(at){ asrc = new MB.EncodedAudioPacketSource(at.codec); output.addAudioTrack(asrc); }
   await output.start();
   const sink = new MB.CanvasSink(vt, {width: W, height: H, fit: "cover", poolSize: 2});
@@ -698,7 +698,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
   // Yumuşak yeniden kadraj: her iki altyazı grubunda bir %7 içeri/dışarı, .6 sn yumuşak geçiş (pop zoom değil)
   // Kadraj ritmi (genis / orta / yakin): her altyazi grubunda (~1-2 sn) yumusak gecis; Glow Up'ta daha hafif
   const ZL = brand ? [1, 1.04, 1, 1.07] : [1, 1.06, 1.12, 1.04];
-  const zoomAt = t => { let k = 0; for(let g = 0; g < groups.length; g++){ if(groups[g].st <= t) k = g; else break; } const tgt = ZL[k % 4], from = ZL[(k + 3) % 4], p = easeOut(clamp((t - (groups[k] ? groups[k].st : 0)) / .9)); return from + (tgt - from) * p; };
+  const zoomAt = t => { if(!zoom) return 1; let k = 0; for(let g = 0; g < groups.length; g++){ if(groups[g].st <= t) k = g; else break; } const tgt = ZL[k % 4], from = ZL[(k + 3) % 4], p = easeOut(clamp((t - (groups[k] ? groups[k].st : 0)) / .9)); return from + (tgt - from) * p; };
   // Kanca basligi: ilk ~2.6 sn buyuk baslik (yapay zeka konusmadan yazar)
   const hook = String(plan.hook || "").trim().slice(0, 48);
   const drawHook = t => {
