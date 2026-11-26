@@ -1730,6 +1730,12 @@ function setMode(m){
   document.querySelectorAll("#modeSeg button").forEach(b => b.classList.toggle("on", b.dataset.mode === m));
   $("#wsBtn").style.display = m === "agent" ? "" : "none";
   ideModeChanged(m);
+  // acilis ekrani onerileri moda gore
+  const SUGS = {video: ["Dinamik kurgu yap: yüze zoom, geçişler, ses efektleri", "Sade altyazı ekle, başka bir şey yapma", "Sessiz yerleri kes, dikey Reels yap", "Haber tarzı kurgu, bilgi grafikleriyle"],
+    image: ["Gün batımında İstanbul, sinematik", "Minimalist kahve dükkânı logosu", "Yağmurlu sokakta neon ışıklar", "Çocuk kitabı tarzında sevimli kedi"]};
+  if(!setMode.def) setMode.def = [...document.querySelectorAll(".sug")].map(b => b.textContent);
+  document.querySelectorAll(".sug").forEach((b, i) => { b.textContent = (SUGS[m] || setMode.def)[i] || b.textContent; });
+  if(ideCanUse()) $("#ideCard").style.display = m === "video" || m === "image" || m === "glowup" ? "none" : "";
   $("#arBtn").style.display = m === "image" ? "flex" : "none";
   $("#brandSel").style.display = m === "glowup" ? "" : "none";
   if(m === "glowup") $("#attachBtn").style.display = "";
@@ -2154,16 +2160,20 @@ async function makeVideo(prompt, brand = null){
       const url = URL.createObjectURL(new Blob([r.data], {type: "video/mp4"}));
       const nCard = (r.plan.sahneler || []).length, nEmph = (r.plan.vurgu || []).length;
       const ozet = (r.plan.__heuristic ? "_Not: yapay zekâ kurgu planı alınamadı (" + (WEB.lastPlanError || "bilinmeyen sebep") + "), sahneler konuşmadan otomatik çıkarıldı._\n\n" : "") + "**Kinetik tipografi hazır** (" + r.styleName + " stil" + (r.sure ? ", " + r.sure + " sn'de" : "") + "): " + r.words.length + " kelime konuşmayla eş zamanlı animasyonlandı, " + nEmph + " anahtar kelime vurgulandı" + (nCard ? ", " + nCard + " infografik sahne eklendi (" + [...new Set(r.plan.sahneler.map(x => x.type))].join(", ") + ")" : "") + (r.plan.isim && r.plan.isim.ad ? ", isim etiketi: " + r.plan.isim.ad : "") + (r.plan.__istek ? ".\n\n**İsteğini şöyle uyguladım:** " + ((r.plan.istek && r.plan.istek.ozet) ? r.plan.istek.ozet + " → " : "") + ["grafik", "kanca", "kadraj", "kesme"].map(k => ({grafik: "bilgi grafikleri", kanca: "açılış başlığı", kadraj: "yumuşak kadraj", kesme: "boşluk kesme"})[k] + (r.plan.__istek[k] ? " ✓" : " ✗")).join(" · ") + " (değiştirmek için yaz: ör. \"grafik olmasın\", \"zoom yok\")" : "") + (r.plan.konsept && r.plan.konsept.fikir ? ". Konsept: " + r.plan.konsept.fikir : "") + (r.plan.__kesilen > .3 ? ", konuşmadaki boşluklardan " + r.plan.__kesilen.toFixed(1) + " sn kesildi (istemezsen \"boşlukları kesme\" yaz)" : "") + ".";
+      const K = r.plan.__kurgu, gAd = {whip: "hızlı kaydırma", zoomblur: "zoom bulanıklığı", glitch: "glitch", flash: "flaş"};
+      const kurguNot = K ? "\n\n**Kurgu (" + ({sade: "sade", orta: "orta", dinamik: "dinamik"}[K.seviye] || K.seviye) + "):** " + [K.punch ? K.punch + " yakınlaştırma vuruşu" : "", Object.keys(K.gecis || {}).length ? Object.entries(K.gecis).map(([k, v]) => v + " " + (gAd[k] || k)).join(", ") + " geçişi" : "", K.sarsinti ? K.sarsinti + " kamera sarsıntısı" : "", K.sfx ? K.sfx + " ses efekti (whoosh/darbe)" : ""].filter(Boolean).join(", ") +
+        (K.yuz ? ". Yüzün yeri bulundu: yazılar yüzün üstüne gelmiyor, yakınlaştırmalar yüze odaklı" : ". Yüz bulunamadı: yazılar güvenli bölgede") + ". _(Değiştirmek için yaz: \"dinamik kurgu\", \"sade kurgu\", \"ses efekti olmasın\", \"geçiş olmasın\", \"zoom yok\")_" +
+        (!brand && (r.plan.__dolgu || (r.plan.__duzeltme || []).length) ? "\n\n**Temizlik:** " + (r.plan.__dolgu ? r.plan.__dolgu + " dolgu (eee/ıı) altyazıdan çıkarıldı. " : "") + ((r.plan.__duzeltme || []).length ? "Yazım düzeltildi: " + r.plan.__duzeltme.join(", ") + "." : "") : "") : "";
       const glowNot = brand ? "\n\n**Teslim notu (" + brand.ad + "):** ham sese dokunulmadı, müzik eklenmedi; altyazı opaklık + kayma ile, gölgesiz, Reels güvenli alanında (alt kenar ≤ y1470); tam ekran infografikte altyazı yok; font " + brand.font + " (Türkçe karakter setiyle)." + (r.clean ? " " + r.clean.removed + " dolgu (eee/ıı) altyazıdan çıkarıldı." + (r.clean.fixed.length ? " Yazım düzeltildi: " + r.clean.fixed.join(", ") + "." : "") : "") + (r.tdk && r.tdk.length ? "\n\n**TDK de/da teyidi:** " + r.tdk.join(" · ") : "") + (brand.not ? "\n\n_Marka kuralı: " + brand.not + "_" : "") + (r.plan.__sesTeklif ? "\n\n_Ses: ham sese dokunulmadı (Glow Up kuralı). Sesi yükseltmemi istiyorsan yalnız düz kazanç uygulayabilirim; onaylarsan Video sekmesinde \"sesi yükselt\" ile yaparım._" : "") : "";
       notifyDone("Videon hazır", brand ? brand.ad + " kurgusu bitti" : "Code-Tr videonu bitirdi");
-      box.innerHTML = md(ozet + glowNot) + '<video controls playsinline style="max-width:min(100%,520px);max-height:560px;border-radius:12px;display:block;background:#000"></video>';
+      box.innerHTML = md(ozet + kurguNot + glowNot) + '<video controls playsinline style="max-width:min(100%,520px);max-height:560px;border-radius:12px;display:block;background:#000"></video>';
       box.querySelector("video").src = url;
       const acts = document.createElement("div"); acts.className = "gen-acts";
       const assUrl = URL.createObjectURL(new Blob([r.ass], {type: "text/plain"}));
       acts.innerHTML = '<a download="code-tr-motion.mp4">⤓ Videoyu indir (' + (r.data.length / 1048576).toFixed(1) + ' MB)</a><a download="code-tr-motion.ass">⤓ Animasyon dosyası (.ass)</a>';
       acts.children[0].href = url; acts.children[1].href = assUrl;
       box.after(acts);
-      aMsg.content = ozet + "\n\nDöküm: " + r.words.map(w => w.w).join(" ").slice(0, 1500) + "\n\n*(Video bu cihazda işlendi; sohbet geçmişinde saklanmaz.)*";
+      aMsg.content = ozet + kurguNot + "\n\nDöküm: " + r.words.map(w => w.w).join(" ").slice(0, 1500) + "\n\n*(Video bu cihazda işlendi; sohbet geçmişinde saklanmaz.)*";
       throw {done: true};
     }
     const ext = ((item.name.match(/\.(\w{2,4})$/) || [])[1] || "mp4").toLowerCase();
@@ -2370,7 +2380,10 @@ Kurallar:
 - ÖNCE İSTEĞİ YORUMLA ve ona sadık kal (kendi kafana göre ekleme yapma): JSON'a "istek" ekle: {"ozet": "kullanıcının ne istediği, tek cümle", "grafik": true/false, "kanca": true/false, "kadraj": true/false, "kesme": true/false}. grafik = ekranda bilgi/infografik sahneleri, kanca = açılış başlığı, kadraj = yumuşak yakınlaşma ritmi, kesme = sessiz boşlukları kesme. Kullanıcı "profesyonel/dinamik/kurgu/edit/animasyonlu" gibi genel bir şey istiyorsa hepsi true. "sadece/yalnızca altyazı" ya da yalnız altyazı istediyse hepsi false. Açıkça istemediği veya reddettiği şeyi false yap. grafik false ise "sahneler": [] döndür.
 - KANCA: JSON'a "hook" ekle: videonun ilk 2 saniyesinde ekranda duracak, merak uyandıran 2-5 kelimelik Türkçe başlık (konuşmadaki gerçek bilgiden; ör. "Bu sosu kimse bilmiyor", "3 adımda taze avokado"). Uydurma bilgi yok, emoji yok.
 - BU VİDEOYA ÖZEL KONSEPT TASARLA (şablon değil): JSON'a "konsept" alanı ekle: {"fikir": "tek cümle konsept (ör. 'taze malzemenin yolculuğu: ince dal çizgisi her bilgiyi bağlar')", "yerlesim": "ust|orta|alt|sol", "giris": "fade|rise|slide|mask|type", "motif": "line|dots|wave|leaf|pulse|circle|frame|none", "boyut": "kucuk|orta|buyuk", "tempo": "yavas|orta|canli"}.
-  Motifi içerikten seç: gıda/doğa → leaf, sağlık/kalp → pulse, teknoloji → dots veya frame, eğitim → line, lüks/sakin → circle veya none, akış/hız → wave. Tempo konuşmanın enerjisine uysun (sakin anlatım → yavas). Konuşmacının yüzü genelde ekranın üst-ortasında; röportajda yerlesim "alt" veya "sol" daha güvenli.`;
+  Motifi içerikten seç: gıda/doğa → leaf, sağlık/kalp → pulse, teknoloji → dots veya frame, eğitim → line, lüks/sakin → circle veya none, akış/hız → wave. Tempo konuşmanın enerjisine uysun (sakin anlatım → yavas). Konuşmacının yüzü genelde ekranın üst-ortasında; röportajda yerlesim "alt" veya "sol" daha güvenli.
+- KURGU (After Effects tarzı, profesyonel kurgucu gibi): JSON'a "kurgu" ekle: {"yogunluk": "sade|orta|dinamik", "sfx": true/false, "olaylar": [{"t": saniye, "tip": "punch|shake|whip|zoomblur|glitch|flash"}]}.
+  yogunluk: enerjik/viral/eğlenceli/TikTok/"dinamik"/"efektli" istek → dinamik; kurumsal/bilgilendirici → orta; duygusal/sakin/"sade" → sade. sfx (geçiş sesleri: whoosh, darbe) yalnız dinamikte ya da kullanıcı ses efekti isterse true.
+  olaylar: punch = vurucu cümlenin anahtar kelimesinde yüze yakınlaşma (3-5 sn'de en fazla bir); shake = gerçekten güçlü an (şaşırtıcı sayı, ünlem; videoda en fazla 2-3); whip/zoomblur = konu değişimi; glitch = sürpriz/ters köşe; flash = en fazla 1 (en büyük an). Saniyeleri dökümden al; boş da bırakabilirsin (konuşmadan otomatik yerleştirilir).`;
 function heuristicPlan(words){
   const vurgu = [], sahneler = []; let last = -99;
   words.forEach((w, i) => {

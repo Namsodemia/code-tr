@@ -300,7 +300,9 @@ function typoScene(ctx, L0, t, P, d, W, H){
   const C = STYLE.concept || {};
   const sz = C.boyut === "kucuk" ? .82 : C.boyut === "buyuk" ? 1.22 : 1;
   const L = {...L0}; if(C.yerlesim === "orta") L.y = H * .28; else if(C.yerlesim === "alt") L.y = H * .42; else if(C.yerlesim === "sol"){ L.x = W * .07; L.w = W * .62; }
-  if(STYLE.ov && W < H) L.y = Math.max(L.y, H * .4);   // videonun ustundeyken yuz bolgesine (ust-orta) yazi gelmez
+  if(STYLE.ov && STYLE.face){ const f = STYLE.face;   // gercek yuz yerine gore: yuzun altina, yuz alttaysa ustune
+    if(f.y1 < .56) L.y = Math.max(L.y, H * (f.y1 + .02)); else if(f.y0 > .42) L.y = H * .08; else L.y = Math.max(L.y, H * .4); }
+  else if(STYLE.ov && W < H) L.y = Math.max(L.y, H * .4);   // yuz bulunamadiysa: ust-orta bolgeye yazi gelmez
   L.s = L0.s * sz;
   const ent = (p, i = 0) => { const g = C.giris || "rise"; return g === "slide" ? {dx: (1 - p) * -60 * L.s, dy: 0} : g === "fade" ? {dx: 0, dy: 0} : {dx: 0, dy: (1 - p) * 16 * L.s}; };
   const {x, w, s} = L, OV = STYLE.ov, ink = OV ? "#ffffff" : P.navy, sub = OV ? "rgba(255,255,255,.8)" : P.gray;
@@ -535,7 +537,7 @@ function drawCaption(ctx, W, H, t, groups, emph, P, onScene){
     // ya da aktif kelime parlak, digerleri soluk (spotlight)
     if(onScene) return;
     const g = groups.find(x => t >= x.st && t < x.en); if(!g) return;
-    const s = Math.min(W, H) / 1080, vert = W < H, fs = 74 * s, y = vert ? H * .72 : H * .85;
+    const s = Math.min(W, H) / 1080, vert = W < H, fs = 74 * s, y = capY(vert ? H * .72 : H * .85, fs, H);
     const a0 = easeOut(clamp((t - g.st + .05) / .25)) * easeOut(clamp((g.en - t) / .22));
     font(ctx, fs, 800); const sp = ctx.measureText(" ").width;
     const parts = g.words.map(w => ({w, t: w.w, wd: ctx.measureText(w.w).width}));
@@ -558,7 +560,7 @@ function drawCaption(ctx, W, H, t, groups, emph, P, onScene){
     const cur = [...g.words].reverse().find(w => t >= w.s - .03) || g.words[0];
     ctx.save(); ctx.textBaseline = "middle"; ctx.lineJoin = "round";
     if(STYLE.cap === "twolayer"){
-      const yb = vert ? H * .70 : H * .82;
+      const yb = capY(vert ? H * .70 : H * .82, 110 * s, H);
       font(ctx, 34 * s, 600); ctx.textAlign = "center"; ctx.globalAlpha = a0 * .9; ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "rgba(0,0,0,.5)"; ctx.lineWidth = 5 * s;
       const line = g.words.map(w => w.w).join(" "); ctx.strokeText(line, W / 2, yb - 70 * s, W * .84); ctx.fillText(line, W / 2, yb - 70 * s, W * .84);
       const k = clamp((t - cur.s) / .15), big = cur.w.replace(/[.,!?;:…]+$/, "").toLocaleUpperCase("tr");
@@ -567,7 +569,7 @@ function drawCaption(ctx, W, H, t, groups, emph, P, onScene){
       else { ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = fs * .08; ctx.strokeText(big, W / 2, yb + (1 - k) * 18 * s); }
       ctx.fillStyle = "#ffffff"; ctx.fillText(big, W / 2, yb + (1 - k) * 18 * s);
     } else {
-      const fs = 58 * s, left = STYLE.cap === "left", y = vert ? H * .72 : H * .85;
+      const fs = 58 * s, left = STYLE.cap === "left", y = capY(vert ? H * .72 : H * .85, fs, H);
       font(ctx, fs, 800); const sp = ctx.measureText(" ").width;
       const parts = g.words.map(w => ({w, t: w.w, wd: ctx.measureText(w.w).width}));
       const total = parts.reduce((a, p) => a + p.wd, 0) + sp * (parts.length - 1), k = Math.min(1, W * .74 / total);
@@ -585,7 +587,7 @@ function drawCaption(ctx, W, H, t, groups, emph, P, onScene){
     ctx.restore(); return;
   }
   const g = groups.find(x => t >= x.st && t < x.en); if(!g) return;
-  const s = Math.min(W, H) / 1080, fs = 62 * s, y = H * (W < H ? .73 : .86);
+  const s = Math.min(W, H) / 1080, fs = 62 * s, y = capY(H * (W < H ? .73 : .86), fs, H);
   font(ctx, fs, 800); ctx.textBaseline = "middle";
   const vis = g.words.filter(w => t >= w.s - .03);
   if(!vis.length) return;
@@ -612,7 +614,7 @@ function drawCaption(ctx, W, H, t, groups, emph, P, onScene){
 }
 function drawLowerThird(ctx, W, H, t, it, P){
   if(!it || !it.ad) return; const a = +(it.start || .5), b = +(it.end || a + 4.5); if(t < a || t > b) return;
-  const s = Math.min(W, H) / 1080, bx = W * .06, by = H * (W < H ? .6 : .72), bw = Math.min(W * .62, 560 * s), bh = 96 * s;
+  const s = Math.min(W, H) / 1080, bx = W * .06, bw = Math.min(W * .62, 560 * s), bh = 96 * s, by = (STYLE.face ? faceAvoid(H * (W < H ? .6 : .72) + bh / 2, bh * 1.6, H, STYLE.face) : H * (W < H ? .6 : .72) + bh / 2) - bh / 2;
   const pin = easeOut(clamp((t - a) / .7)), pout = easeOut(clamp((b - t) / .5)), x = bx - (1 - pin) * (bw + bx);
   ctx.save(); ctx.globalAlpha = pout;
   ctx.fillStyle = "#fff"; ctx.fillRect(x, by, bw, bh); ctx.fillStyle = P.red; ctx.fillRect(x, by, 7 * s, bh + (STYLE.glow ? 30 : 26) * s);
@@ -639,7 +641,175 @@ export function parseWishes(q){
     capColor: ck ? colors[ck] : "", upper: /büyük harf/.test(q),
     loud: /ses(i)? (yükselt|arttır|artır|dengele|düzelt|normalize|güçlendir)|ses (kısık|düşük|az)|sesi aç/.test(q),
     grade: /siyah ?beyaz|black ?white/.test(q) ? "grayscale(1) contrast(1.1)" : /sinematik renk|film gibi renk|sinematik ton/.test(q) ? "contrast(1.1) saturate(.9) brightness(.98) sepia(.06)" : /sıcak ton|sıcak renk|sıcak yap/.test(q) ? "sepia(.14) saturate(1.12) contrast(1.04)" : /soğuk ton|soğuk renk/.test(q) ? "hue-rotate(-8deg) saturate(.95) contrast(1.05) brightness(1.02)" : /canlı renk|renkleri canlandır|renk(leri)? (düzelt|iyileştir|ayarla)/.test(q) ? "contrast(1.07) saturate(1.18) brightness(1.02)" : "", noCaps: /alt ?yazı (olmasın|yok|istemiyorum|ekleme)|altyazısız/.test(q),
+    level: /sade kurgu|sakin kurgu|efekt(siz| olmasın| yok)|minimal kurgu/.test(q) ? "sade" : /dinamik|enerjik|viral|hareketli|after ?effects?|claude gibi|efektli|tiktok tarz|reels tarz|hızlı kurgu|profesyonel kurgu/.test(q) ? "dinamik" : "",
+    sfx: /ses efekti (olmasın|yok|istemiyorum)|efekt sesi (olmasın|yok)|sfx (olmasın|yok)/.test(q) ? false : /ses efekt|efekt ses|whoosh|sfx/.test(q) ? true : undefined,
+    noTrans: /geçiş (efekti )?(olmasın|yok|istemiyorum)|geçişsiz/.test(q),
   };
+}
+// ======================================================================
+// KURGU MOTORU (After Effects / profesyonel kurgucu tarzi): yuz algilama, kamera (punch-in, sarsinti,
+// hareket bulanikligi), kesme noktalarinda gecisler (whip, zoom bulaniklik, glitch, flas) ve koddan
+// uretilen ses efektleri. Her sey zamanin saf fonksiyonu; rastgelelik tohumlu (ayni video = ayni kurgu).
+// ======================================================================
+const hsh = (i, s = 1) => { let a = (i * 374761393 + s * 668265263) | 0; a = Math.imul(a ^ (a >>> 15), a | 1); a ^= a + Math.imul(a ^ (a >>> 7), a | 61); return ((a ^ (a >>> 14)) >>> 0) / 4294967296; };
+const noise1 = (x, s = 1) => { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return (hsh(i, s) * (1 - u) + hsh(i + 1, s) * u) * 2 - 1; };
+const easeIO = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+
+// Yuz algilama (MediaPipe BlazeFace, Apache 2.0, siteye gomulu): videodan 9 kare orneklenir, en buyuk yuzun
+// ortanca kutusu doner (cikti karesine gore 0-1). Bulunamazsa null; hata olursa sessizce null (eski sabit kural).
+export async function detectFace(MB, vt, dur, W, H, onStep = () => {}){
+  try{
+    onStep("Yüz aranıyor (yazılar yüze gelmesin)…");
+    const V = await import("/vendor/mediapipe/vision_bundle.mjs");
+    const files = await V.FilesetResolver.forVisionTasks("/vendor/mediapipe/wasm");
+    const det = await V.FaceDetector.createFromOptions(files, {baseOptions: {modelAssetPath: "/vendor/mediapipe/blaze_face_short_range.tflite"}, runningMode: "IMAGE", minDetectionConfidence: .55});
+    const sw = 360, sh = Math.round(360 * H / W);
+    const sink = new MB.CanvasSink(vt, {width: sw, height: sh, fit: "cover", poolSize: 1});
+    const ts = Array.from({length: 9}, (_, i) => Math.max(0, dur * (i + .5) / 9));
+    const boxes = [];
+    for await (const wc of sink.canvasesAtTimestamps(ts)){
+      if(!wc) continue;
+      const img = wc.canvas.getContext("2d").getImageData(0, 0, sw, sh);
+      const r = det.detect(img); const d = (r.detections || []).map(x => x.boundingBox).sort((a, b) => b.width * b.height - a.width * a.height)[0];
+      if(d && d.width > sw * .06) boxes.push([d.originX / sw, d.originY / sh, (d.originX + d.width) / sw, (d.originY + d.height) / sh]);
+    }
+    det.close();
+    if(boxes.length < 3) return null;
+    const med = k => boxes.map(b => b[k]).sort((a, b) => a - b)[Math.floor(boxes.length / 2)];
+    let [x0, y0, x1, y1] = [0, 1, 2, 3].map(med); const fw = x1 - x0, fh = y1 - y0;
+    // yuz kutusu yalniz yuzu kapsar: sac/alin ve cene/boyun payi ekle
+    x0 -= fw * .18; x1 += fw * .18; y0 -= fh * .45; y1 += fh * .22;
+    return {x0: Math.max(0, x0), y0: Math.max(0, y0), x1: Math.min(1, x1), y1: Math.min(1, y1), cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 + fh * .05, n: boxes.length};
+  }catch(e){ console.warn("Yüz algılanamadı:", e); return null; }
+}
+// Yazi bandi yuzle cakisiyorsa en yakin bos yere tasi (alt sinir Reels guvenli alani)
+function faceAvoid(y, h, H, face, lo = .1, hi = .765){
+  if(!face) return y;
+  const pad = H * .025, f0 = face.y0 * H - pad, f1 = face.y1 * H + pad;
+  if(y + h / 2 < f0 || y - h / 2 > f1) return y;
+  const below = f1 + h / 2, above = f0 - h / 2;
+  const okB = below + h / 2 <= H * hi, okA = above - h / 2 >= H * lo;
+  if(okB && okA) return Math.abs(below - y) <= Math.abs(above - y) ? below : above;
+  return okB ? below : okA ? above : y;
+}
+const capY = (y, fs, H) => STYLE.face ? faceAvoid(y, fs * 1.5, H, STYLE.face, .1, .78) : y;
+
+// Kurgu plani: konusma, vurgular ve kesme noktalarindan; yapay zekanin ozel olaylari (plan.kurgu.olaylar) once gelir.
+export const KURGU_TIPLER = ["punch", "shake", "whip", "zoomblur", "glitch", "flash"];
+export function planEdits({words, groups, emph, cuts = [], dur, level = "orta", ai = [], brand = false, sfx = false}){
+  const L = brand ? "sade" : level, out = {punch: [], shake: [], trans: [], sfx: [], intro: L !== "sade", level: L};
+  const gap = L === "dinamik" ? 1.8 : L === "orta" ? 2.6 : 4.5, amt = L === "dinamik" ? .16 : L === "orta" ? .12 : .08;
+  const grpEnd = t => { const g = groups.find(x => t >= x.st - .05 && t < x.en); return g ? g.en : t + 1.2; };
+  // yapay zekanin istedigi olaylar
+  for(const e of (Array.isArray(ai) ? ai : [])){
+    const t = +e.t; if(!(t >= 0 && t < dur)) continue;
+    if(e.tip === "punch") out.punch.push({t, end: Math.min(dur, grpEnd(t)), amt});
+    else if(e.tip === "shake" && !brand) out.shake.push({t, amp: L === "dinamik" ? 1 : .7, seed: Math.round(t * 100)});
+    else if(["whip", "zoomblur", "glitch", "flash"].includes(e.tip) && !brand) out.trans.push({t, tip: e.tip, ai: true});
+  }
+  // vurgulu kelimelerde punch-in (aralik kurali: her 2-4 sn'de yeni bir sey)
+  let last = out.punch.length ? -9 : -9;
+  [...emph].sort((a, b) => a - b).forEach(k => { const w = words[k]; if(!w || w.s < 1.2) return;
+    if(w.s - last < gap || out.punch.some(p => Math.abs(p.t - w.s) < gap * .6)) return;
+    out.punch.push({t: Math.max(0, w.s - .05), end: Math.min(dur, grpEnd(w.s)), amt}); last = w.s; });
+  // sarsinti: unlemli ve sayili guclu anlar (yalniz dinamik)
+  if(L === "dinamik") words.forEach((w, k) => { if((/!$/.test(w.w) || (emph.has(k) && /\d/.test(w.w))) && !out.shake.some(s => Math.abs(s.t - w.s) < 3)) out.shake.push({t: w.s, amp: .8, seed: k + 11}); });
+  // kesme noktalari: atlama kurgusunu gecisle ort (sade: sert kesme + zoom degisimi)
+  const cyc = L === "dinamik" ? ["whip", "zoomblur", "glitch", "whip", "zoomblur"] : ["cut", "cut", "whip", "cut", "zoomblur"];
+  cuts.forEach((t, i) => { if(out.trans.some(x => Math.abs(x.t - t) < .5)) return; const tip = L === "sade" ? "cut" : cyc[i % cyc.length]; out.trans.push({t, tip, cut: true}); });
+  // flas en fazla 1 kez (yapisal an): dinamikte kanca bitisi
+  const fl = out.trans.filter(x => x.tip === "flash"); if(fl.length > 1) fl.slice(1).forEach(x => x.tip = "zoomblur");
+  out.trans.sort((a, b) => a.t - b.t);
+  out.trans.forEach((x, i) => { x.d = x.tip === "glitch" ? .2 : x.tip === "flash" ? .22 : .24; x.dir = i % 2 ? -1 : 1; });
+  out.punch.sort((a, b) => a.t - b.t);
+  for(let i = 1; i < out.punch.length; i++) if(out.punch[i].t < out.punch[i - 1].end + .3) out.punch[i - 1].end = Math.max(out.punch[i - 1].t + .5, out.punch[i].t - .3);
+  // ses efektleri: gecislerde whoosh/glitch, sarsintida darbe; kancada hafif darbe
+  if(sfx && !brand){
+    out.trans.forEach(x => { if(x.tip === "whip" || x.tip === "zoomblur") out.sfx.push({t: x.t + x.d * .5, k: "whoosh"}); else if(x.tip === "glitch") out.sfx.push({t: x.t, k: "glitch"}); else if(x.tip === "flash") out.sfx.push({t: x.t, k: "impact"}); });
+    out.shake.forEach(s => out.sfx.push({t: s.t, k: "thud"}));
+    if(L === "dinamik") out.punch.forEach(p => out.sfx.push({t: p.t, k: "tick"}));
+  }
+  return out;
+}
+// Kamera: temel kadraj ritmi x punch-in (log olcekte, sabit hizli dolly gibi) + sonumlenen gurultu sarsintisi
+function camAt(t, E, base){
+  let z = base, ox = 0, oy = 0, rot = 0, blur = 0, mx = 0, my = 0;
+  for(const p of E.punch){ if(t < p.t || t > p.end + .35) continue;
+    const k = easeOut(clamp((t - p.t) / .16)) * easeIO(clamp((p.end + .35 - t) / .35)); z *= Math.exp(Math.log(1 + p.amt) * k); }
+  for(const s of E.shake){ const dt = t - s.t; if(dt < 0 || dt > .7) continue;
+    const d = Math.exp(-dt / .16) * s.amp, f = 26;
+    ox += noise1(dt * f, s.seed) * 16 * d; oy += noise1(dt * f, s.seed + 5) * 16 * d; rot += noise1(dt * f * .7, s.seed + 9) * .012 * d;
+    mx += (noise1((dt + .01) * f, s.seed) - noise1(dt * f, s.seed)) * 16 * d * 4; my += (noise1((dt + .01) * f, s.seed + 5) - noise1(dt * f, s.seed + 5)) * 16 * d * 4; }
+  if(E.intro && t < .45){ const p = easeOut(t / .45); blur = 10 * (1 - p); z *= Math.exp(Math.log(1.1) * (1 - p)); }
+  return {z, ox, oy, rot, blur, mx, my};
+}
+function drawCam(c, src, W, H, cam, anchor, filter){
+  const S = Math.min(W, H) / 1080, ax = W * anchor.x, ay = H * anchor.y;
+  // tasma payi: sarsinti/donme kenari acmasin
+  const over = 1 + (Math.abs(cam.ox) + Math.abs(cam.oy)) * 2.2 * S / Math.min(W, H) + Math.abs(cam.rot) * 1.4;
+  const z = Math.max(1, cam.z) * over;
+  // odak noktasi kenara cok yakinsa kenar acilmasin diye sinirla
+  const fx = clamp(ax, W / 2 - (W / 2) * (1 - 1 / z) * 1.0, W / 2 + (W / 2) * (1 - 1 / z) * 1.0), fy = clamp(ay, H / 2 - (H / 2) * (1 - 1 / z), H / 2 + (H / 2) * (1 - 1 / z));
+  const draw = (dx, dy, a) => { c.save(); c.globalAlpha = a; c.translate(fx + cam.ox * S + dx, fy + cam.oy * S + dy); c.rotate(cam.rot); c.scale(z, z); c.translate(-fx, -fy); c.drawImage(src, 0, 0, W, H); c.restore(); };
+  const f = [filter, cam.blur > .4 ? "blur(" + (cam.blur * S).toFixed(1) + "px)" : ""].filter(Boolean).join(" ");
+  if(f) c.filter = f;
+  const mv = Math.hypot(cam.mx, cam.my) * S;
+  if(mv > 2){ const n = 5; for(let k = 0; k < n; k++){ const u = k / (n - 1) - .5; draw(cam.mx * S * u, cam.my * S * u, k ? 1 / (k + 1) : 1); } }   // hareket bulanikligi (alt kare ortalamasi)
+  else draw(0, 0, 1);
+  c.filter = "none";
+}
+// Gecisler: A (kesmeden onceki son kare) ve B (yeni goruntu) ayni anda ekranda; bos kare yok
+function blurStrip(c, img, x, y, w, h, dx, dy, n){ for(let k = 0; k < n; k++){ const u = n > 1 ? k / (n - 1) - .5 : 0; c.globalAlpha = k ? 1 / (k + 1) : 1; c.drawImage(img, x + dx * u, y + dy * u, w, h); } c.globalAlpha = 1; }
+function drawTransition(c, tr, p, A, B, W, H, tmp, frameNo){
+  const S = Math.min(W, H) / 1080;
+  if(tr.tip === "whip"){
+    const e = easeIO(p), sp = Math.sin(Math.PI * p) * W * .35, d = tr.dir;
+    blurStrip(c, A, -d * W * e, 0, W, H, sp, 0, 7); blurStrip(c, B, d * W * (1 - e), 0, W, H, sp, 0, 7);
+  } else if(tr.tip === "zoomblur"){
+    const e = easeOut(p), s = Math.exp(Math.log(1.35) * (1 - e));
+    if(p < .45){ c.globalAlpha = 1; const sa = 1 + .4 * p; c.drawImage(A, W / 2 - W * sa / 2, H / 2 - H * sa / 2, W * sa, H * sa); }
+    const n = 6; for(let k = 0; k < n; k++){ const sk = s * (1 + .05 * k * (1 - e)); c.globalAlpha = (k ? 1 / (k + 1) : 1) * (p < .45 ? clamp(p / .25) : 1); c.drawImage(B, W / 2 - W * sk / 2, H * .45 - H * sk * .45, W * sk, H * sk); }
+    c.globalAlpha = 1;
+  } else if(tr.tip === "glitch"){
+    const src = p < .45 && frameNo % 2 ? A : B, amp = (1 - p) * W * .07;
+    // renk kaymasi (kirmizi kanal ayri): tmp[0] = yalniz kirmizi, tmp[1] = camgobegi
+    const [r, g] = tmp; const rc = r.getContext("2d"), gc = g.getContext("2d");
+    rc.globalCompositeOperation = "source-over"; rc.drawImage(src, 0, 0, W, H); rc.globalCompositeOperation = "multiply"; rc.fillStyle = "#ff0000"; rc.fillRect(0, 0, W, H); rc.globalCompositeOperation = "source-over";
+    gc.globalCompositeOperation = "source-over"; gc.drawImage(src, 0, 0, W, H); gc.globalCompositeOperation = "multiply"; gc.fillStyle = "#00ffff"; gc.fillRect(0, 0, W, H); gc.globalCompositeOperation = "source-over";
+    c.drawImage(g, 0, 0); c.globalCompositeOperation = "lighter"; c.drawImage(r, amp * .35, 0); c.globalCompositeOperation = "source-over";
+    // yatay serit kaymasi
+    for(let k = 0; k < 7; k++){ const hh = H * (.03 + hsh(k, frameNo) * .09), yy = hsh(k + 20, frameNo) * (H - hh), dx = (hsh(k + 40, frameNo) - .5) * 2 * amp; c.drawImage(src, 0, yy, W, hh, dx, yy, W, hh); }
+  } else if(tr.tip === "flash"){
+    c.drawImage(B, 0, 0, W, H); c.fillStyle = "#ffffff"; c.globalAlpha = Math.pow(1 - p, 2) * .85; c.fillRect(0, 0, W, H); c.globalAlpha = 1;
+  } else c.drawImage(B, 0, 0, W, H);
+  void S;
+}
+// Ses efektleri koddan uretilir (dosya/lisans yok): RBJ bant geciren ile supurulen gurultu (whoosh), alt frekans darbe, tik, glitch
+function biquadBP(f0, q, sr){ const w = 2 * Math.PI * f0 / sr, al = Math.sin(w) / (2 * q), a0 = 1 + al; return {b0: al / a0, b1: 0, b2: -al / a0, a1: -2 * Math.cos(w) / a0, a2: (1 - al) / a0}; }
+export function synthSfx(kind, sr){
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647 * 2 - 1;
+  if(kind === "whoosh"){ const len = .42, n = Math.round(len * sr), out = new Float32Array(n); let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+    for(let i = 0; i < n; i++){ const u = i / n, f = 350 * Math.pow(4200 / 350, Math.sin(Math.PI * u) ** 1.5), c = biquadBP(f, 1.4, sr), x = rnd();
+      const y = c.b0 * x + c.b1 * x1 + c.b2 * x2 - c.a1 * y1 - c.a2 * y2; x2 = x1; x1 = x; y2 = y1; y1 = y; out[i] = y * Math.pow(Math.sin(Math.PI * u), 2.2) * 1.6; }
+    return {data: out, peak: .5}; }
+  if(kind === "thud" || kind === "impact"){ const len = kind === "impact" ? .9 : .32, n = Math.round(len * sr), out = new Float32Array(n); let ph = 0;
+    for(let i = 0; i < n; i++){ const t = i / sr, f = 95 * Math.exp(-t * 9) + 42; ph += 2 * Math.PI * f / sr; out[i] = Math.sin(ph) * Math.exp(-t * (kind === "impact" ? 4.5 : 11)) * .9 + (t < .012 ? rnd() * .5 * (1 - t / .012) : 0) + (kind === "impact" ? rnd() * .18 * Math.exp(-t * 6) : 0); }
+    return {data: out, peak: 0}; }
+  if(kind === "tick"){ const n = Math.round(.035 * sr), out = new Float32Array(n); for(let i = 0; i < n; i++){ const t = i / sr; out[i] = Math.sin(2 * Math.PI * 2100 * t) * Math.exp(-t * 140) * .5; } return {data: out, peak: 0}; }
+  if(kind === "glitch"){ const n = Math.round(.18 * sr), out = new Float32Array(n); let hold = 0;
+    for(let i = 0; i < n; i++){ if(i % 37 === 0) hold = rnd(); const t = i / sr, gate = Math.floor(t * 60) % 3 !== 1 ? 1 : 0; out[i] = (Math.round(hold * 6) / 6) * gate * .45 * Math.exp(-t * 9); } return {data: out, peak: 0}; }
+  return {data: new Float32Array(0), peak: 0};
+}
+// Efektleri sese karistir: konusmanin ~ -18 dB altinda (sesi bastirmaz)
+export function mixSfx(abuf, list){
+  if(!list.length) return 0;
+  const sr = abuf.sampleRate, ch = abuf.numberOfChannels; let rms = 0, n = 0; const d0 = abuf.getChannelData(0);
+  for(let k = 0; k < d0.length; k += 64){ rms += d0[k] * d0[k]; n++; } rms = Math.sqrt(rms / Math.max(1, n)) || .05;
+  const cache = {}; let added = 0;
+  for(const e of list){ const s = cache[e.k] || (cache[e.k] = synthSfx(e.k, sr)); const g = Math.min(.5, rms * (e.k === "tick" ? 1.2 : e.k === "impact" ? 3 : 2.2));
+    const i0 = Math.round((e.t - s.peak * s.data.length / sr) * sr); if(i0 >= abuf.length) continue; added++;
+    for(let c = 0; c < ch; c++){ const d = abuf.getChannelData(c); for(let i = Math.max(0, -i0); i < s.data.length && i0 + i < d.length; i++) d[i0 + i] += s.data[i] * g; } }
+  return added;
 }
 export async function renderFast({file, W, H, words, plan, palette = "kurumsal", brand = null, look = null, cut = false, zoom = true, wish = {}, onStep = () => {}}){
   // Glow Up kurallari: ham sese HIC dokunma (kazanc yalniz teklif edilir); metin yuz bolgesine (ust-orta) gelmez
@@ -668,6 +838,8 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
   const vt = await input.getPrimaryVideoTrack(); const at = await input.getPrimaryAudioTrack();
   if(!vt) throw new Error("Videoda görüntü bulunamadı.");
   const dur = await input.computeDuration();
+  const face = plan.__face !== undefined ? plan.__face : await detectFace(MB, vt, dur, W, H, onStep);
+  plan.__face = face; STYLE.face = face;
   const out = new OffscreenCanvas(W, H); const ctx = out.getContext("2d");
   const scv = new OffscreenCanvas(W, H); const sctx = scv.getContext("2d");
   const output = new MB.Output({format: new MB.Mp4OutputFormat({fastStart: "in-memory"}), target: new MB.BufferTarget()});
@@ -691,8 +863,19 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
   }
   groups = captionGroups(words);
   plan.__kesilen = Math.max(0, saved);
+  // Kurgu: kesme noktalari (cikti zamani) + yapay zeka olaylari + vurgular
+  const cutsOut = []; { let acc = 0; segs.forEach(([a, b], k) => { if(k && a - segs[k - 1][1] > .2) cutsOut.push(acc); acc += b - a; }); }
+  const KG = plan.kurgu || {};
+  let level = wish.level || (["sade", "orta", "dinamik"].includes(KG.yogunluk) ? KG.yogunluk : "orta");
+  if(!zoom) level = "sade";
+  const aiEv = (Array.isArray(KG.olaylar) ? KG.olaylar : []).map(e => ({...e, t: saved > .3 ? toOut(+e.t) : +e.t})).filter(e => level !== "sade" || e.tip === "punch");
+  const E = planEdits({words, groups, emph, cuts: wish.noTrans ? [] : cutsOut, dur: outDur, level, ai: wish.noTrans ? aiEv.filter(e => e.tip === "punch" || e.tip === "shake") : aiEv, brand: !!brand,
+    sfx: !brand && wish.sfx !== false && (wish.sfx === true || (level !== "sade" && (KG.sfx === true || level === "dinamik")))});
+  if(!zoom){ E.punch = []; E.shake = []; E.intro = false; }
+  const cnt = {}; E.trans.forEach(x => { if(x.tip !== "cut") cnt[x.tip] = (cnt[x.tip] || 0) + 1; });
+  plan.__kurgu = {seviye: E.level, punch: E.punch.length, sarsinti: E.shake.length, gecis: cnt, sfx: 0, yuz: !!face, zaman: E.trans.filter(x => x.tip !== "cut").map(x => [x.tip, +x.t.toFixed(2)]).concat(E.punch.map(x => ["punch", +x.t.toFixed(2)]), E.shake.map(x => ["shake", +x.t.toFixed(2)]))};
   let asrc = null, abuf = null;
-  if(at && (saved > .3 || wish.loud)){
+  if(at && (saved > .3 || wish.loud || E.sfx.length)){
     try{
       const codec = await MB.getFirstEncodableAudioCodec(["aac", "opus"]);
       const ac = new OfflineAudioContext(1, 1, 48000); const src = await ac.decodeAudioData(await file.arrayBuffer());
@@ -707,6 +890,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
         const rms = Math.sqrt(sum / Math.max(1, n)), g = Math.min(.126 / Math.max(rms, 1e-4), .89 / Math.max(peak, 1e-4), 8);
         if(g > 1.05 || g < .95) for(let c = 0; c < ch; c++){ const d = abuf.getChannelData(c); for(let k = 0; k < d.length; k++) d[k] *= g; }
       }
+      plan.__kurgu.sfx = mixSfx(abuf, E.sfx);
       if(codec){ asrc = new MB.AudioBufferSource({codec, bitrate: 160e3}); output.addAudioTrack(asrc); } else abuf = null;
     }catch(e){ console.warn("Ses kesilemedi, kesme kapatıldı:", e); abuf = null; asrc = null; }
     if(!abuf) return renderFast({file, W, H, words: words.map(w => ({...w, s: toSrc(w.s), e: toSrc(w.e)})), plan, palette, brand, look, cut: false, zoom, wish: {...wish, trimStart: 0, trimEnd: 0, loud: false}, onStep});
@@ -731,7 +915,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
     const s2 = Math.min(W, H) / 1080, p = easeOut(clamp((t - n.s + .1) / .6)), o = easeOut(clamp((n.s + 1.8 - t) / .4));
     const val = parseFloat(n.txt.replace("%", "").replace(/\.(?=\d{3})/g, "").replace(",", ".")), shown = isNaN(val) ? n.txt : n.txt.replace(/[\d.,]+/, (Math.round(val * easeOut(clamp((t - n.s + .1) / .9)) * (val % 1 ? 10 : 1)) / (val % 1 ? 10 : 1)).toLocaleString("tr-TR"));
     ctx.save(); ctx.globalAlpha = o * p; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic"; ctx.lineJoin = "round";
-    font(ctx, 200 * s2, 800); ctx.strokeStyle = "rgba(0,0,0,.5)"; ctx.lineWidth = 12 * s2; const y = H * (faceSafe ? .58 : .3) + (1 - p) * 20 * s2;
+    font(ctx, 200 * s2, 800); ctx.strokeStyle = "rgba(0,0,0,.5)"; ctx.lineWidth = 12 * s2; const y = (face ? faceAvoid(H * .36, 260 * s2, H, STYLE.face || face) + 70 * s2 : H * (faceSafe ? .58 : .3)) + (1 - p) * 20 * s2;
     ctx.strokeText(shown, W / 2, y); ctx.fillStyle = "#ffffff"; ctx.fillText(shown, W / 2, y);
     if(n.unit){ font(ctx, 54 * s2, 700); ctx.lineWidth = 7 * s2; const u = n.unit.toLocaleUpperCase("tr"); ctx.strokeText(u, W / 2, y + 70 * s2); ctx.fillStyle = P.red; ctx.fillText(u, W / 2, y + 70 * s2); }
     ctx.restore();
@@ -741,14 +925,26 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
     const words2 = hook.split(/\s+/), lines = []; let cur = "";
     font(ctx, 92 * s2, 800); for(const w of words2){ const tr = cur ? cur + " " + w : w; if(ctx.measureText(tr).width > W * .82 && cur){ lines.push(cur); cur = w; } else cur = tr; } if(cur) lines.push(cur);
     ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
-    lines.slice(0, 3).forEach((ln, i) => { const p = easeOut(clamp((t - i * .12) / .5)), yy = H * (faceSafe ? .5 : .22) + i * 100 * s2 + (1 - p) * 18 * s2;
+    const nl = Math.min(3, lines.length), hy = face ? faceAvoid(H * .3, nl * 100 * s2 + 30 * s2, H, STYLE.face || face) - (nl - 1) * 50 * s2 : H * (faceSafe ? .5 : .22);
+    lines.slice(0, 3).forEach((ln, i) => { const p = easeOut(clamp((t - i * .12) / .5)), yy = hy + i * 100 * s2 + (1 - p) * 18 * s2;
       ctx.globalAlpha = a * p; font(ctx, 92 * s2, 800); ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = 9 * s2; ctx.strokeText(ln, W / 2, yy);
       ctx.fillStyle = i === lines.length - 1 && lines.length > 1 ? P.red : "#ffffff"; ctx.fillText(ln, W / 2, yy); });
     ctx.restore();
   };
   const GF = wish.grade || "";   // istenirse renk ayari (istenmezse renge dokunulmaz)
-  const drawVid = (src, t) => { if(GF){ ctx.filter = GF; drawVid0(src, t); ctx.filter = "none"; } else drawVid0(src, t); };
-  const drawVid0 = (src, t) => { const z = zoomAt(t); if(z === 1) return ctx.drawImage(src, 0, 0, W, H); const sw = W / z, sh = H / z; ctx.drawImage(src, (W - sw) / 2, (H - sh) * .4, sw, sh, 0, 0, W, H); };
+  const drawVid = (src, t) => drawVid0(src, t, GF);
+  // Kamera + gecisler: video once vb'ye (kamera ile), sonra gecisle ana kareye
+  const vb = new OffscreenCanvas(W, H), vbc = vb.getContext("2d"), holdC = new OffscreenCanvas(W, H), holdX = holdC.getContext("2d");
+  let tmp = null; const anchor = face ? {x: face.cx, y: face.cy} : {x: .5, y: .4};
+  const drawVid0 = (src, t, gf) => {
+    const tr = E.trans.find(x => x.tip !== "cut" && t >= x.t && t < x.t + x.d);
+    if(tr && !tr.h){ holdX.drawImage(vb, 0, 0); tr.h = true; }   // kesmeden onceki son kare (A)
+    const cam = camAt(t, E, zoomAt(t)); drawCam(vbc, src, W, H, cam, anchor, gf || "");
+    if(face){ const z = Math.max(1, cam.z), sc = (v, a) => a + (v - a) * z;   // yakinlasinca yuz buyur: yazilar yeni kutuya gore kacar
+      STYLE.face = {...face, y0: clamp(sc(face.y0, anchor.y)), y1: clamp(sc(face.y1, anchor.y)), x0: clamp(sc(face.x0, anchor.x)), x1: clamp(sc(face.x1, anchor.x))}; }
+    if(tr){ if(tr.tip === "glitch" && !tmp) tmp = [new OffscreenCanvas(W, H), new OffscreenCanvas(W, H)]; drawTransition(ctx, tr, (t - tr.t) / tr.d, holdC, vb, W, H, tmp, i); }
+    else ctx.drawImage(vb, 0, 0);
+  };
   let i = 0, t0 = performance.now();
   const fmt = brand ? "info" : (look && look.fmt) || "info", S = Math.min(W, H) / 1080;
   const half = fmt === "bolunmus" ? new OffscreenCanvas(W, Math.round(H / 2)) : null;
@@ -782,7 +978,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
       if(fmt === "kinetik"){
         const b = bigWords.find(x => t >= x.s - .05 && t < x.s + 1.1);
         if(b){ const k = easeOut(clamp((t - b.s + .05) / .45)), o = easeOut(clamp((b.s + 1.1 - t) / .35)), txt = b.w.replace(/[.,!?;:…]+$/, "").toLocaleUpperCase("tr");
-          const fs = fitText(ctx, txt, W * .84, 170 * S, 900), y = H * .42;
+          const fs = fitText(ctx, txt, W * .84, 170 * S, 900), y = face ? faceAvoid(H * .42, fs * 1.3, H, STYLE.face || face) : H * .42;
           ctx.save(); ctx.globalAlpha = o; ctx.fillStyle = P.red; ctx.fillRect(0, y - fs * .62, W * k, fs * 1.24);
           ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.globalAlpha = o * k; ctx.fillText(txt, W / 2 + (1 - k) * -30 * S, y); ctx.restore(); }
       }

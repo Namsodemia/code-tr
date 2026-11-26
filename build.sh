@@ -66,6 +66,14 @@ if [ ! -f web/vendor/ide/ide.mjs ]; then
   mkdir -p web/vendor/ide && cp "$T/ide.mjs" web/vendor/ide/
 fi
 cp -R web/vendor/ide site/vendor/
+# Yuz algilama (MediaPipe Tasks Vision + BlazeFace modeli, Apache 2.0): yazilar yuze gelmesin
+if [ ! -f web/vendor/mediapipe/blaze_face_short_range.tflite ]; then
+  T=$(mktemp -d); (cd "$T" && npm pack @mediapipe/tasks-vision@0.10.21 --silent >/dev/null && tar xzf mediapipe-tasks-vision-0.10.21.tgz)
+  mkdir -p web/vendor/mediapipe/wasm && cp "$T"/package/vision_bundle.mjs web/vendor/mediapipe/
+  cp "$T"/package/wasm/vision_wasm_internal.* "$T"/package/wasm/vision_wasm_nosimd_internal.* web/vendor/mediapipe/wasm/
+  curl -sfL -o web/vendor/mediapipe/blaze_face_short_range.tflite https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite
+fi
+cp -R web/vendor/mediapipe site/vendor/
 cp web/manifest.webmanifest web/sw.js web/motion.js web/yayin-giris.html site/
 mkdir -p site/api && cp web/api/*.js site/api/
 cp web/version.json site/version.json
