@@ -1,7 +1,7 @@
 <p align="center"><img src="brand/wordmark.png" width="420" alt="Code-Tr"></p>
 
 <p align="center"><b>Ücretsiz, Türkçe yapay zekâ asistanı</b> — sohbet et, kod yazdır, PDF özetlet, görsel üret.</p>
-<p align="center"><a href="https://coder-tr.vercel.app">coder-tr.vercel.app</a></p>
+<p align="center"><a href="https://coder-tr.vercel.app"><b>coder-tr.vercel.app</b></a> · <a href="https://coder-tr.vercel.app/hakkinda.html">Hakkında</a> · <a href="LICENSE">MIT</a></p>
 
 ---
 
