@@ -450,9 +450,17 @@ export async function previewScene(canvas, sc, t, palette = "kurumsal"){
 // HIZLI MOTOR: WebCodecs (donanim kod cozme + donanim H.264 kodlama), Mediabunny ile.
 // Sahneler, altyazi ve isim etiketi ayni karede dogrudan cizilir; ses kayipsiz aktarilir.
 // ======================================================================
+// Altyazi gruplari: anlam bütünlüğüne göre 2-4 kelime (~24 harf); "ve, bir, için, de…" gibi bağlayıcılarda satır bitmez
+const NOEND = /^(ve|veya|ile|bir|bu|şu|o|için|gibi|kadar|de|da|ki|ama|çünkü|en|daha|çok|her|hem|ne|ya|yani|the|a)$/i;
 function captionGroups(words){
   const groups = []; let cur = [];
-  words.forEach((w, i) => { cur.push({...w, i}); const nx = words[i + 1]; if(cur.length >= 3 || /[.,!?;:…]$/.test(w.w) || !nx || nx.s - w.e > .3){ groups.push(cur); cur = []; } });
+  words.forEach((w, i) => { cur.push({...w, i}); const nx = words[i + 1], len = cur.reduce((a, x) => a + x.w.length + 1, 0);
+    const hard = /[.!?…]$/.test(w.w) || !nx || nx.s - w.e > .35, soft = /[,;:]$/.test(w.w);
+    const full = cur.length >= 4 || len + (nx ? nx.w.length : 0) > 24;
+    if(hard || ((soft || full) && !(NOEND.test(w.w.replace(/[.,!?;:…]+$/, "")) && cur.length < 5 && nx && nx.s - w.e < .35))){ groups.push(cur); cur = []; } });
+  // tek kelime kalan grubu (yakinsa) oncekine ekle
+  for(let g = groups.length - 1; g > 0; g--){ const a = groups[g - 1], b = groups[g];
+    if(b.length === 1 && b[0].s - a[a.length - 1].e < .4 && a.concat(b).reduce((x, w) => x + w.w.length + 1, 0) <= 30 && !/[.!?…]$/.test(a[a.length - 1].w)){ groups.splice(g - 1, 2, a.concat(b)); } }
   return groups.map(g => ({words: g, st: g[0].s, en: Math.min(g[g.length - 1].e + .35, g[g.length - 1].e + 1.2)}));
 }
 // Glow Up altyazi: beyaz kalin sans + ince koyu kontur, anahtar kelime duz marka renginde keskin kutu,
@@ -629,7 +637,8 @@ export function parseWishes(q){
   const ck = Object.keys(colors).find(k => new RegExp(k + "\\s*(renkli\\s*)?alt ?yazı").test(q) || new RegExp("alt ?yazı(lar)?\\s*(rengi\\s*)?" + k).test(q));
   return {
     trimStart: num(/ilk\s*(\d+(?:[.,]\d+)?)\s*(?:sn|saniye)/), trimEnd: num(/son\s*(\d+(?:[.,]\d+)?)\s*(?:sn|saniye)/),
-    capColor: ck ? colors[ck] : "", upper: /büyük harf/.test(q), noCaps: /alt ?yazı (olmasın|yok|istemiyorum|ekleme)|altyazısız/.test(q),
+    capColor: ck ? colors[ck] : "", upper: /büyük harf/.test(q),
+    grade: /siyah ?beyaz|black ?white/.test(q) ? "grayscale(1) contrast(1.1)" : /sinematik renk|film gibi renk|sinematik ton/.test(q) ? "contrast(1.1) saturate(.9) brightness(.98) sepia(.06)" : /sıcak ton|sıcak renk|sıcak yap/.test(q) ? "sepia(.14) saturate(1.12) contrast(1.04)" : /soğuk ton|soğuk renk/.test(q) ? "hue-rotate(-8deg) saturate(.95) contrast(1.05) brightness(1.02)" : /canlı renk|renkleri canlandır|renk(leri)? (düzelt|iyileştir|ayarla)/.test(q) ? "contrast(1.07) saturate(1.18) brightness(1.02)" : "", noCaps: /alt ?yazı (olmasın|yok|istemiyorum|ekleme)|altyazısız/.test(q),
   };
 }
 export async function renderFast({file, W, H, words, plan, palette = "kurumsal", brand = null, look = null, cut = false, zoom = true, wish = {}, onStep = () => {}}){
@@ -711,11 +720,13 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
       ctx.fillStyle = i === lines.length - 1 && lines.length > 1 ? P.red : "#ffffff"; ctx.fillText(ln, W / 2, yy); });
     ctx.restore();
   };
-  const drawVid = (src, t) => { const z = zoomAt(t); if(z === 1) return ctx.drawImage(src, 0, 0, W, H); const sw = W / z, sh = H / z; ctx.drawImage(src, (W - sw) / 2, (H - sh) * .4, sw, sh, 0, 0, W, H); };
+  const GF = wish.grade || "";   // istenirse renk ayari (istenmezse renge dokunulmaz)
+  const drawVid = (src, t) => { if(GF){ ctx.filter = GF; drawVid0(src, t); ctx.filter = "none"; } else drawVid0(src, t); };
+  const drawVid0 = (src, t) => { const z = zoomAt(t); if(z === 1) return ctx.drawImage(src, 0, 0, W, H); const sw = W / z, sh = H / z; ctx.drawImage(src, (W - sw) / 2, (H - sh) * .4, sw, sh, 0, 0, W, H); };
   let i = 0, t0 = performance.now();
   const fmt = brand ? "info" : (look && look.fmt) || "info", S = Math.min(W, H) / 1080;
   const half = fmt === "bolunmus" ? new OffscreenCanvas(W, Math.round(H / 2)) : null;
-  const crop = (src, dx, dy, dw, dh) => { const a = dw / dh, sw = Math.min(W, H * a), sh = sw / a; ctx.drawImage(src, (W - sw) / 2, (H - sh) / 2, sw, sh, dx, dy, dw, dh); };
+  const crop = (src, dx, dy, dw, dh) => { const a = dw / dh, sw = Math.min(W, H * a), sh = sw / a; if(wish.grade) ctx.filter = wish.grade; ctx.drawImage(src, (W - sw) / 2, (H - sh) / 2, sw, sh, dx, dy, dw, dh); ctx.filter = "none"; };
   // kinetik: vurgulanan (yoksa uzun) kelimeler ekranin ortasinda dev tipografi olarak gelir
   const bigWords = fmt === "kinetik" ? words.map((w, k) => ({...w, k})).filter((w, k) => emph.has(k) || (w.w.length >= 7 && k % 4 === 0)).filter((w, k, a) => !k || w.s - a[k - 1].s > 1.6) : [];
   for await (const wc of sink.canvasesAtTimestamps(times())){

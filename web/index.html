@@ -294,9 +294,12 @@ textarea#input::placeholder{color:var(--faint)}
   .side{position:absolute;z-index:40;height:100%;box-shadow:var(--shadow)}
   .thread{padding:8px 16px 30px}.composer-wrap{padding:0 12px 12px}
   .empty h1{font-size:30px}
-  .bar{gap:4px}
+  .bar{gap:4px;flex-wrap:wrap;row-gap:8px}
   .bar .pill{max-width:120px;padding:5px 8px}
-  .seg button{padding:3px 8px}
+  .bar #modeSeg{order:10;flex:1 0 100%;overflow-x:auto;scrollbar-width:none;display:flex}
+  .bar #modeSeg::-webkit-scrollbar{display:none}
+  .seg button{padding:5px 10px;flex:0 0 auto}
+  #brandSel{order:11;max-width:100%}
   .menu{width:min(330px,calc(100vw - 24px))}
   .hint{display:none}
 }
@@ -495,6 +498,10 @@ body{letter-spacing:-.005em}
       <b>Code-<i>Tr</i></b>
     </div>
     <button class="newchat" id="newChat"><span class="plus">+</span>Yeni sohbet</button>
+    <div id="projBox" style="display:none">
+      <div class="list-h" style="display:flex;align-items:center;justify-content:space-between">Projeler <button id="newProj" title="Yeni ortak proje" style="border:0;background:none;color:var(--accent);font-size:18px;cursor:pointer;padding:0 4px">+</button></div>
+      <div id="projInv"></div><div class="chats" id="projs" style="flex:0 0 auto;max-height:28vh"></div>
+    </div>
     <div class="list-h">Sohbetler</div>
     <div class="chats" id="chats"></div>
     <div class="side-foot">
@@ -1270,16 +1277,18 @@ function md(src, streaming){
 
 /* ---------------- sohbetler ---------------- */
 function saveChats(){
+  if(current && current.proj){ PROJ.sync(); chats = chats.filter(c => !c.proj); }
   chats.sort((a, b) => b.updated - a.updated);
   store.set("coder.chats", chats.slice(0, 200));
   if(ACC.user) ACC.queueSync();
 }
 function newChat(){
+  if(window.PROJ) PROJ.stop();
   current = {id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: "Yeni sohbet", messages: [], updated: Date.now()};
   renderThread(); renderChats(); $("#input").focus();
 }
 function openChat(id){
-  const c = chats.find(x => x.id === id); if(!c || busy) return;
+  const c = chats.find(x => x.id === id); if(!c || busy) return; if(window.PROJ) PROJ.stop();
   if(window.innerWidth < 760) $("#side").classList.add("hidden");
   current = c; renderThread(); renderChats();
 }
@@ -1288,6 +1297,7 @@ function deleteChat(id){
   if(current && current.id === id) newChat(); else renderChats();
 }
 function renderChats(){
+  if(window.PROJ) PROJ.render();
   const box = $("#chats"); box.innerHTML = "";
   for(const c of chats){
     const b = document.createElement("div");
@@ -1302,6 +1312,7 @@ function renderChats(){
 /* ---------------- mesaj cizimi ---------------- */
 function userEl(m){
   const d = document.createElement("div"); d.className = "msg user";
+  if(m.by){ const n = document.createElement("div"); n.style.cssText = "font-size:11.5px;color:var(--faint);text-align:right;margin-bottom:3px"; n.textContent = m.by; d.appendChild(n); }
   if(m.atts && m.atts.length){
     const row = document.createElement("div"); row.className = "att-row";
     for(const a of m.atts){
@@ -1832,6 +1843,7 @@ const ACC = {
   },
   render(){
     if(GLOW) GLOW.check(this.user);
+    if(window.PROJ) PROJ.load(this.user);
     $("#acctBox").style.display = this.enabled ? "" : "none";
     $("#loginBtn").style.display = this.user ? "none" : "";
     $("#acctBtn").style.display = this.user ? "" : "none";
@@ -2676,6 +2688,69 @@ async function teachPost(action, body, btn){
 $("#eAddText").onclick = async () => { if(await teachPost("add_text", {title: $("#eTitle").value, text: $("#eText").value}, $("#eAddText"))){ $("#eText").value = ""; $("#eTitle").value = ""; } };
 $("#eAddUrl").onclick = async () => { if(await teachPost("add_url", {url: $("#eUrl").value, title: $("#eTitle").value}, $("#eAddUrl"))){ $("#eUrl").value = ""; } };
 $("#learnBtn").onclick = () => { openLearn(); loadSources(); };
+/* ---------------- Ortak çalışma: projeler (davet, kabul, ortak sohbet) ---------------- */
+window.PROJ = {
+  list: [], invites: [], timer: null, on: false,
+  async api(body){ const r = await fetch("/api/projects", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)}); const j = await r.json().catch(() => ({})); if(!r.ok) throw new Error(j.error || "Hata " + r.status); return j; },
+  async load(user){
+    this.on = !!(user && !LOCAL && ACC.enabled); $("#projBox").style.display = this.on ? "" : "none"; if(!this.on) return;
+    try{ const j = await (await fetch("/api/projects")).json(); this.list = j.projects || []; this.invites = j.invites || []; }catch(e){}
+    this.render();
+  },
+  render(){
+    if(!this.on) return;
+    const inv = $("#projInv"); inv.innerHTML = "";
+    for(const x of this.invites){ const d = document.createElement("div"); d.className = "chat-item"; d.style.cssText = "flex-direction:column;align-items:stretch;gap:6px;background:var(--accent-soft, #fff1e8)";
+      d.innerHTML = "<span>📩 <b>" + esc(x.from) + "</b> seni <b>" + esc(x.name) + "</b> projesine davet etti</span><span style='display:flex;gap:6px'><button class='btn primary' style='padding:4px 10px'>Kabul et</button><button class='btn' style='padding:4px 10px'>Reddet</button></span>";
+      const [ok, no] = d.querySelectorAll("button");
+      ok.onclick = async () => { try{ await this.api({action: "accept", id: x.id}); toast("Projeye katıldın."); await this.load(ACC.user); this.open(x.id); }catch(e){ toast(e.message); } };
+      no.onclick = async () => { try{ await this.api({action: "decline", id: x.id}); this.load(ACC.user); }catch(e){ toast(e.message); } };
+      inv.appendChild(d); }
+    const box = $("#projs"); box.innerHTML = "";
+    for(const p of this.list){ const d = document.createElement("div"); d.className = "chat-item" + (current && current.proj === p.id ? " active" : "");
+      d.innerHTML = "<span>👥 " + esc(p.name) + " <small style='color:var(--faint)'>" + p.members.length + "</small></span><button class='del' title='Davet et' style='opacity:1'>＋</button>";
+      d.onclick = e => { if(e.target.closest("button")) this.invite(p); else this.open(p.id); };
+      box.appendChild(d); }
+  },
+  async create(){
+    const name = prompt("Ortak proje adı (ör. Limea Aralık videoları):"); if(!name) return;
+    try{ const j = await this.api({action: "create", name}); await this.load(ACC.user); this.open(j.project.id); this.invite(j.project); }catch(e){ toast(e.message); }
+  },
+  async invite(p){
+    const who = p.members.map(m => m.name).join(", "), e = prompt("\"" + p.name + "\" projesine davet edilecek e-posta:\n(Üyeler: " + who + (p.invites.length ? " · Bekleyen: " + p.invites.join(", ") : "") + ")\n\nProjeden ayrılmak için \"ayrıl\" yaz" + (p.owner === (ACC.user || {}).id ? " (sahibi olduğun için proje silinir)" : "") + ".");
+    if(!e) return;
+    try{
+      if(e.trim().toLocaleLowerCase("tr") === "ayrıl"){ if(!confirm("Emin misin?")) return; await this.api({action: "leave", id: p.id}); if(current && current.proj === p.id) newChat(); this.load(ACC.user); return; }
+      await this.api({action: "invite", id: p.id, email: e.trim()}); toast("Davet gönderildi. Kişi bu e-postayla giriş yapınca \"Projeler\"de görür."); this.load(ACC.user);
+    }catch(x){ toast(x.message); }
+  },
+  async fetchMsgs(id){ const j = await (await fetch("/api/projects?id=" + encodeURIComponent(id))).json(); if(j.error) throw new Error(j.error); return j; },
+  async open(id){
+    if(busy) return;
+    try{
+      const j = await this.fetchMsgs(id);
+      current = {id: "p_" + id, proj: id, title: "👥 " + j.project.name, messages: j.messages, updated: Date.now(), __synced: j.messages.length};
+      if(window.innerWidth < 760) $("#side").classList.add("hidden");
+      renderThread(); renderChats(); this.poll();
+    }catch(e){ toast(e.message); }
+  },
+  async sync(){
+    const c = current; if(!c || !c.proj) return;
+    const add = c.messages.slice(c.__synced || 0).filter(m => m.content && !m.by);
+    c.__synced = c.messages.length; if(!add.length) return;
+    try{ await this.api({action: "append", id: c.proj, msgs: add.map(m => ({role: m.role, content: m.content}))}); add.forEach(m => { if(m.role === "user") m.by = ACC.user.name; }); }catch(e){ toast("Projeye kaydedilemedi: " + e.message); }
+  },
+  poll(){
+    this.stop();
+    this.timer = setInterval(async () => {
+      const c = current; if(!c || !c.proj || busy || document.hidden) return;
+      try{ const j = await this.fetchMsgs(c.proj); if(j.messages.length > (c.__synced || 0) && current === c && !busy){ c.messages = j.messages; c.__synced = j.messages.length; renderThread(); } }catch(e){}
+    }, 6000);
+  },
+  stop(){ clearInterval(this.timer); this.timer = null; },
+};
+$("#newProj").onclick = () => PROJ.create();
+
 /* ---------------- Glow Up ekibi ---------------- */
 var GLOW = {
   data: null,

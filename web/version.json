@@ -1,14 +1,13 @@
 {
-  "version": "1.23.0",
-  "mac": "1.23.0",
+  "version": "1.24.0",
+  "mac": "1.24.0",
   "date": "2026-11-27",
   "notes": [
+    "Ortak çalışma: Projeler — proje aç, e-postayla davet et, davet edilen kabul eder; projedeki sohbeti herkes görür ve birlikte yazar",
+    "Mobilde alt çubuk düzeldi: modlar ayrı satırda, gönder düğmesi her zaman görünür",
+    "Video: \"sıcak ton\", \"soğuk ton\", \"sinematik renk\", \"siyah beyaz\" yazarsan renk ayarlanır; yazmazsan renge dokunulmaz",
+    "Altyazı satırları anlama göre bölünür, \"ve, bir, için\" gibi kelimelerde kesilmez",
     "Editör: Kod modunda \"‹/› Editör\" ile proje aç; solda dosya ağacı, ortada sekmeli kod editörü (renklendirme, ⌘/Ctrl+S ile kaydet)",
-    "Her cihazda: Windows ve Mac'te Chrome/Edge ile bilgisayarındaki klasörü doğrudan düzenle; telefon, tablet, Safari ve Firefox'ta projeler tarayıcında saklanır, dosya ya da klasör içe aktarabilirsin",
-    "Kod ajanı açık projendeki dosyaları okuyup düzenler; her değişikliği önce satır satır fark (eklenen yeşil, silinen kırmızı) olarak gösterir, \"✓ Uygula\" demeden hiçbir şeye dokunmaz",
-    "Canlı önizleme: HTML projen yazdıkça sağda güncellenir, sayfalar arası bağlantılar da çalışır",
-    "Yayınla: projeni tek tıkla internete yükle (Netlify) ya da zip'i indirip Netlify/Vercel/Cloudflare Drop veya GitHub Pages'e koy; sitemap.xml ve robots.txt otomatik eklenir, Google Search Console rehberi içinde",
-    "⤓ İndir: projeni istediğin an zip olarak indir",
-    "Kod önizleme: HTML/SVG kodlarında \"▶ Önizle\" ile sonuç sohbetin içinde canlı çalışır"
+    "Her cihazda: Windows ve Mac'te Chrome/Edge ile bilgisayarındaki klasörü doğrudan düzenle; telefon, tablet, Safari ve Firefox'ta projeler tarayıcında saklanır, dosya ya da klasör içe aktarabilirsin"
   ]
 }
