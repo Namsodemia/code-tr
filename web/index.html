@@ -776,6 +776,8 @@ async function localStream(name, messages, onToken, signal){
 }
 async function webStream(s, name, messages, onToken, signal){
   if(String(name).startsWith("webllm:")) return localStream(name, messages, onToken, signal);
+  // Kendi anahtarla "Otomatik" ya da ucretsiz olmayan bir ad gelirse para harcanmasin: ucretsiz yonlendiriciye gec.
+  if(s.cloud_key && (name === "auto" || !(String(name).endsWith(":free") || name === "openrouter/free"))) name = "openrouter/free";
   const viaShared = !s.cloud_key && WEB.shared;
   if(!s.cloud_key && !viaShared) throw new Error("Önce Ayarlar'dan ücretsiz API anahtarını ekle.");
   const msgs = messages.map(m => m.images && m.images.length
@@ -799,6 +801,7 @@ async function webStream(s, name, messages, onToken, signal){
     if(/istek gonderdin|istek gönderdin/i.test(String(d))) throw new Error("Biraz hızlı gittin 🙂 Birkaç dakika bekleyip tekrar dene.");
     if(r.status === 429 || r.status === 503) throw new Error("Ücretsiz modeller şu an çok yoğun, birkaç kez denedim ama cevap alamadım. Bir dakika sonra tekrar gönder.");
     if(r.status === 401) throw new Error("API anahtarı geçersiz. Ayarlar'dan kontrol et.");
+    if(r.status === 402) throw new Error("Seçili model ücretli ya da hesabındaki kredi yetersiz. Model menüsünden ücretsiz bir model seç (ya da Ayarlar'dan kendi anahtarını kaldırıp Code-Tr'nin ücretsiz modellerini kullan).");
     throw new Error("Bir sorun çıktı (" + r.status + "). Tekrar dene.");
   }
   const used = r.headers.get("X-Coder-Model");
@@ -1850,7 +1853,7 @@ async function makeVideo(prompt){
       say(attempt === 1 ? "Ne yapacağımı planlıyorum…" : "İlk deneme olmadı, komutu düzeltiyorum…");
       let reply = "";
       const msgs = [{role: "system", content: VIDEO_PROMPT}, {role: "user", content: "INPUT = " + input + "\nVideo bilgisi:\n" + info + "\n\nİstek: " + prompt + (lastErr ? "\n\nÖnceki komut hata verdi:\n" + lastErr + "\nDüzeltilmiş JSON ver." : "")}];
-      const m = String(model).startsWith("webllm:") ? model : "cloud:auto";
+      const m = String(model).startsWith("webllm:") ? model : (WEB.settings().cloud_key ? model : "cloud:auto");
       await webStream(WEB.settings(), m.replace(/^cloud:/, ""), msgs, t => { reply += t; }, null);
       plan = parseJSONLoose(reply);
       const args = plan && plan.args ? plan.args.map(a => a === "INPUT" ? input : a) : null;
