@@ -23,7 +23,9 @@ export const FORMATS = ["info", "kinetik", "cerceve", "sade", "bolunmus"];
 export function pickLook(prev = {}, prefer = "", ai = {}){
   const pick = (arr, old) => { const c = arr.filter(x => x !== old); return c[Math.floor(Math.random() * c.length)]; };
   const q = String(prefer).toLocaleLowerCase("tr"), has = rx => rx.test(q);
-  const fmt = FORMATS.includes(ai.format) ? ai.format : has(/sade|minimal|yalnız altyazı|sadece altyazı/) ? "sade" : has(/enerjik|dinamik|tiktok|hızlı|kinetik|dev yazı|büyük yazı/) ? "kinetik" : has(/haber|belgesel|çerçeve|editoryal|dergi/) ? "cerceve" : has(/bölünmüş|split|ikiye böl|yarım ekran/) ? "bolunmus" : has(/infografi|grafik|şema|adım/) ? "info" : pick(FORMATS, prev.fmt);
+  const askedInfo = has(/infografi|grafik|şema|adım|referans/);
+  if(ai.format === "info" && !askedInfo) ai = {...ai, format: ""};   // referans sablonu istenmedikce secme
+  const fmt = FORMATS.includes(ai.format) ? ai.format : has(/sade|minimal|yalnız altyazı|sadece altyazı/) ? "sade" : has(/enerjik|dinamik|tiktok|hızlı|kinetik|dev yazı|büyük yazı/) ? "kinetik" : has(/haber|belgesel|çerçeve|editoryal|dergi/) ? "cerceve" : has(/bölünmüş|split|ikiye böl|yarım ekran/) ? "bolunmus" : askedInfo ? "info" : pick(FORMATS.filter(f => f !== "info"), prev.fmt);
   const colors = {mavi: "okyanus", lacivert: "lacivert", kurumsal: "lacivert", yeşil: "zumrut", mor: "murekkep", sarı: "komur", siyah: "komur", bordo: "bordo", pembe: "bordo", kırmızı: "lacivert", doğa: "orman"};
   const ck = Object.keys(colors).find(k => q.includes(k));
   const palKey = PAL[ai.renk] ? ai.renk : ck ? colors[ck] : pick(Object.keys(PAL), prev.pal);
@@ -328,7 +330,7 @@ export async function renderMotion({ff, input, W, H, words, plan, palette = "kur
   const scenes = (plan.sahneler || []).filter(sc => SCENES[sc.type] && +sc.end > +sc.start).map(sc => ({...sc, start: +sc.start, end: +sc.end})).sort((a, b) => a.start - b.start).slice(0, 14);
   // Video surekli kesilmesin: tam ekran yalniz ilk sahne ve alinti; digerleri seffaf (videonun ustunde).
   const full = brand ? null : (look && look.full);
-  scenes.forEach((sc, i) => { sc.ov = full === "all" ? false : full === "none" ? sc.type !== "alinti" : !(i === 0 || sc.type === "alinti"); });
+  scenes.forEach((sc, i) => { sc.ov = full === "all" ? false : full === "none" ? sc.type !== "alinti" : sc.type !== "alinti"; });
   plan.sahneler = scenes;
   // 1) sahneleri kare kare ciz -> JPEG
   const cv = typeof OffscreenCanvas !== "undefined" ? new OffscreenCanvas(W, H) : Object.assign(document.createElement("canvas"), {width: W, height: H});
