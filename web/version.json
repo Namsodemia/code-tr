@@ -1,12 +1,12 @@
 {
-  "version": "1.21.0",
-  "mac": "1.21.0",
+  "version": "1.22.0",
+  "mac": "1.22.0",
   "date": "2026-11-26",
   "notes": [
+    "Kod önizleme: HTML/SVG kodlarında \"▶ Önizle\" ile sonuç sohbetin içinde canlı çalışır",
+    "Belirsiz video isteğinde önce sorar: sade altyazı, dinamik, haber tarzı, bilgi grafikli ya da bölünmüş ekran",
     "Video artık tam olarak yazdığın isteğe göre yapılır: yapay zekâ önce isteğini yorumlar, yalnız istediklerini ekler (\"sadece altyazı\" dersen sadece altyazı)",
     "Teslimde \"İsteğini şöyle uyguladım\" satırı: grafik, açılış başlığı, kadraj, boşluk kesme açık mı kapalı mı görürsün",
-    "Kanca başlığı: ilk 2-3 saniyede yapay zekânın konuşmadan yazdığı merak uyandıran büyük başlık (izleyici ilk 3 saniyede karar veriyor)",
-    "Kadraj ritmi: geniş, orta, yakın arasında her 1-2 saniyede yumuşak geçiş; video hep canlı kalır",
-    "İki yeni profesyonel altyazı: kelimeden kelimeye yumuşakça kayan vurgu kutusu ve konuşulan kelimeyi parlatan spot ışığı"
+    "Kanca başlığı: ilk 2-3 saniyede yapay zekânın konuşmadan yazdığı merak uyandıran büyük başlık (izleyici ilk 3 saniyede karar veriyor)"
   ]
 }

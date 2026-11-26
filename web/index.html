@@ -1054,7 +1054,8 @@ function md(src, streaming){
       while(i < lines.length && !/^\s*```\s*$/.test(lines[i])){ body.push(lines[i]); i++; }
       i++;
       const code = body.join("\n");
-      html.push('<div class="code"><div class="code-h"><span>' + esc(lang || "kod") + '</span><button data-copy>Kopyala</button></div><pre><code>' + highlight(code) + "</code></pre></div>");
+      const canPrev = /^(html?|svg|xml)$/i.test(lang || "") || (!lang && /^\s*<(!doctype|html|svg|div|body)/i.test(code));
+      html.push('<div class="code"><div class="code-h"><span>' + esc(lang || "kod") + '</span><span>' + (canPrev ? '<button data-prev>▶ Önizle</button> ' : '') + '<button data-copy>Kopyala</button></span></div><pre><code>' + highlight(code) + "</code></pre></div>");
       continue;
     }
     if(/^\s*$/.test(l)){ i++; continue; }
@@ -1515,6 +1516,17 @@ window.addEventListener("dragenter", e => { if([...e.dataTransfer.types].include
 window.addEventListener("dragleave", () => { if(--dragN <= 0){ dragN = 0; $("#drop").classList.remove("on"); } });
 window.addEventListener("dragover", e => e.preventDefault());
 window.addEventListener("drop", e => { e.preventDefault(); dragN = 0; $("#drop").classList.remove("on"); if(e.dataTransfer.files.length) addFiles([...e.dataTransfer.files]); });
+// Kod önizleme: HTML/SVG kodu sohbetin içinde güvenli (sandbox) çerçevede canlı çalışır
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-prev]"); if(!b) return;
+  const box = b.closest(".code"), old = box.querySelector("iframe.prev");
+  if(old){ old.remove(); box.querySelector("pre").style.display = ""; b.textContent = "▶ Önizle"; return; }
+  const code = box.querySelector("code").innerText;
+  const f = document.createElement("iframe"); f.className = "prev"; f.setAttribute("sandbox", "allow-scripts allow-forms allow-modals");
+  f.style.cssText = "width:100%;height:420px;border:0;background:#fff;display:block;border-radius:0 0 10px 10px";
+  f.srcdoc = /<html|<!doctype/i.test(code) ? code : '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0;font-family:system-ui">' + code;
+  box.querySelector("pre").style.display = "none"; box.appendChild(f); b.textContent = "‹/› Kod";
+});
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-copy]"); if(!b) return;
   navigator.clipboard.writeText(b.closest(".code").querySelector("code").innerText);
@@ -1851,6 +1863,17 @@ async function makeVideo(prompt, brand = null){
   if(ACC.enabled && !ACC.user){ ACC.gate(); return; }
   const item = pending.find(p => p.media);
   if(!item && !brand){ const img = pending.find(p => /^image\//.test(p.type || "")); if(prompt && (img || /üret|oluştur|yap|canlandır|hareketlendir|çek|video ?su/i.test(prompt))) return makeAIVideo(prompt, img); }
+  // Gerekirse soru sor: istek belirsizse önce tarzı sor (video bekletilir)
+  if(item && !brand && !BASIC_EDIT_RX.test(prompt) && !/sade|kinetik|dinamik|haber|belgesel|bölünmüş|infografik|grafik|altyazı|karaoke|kutu|spot|minimal|enerjik|aynı tarz/i.test(prompt) && prompt.trim().split(/\s+/).length < 5 && !makeVideo.__asked){
+    if(!current) newChat(); if(!chats.includes(current)) chats.unshift(current);
+    $("#empty").style.display = "none";
+    const el = assistantEl(); $("#thread").appendChild(el); const box = el.querySelector(".md");
+    box.innerHTML = md("Videonu nasıl kurgulayayım? Birini seç ya da kendi tarifini yaz:") + '<div class="gen-acts" style="flex-wrap:wrap"></div>';
+    const opts = [["Sade altyazı", "sadece altyazı, sade"], ["Dinamik sosyal medya", "dinamik kinetik, kayan kutu altyazı, boşlukları kes"], ["Haber / belgesel", "haber tarzı çerçeve, zarif altyazı"], ["Bilgi grafikli", "infografik ve grafiklerle profesyonel kurgu"], ["Bölünmüş ekran", "bölünmüş ekran, eğitim tarzı"]];
+    const acts = box.querySelector(".gen-acts");
+    opts.forEach(([l, v]) => { const a = document.createElement("a"); a.href = "#"; a.textContent = l; a.onclick = ev => { ev.preventDefault(); acts.remove(); makeVideo.__asked = true; makeVideo(prompt + ", " + v).finally(() => { makeVideo.__asked = false; }); }; acts.appendChild(a); });
+    scrollDown(true); return;
+  }
   if(!item){ toast("Önce 📎 ile bir video ekle (ya da \"... videosu üret\" yaz, fotoğraf eklersen onu canlandırırım)."); $("#attachBtn").click(); return; }
   askNotify();
   if(!prompt){ $("#input").focus(); toast("Videoda ne yapmamı istediğini yaz."); return; }
