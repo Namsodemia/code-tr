@@ -638,6 +638,7 @@ export function parseWishes(q){
   return {
     trimStart: num(/ilk\s*(\d+(?:[.,]\d+)?)\s*(?:sn|saniye)/), trimEnd: num(/son\s*(\d+(?:[.,]\d+)?)\s*(?:sn|saniye)/),
     capColor: ck ? colors[ck] : "", upper: /büyük harf/.test(q),
+    loud: /ses(i)? (yükselt|arttır|artır|dengele|düzelt|normalize|güçlendir)|ses (kısık|düşük|az)|sesi aç/.test(q),
     grade: /siyah ?beyaz|black ?white/.test(q) ? "grayscale(1) contrast(1.1)" : /sinematik renk|film gibi renk|sinematik ton/.test(q) ? "contrast(1.1) saturate(.9) brightness(.98) sepia(.06)" : /sıcak ton|sıcak renk|sıcak yap/.test(q) ? "sepia(.14) saturate(1.12) contrast(1.04)" : /soğuk ton|soğuk renk/.test(q) ? "hue-rotate(-8deg) saturate(.95) contrast(1.05) brightness(1.02)" : /canlı renk|renkleri canlandır|renk(leri)? (düzelt|iyileştir|ayarla)/.test(q) ? "contrast(1.07) saturate(1.18) brightness(1.02)" : "", noCaps: /alt ?yazı (olmasın|yok|istemiyorum|ekleme)|altyazısız/.test(q),
   };
 }
@@ -667,7 +668,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
   const output = new MB.Output({format: new MB.Mp4OutputFormat({fastStart: "in-memory"}), target: new MB.BufferTarget()});
   const vsrc = new MB.CanvasSource(out, {codec: "avc", bitrate: MB.QUALITY_HIGH, latencyMode: "quality", hardwareAcceleration: "prefer-hardware", keyFrameInterval: 2});
   // Akıcı hareket: kaynak 50+ fps ise 60 fps işle
-  FPS = 60;  // grafikler her zaman 60 fps (kaynak 30 fps olsa da animasyonlar akıcı)
+  FPS = dur > 90 ? 30 : 60;  // kisa videoda 60 fps (akici grafik); uzun videoda 30 fps (yari surede biter)
   output.addVideoTrack(vsrc, {frameRate: FPS});
   // atlama kurgu: zaman eşlemesi (kaynak <-> çıkış)
   const ts0 = Math.min(dur - .5, wish.trimStart || 0), te0 = Math.max(ts0 + .5, dur - (wish.trimEnd || 0));
@@ -686,7 +687,7 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
   groups = captionGroups(words);
   plan.__kesilen = Math.max(0, saved);
   let asrc = null, abuf = null;
-  if(at && saved > .3){
+  if(at && (saved > .3 || wish.loud)){
     try{
       const codec = await MB.getFirstEncodableAudioCodec(["aac", "opus"]);
       const ac = new OfflineAudioContext(1, 1, 48000); const src = await ac.decodeAudioData(await file.arrayBuffer());
@@ -696,9 +697,14 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
       for(let c = 0; c < ch; c++){ const inp = src.getChannelData(c), outp = abuf.getChannelData(c); let o = 0;
         for(const [x, y] of segs){ const i0 = Math.round(x * sr), i1 = Math.min(inp.length, Math.round(y * sr));
           for(let k = i0; k < i1; k++){ const d = Math.min(k - i0, i1 - 1 - k); outp[o++] = inp[k] * (d < fade ? d / fade : 1); } } }
+      if(wish.loud){ // istenirse konusma sesini dengele: ortalama seviye ~-18 dBFS, tepe en fazla -1 dBFS (yalniz kullanici isterse)
+        let sum = 0, peak = 0, n = 0; for(let c = 0; c < ch; c++){ const d = abuf.getChannelData(c); for(let k = 0; k < d.length; k += 4){ const v = Math.abs(d[k]); sum += v * v; n++; if(v > peak) peak = v; } }
+        const rms = Math.sqrt(sum / Math.max(1, n)), g = Math.min(.126 / Math.max(rms, 1e-4), .89 / Math.max(peak, 1e-4), 8);
+        if(g > 1.05 || g < .95) for(let c = 0; c < ch; c++){ const d = abuf.getChannelData(c); for(let k = 0; k < d.length; k++) d[k] *= g; }
+      }
       if(codec){ asrc = new MB.AudioBufferSource({codec, bitrate: 160e3}); output.addAudioTrack(asrc); } else abuf = null;
     }catch(e){ console.warn("Ses kesilemedi, kesme kapatıldı:", e); abuf = null; asrc = null; }
-    if(!abuf) return renderFast({file, W, H, words: words.map(w => ({...w, s: toSrc(w.s), e: toSrc(w.e)})), plan, palette, brand, look, cut: false, zoom, wish: {...wish, trimStart: 0, trimEnd: 0}, onStep});
+    if(!abuf) return renderFast({file, W, H, words: words.map(w => ({...w, s: toSrc(w.s), e: toSrc(w.e)})), plan, palette, brand, look, cut: false, zoom, wish: {...wish, trimStart: 0, trimEnd: 0, loud: false}, onStep});
   } else if(at){ asrc = new MB.EncodedAudioPacketSource(at.codec); output.addAudioTrack(asrc); }
   await output.start();
   const sink = new MB.CanvasSink(vt, {width: W, height: H, fit: "cover", poolSize: 2});

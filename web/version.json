@@ -1,13 +1,13 @@
 {
-  "version": "1.24.0",
-  "mac": "1.24.0",
+  "version": "1.25.0",
+  "mac": "1.25.0",
   "date": "2026-11-27",
   "notes": [
+    "Ses: \"sesi yükselt\", \"sesi dengele\" ya da \"ses kısık\" yazarsan konuşma sesi dengelenir; yazmazsan sese dokunulmaz",
+    "Uzun videolar (90 sn üstü) yarı sürede işlenir; kısa videolar akıcı 60 fps kalır",
     "Ortak çalışma: Projeler — proje aç, e-postayla davet et, davet edilen kabul eder; projedeki sohbeti herkes görür ve birlikte yazar",
     "Mobilde alt çubuk düzeldi: modlar ayrı satırda, gönder düğmesi her zaman görünür",
     "Video: \"sıcak ton\", \"soğuk ton\", \"sinematik renk\", \"siyah beyaz\" yazarsan renk ayarlanır; yazmazsan renge dokunulmaz",
-    "Altyazı satırları anlama göre bölünür, \"ve, bir, için\" gibi kelimelerde kesilmez",
-    "Editör: Kod modunda \"‹/› Editör\" ile proje aç; solda dosya ağacı, ortada sekmeli kod editörü (renklendirme, ⌘/Ctrl+S ile kaydet)",
-    "Her cihazda: Windows ve Mac'te Chrome/Edge ile bilgisayarındaki klasörü doğrudan düzenle; telefon, tablet, Safari ve Firefox'ta projeler tarayıcında saklanır, dosya ya da klasör içe aktarabilirsin"
+    "Altyazı satırları anlama göre bölünür, \"ve, bir, için\" gibi kelimelerde kesilmez"
   ]
 }
