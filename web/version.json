@@ -1,13 +1,12 @@
 {
-  "version": "1.4.0",
-  "mac": "1.4.0",
+  "version": "1.5.0",
+  "mac": "1.5.0",
   "date": "2026-11-26",
   "notes": [
-    "🧠 Öğrenen Code-Tr: cevapları 👍/👎 ile değerlendir, yanlışsa \"Doğrusunu öğret\"; onaylanan bilgiler herkes için Code-Tr'yi daha doğru yapar.",
-    "💻 Code-Tr Yerel: yapay zekâyı tamamen kendi cihazında, internetsiz ve hiçbir şirkete bağlı olmadan çalıştır (model menüsünde).",
-    "⚡ Otomatik (en iyi): her soruda boşta olan en güçlü ücretsiz model seçiliyor; zayıf modeller listeden çıkarıldı.",
-    "✍️ Daha iyi cevaplar: yenilenen talimatlarla daha doğal Türkçe, daha düzenli cevaplar; uzun sohbetlerde akıllı kısaltma.",
-    "↻ Yeniden yanıtla: beğenmediğin cevabı tek tıkla yeniden ürettir.",
-    "🎨 Daha güzel görseller: Türkçe tarifin, görsel modeli için otomatik olarak ayrıntılı tarife çevriliyor."
+    "🎬 Yeni Video modu: videonu ekle, ne istediğini Türkçe yaz (kes, dikey yap, yazı ekle, GIF'e çevir, sesi ayır…). İşlem tamamen senin cihazında, ücretsiz ve açık kaynak FFmpeg ile yapılır.",
+    "📚 Code-Tr'yi eğit: yöneticiler cümleler ve bağlantılarla Code-Tr'ye yeni bilgiler öğretebilir; Code-Tr ilgili sorularda bu bilgileri kaynağıyla kullanır.",
+    "🧠 Öğrenen Code-Tr: cevapları 👍/👎 ile değerlendir, yanlışsa \"Doğrusunu öğret\".",
+    "💻 Code-Tr Yerel: yapay zekâyı kendi cihazında, internetsiz ve bağımsız çalıştır.",
+    "⚡ Otomatik (en iyi) model, daha iyi Türkçe cevaplar ve ↻ Yeniden yanıtla."
   ]
 }

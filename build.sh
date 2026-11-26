@@ -48,6 +48,12 @@ cp dist/Code-Tr-mac.zip site/Code-Tr-mac.zip
 cp brand/icon-32.png brand/icon-64.png brand/icon-192.png brand/icon-512.png brand/icon-maskable-512.png brand/apple-touch-icon.png site/
 cp brand/icon-512.png site/icon.png
 mkdir -p site/fonts && cp web/fonts/* site/fonts/
+# FFmpeg (tarayici) - acik kaynak; yoksa resmi npm paketlerinden indir
+if [ ! -f web/vendor/ffmpeg/ffmpeg-core.wasm ]; then
+  T=$(mktemp -d); (cd "$T" && npm pack @ffmpeg/ffmpeg@0.12.15 @ffmpeg/core@0.12.10 --silent >/dev/null && for t in *.tgz; do mkdir -p "${t%.tgz}" && tar xzf "$t" -C "${t%.tgz}"; done)
+  mkdir -p web/vendor/ffmpeg && cp "$T"/ffmpeg-ffmpeg-0.12.15/package/dist/esm/*.js "$T"/ffmpeg-core-0.12.10/package/dist/esm/ffmpeg-core.* web/vendor/ffmpeg/
+fi
+mkdir -p site/vendor && cp -R web/vendor/ffmpeg site/vendor/
 cp web/manifest.webmanifest web/sw.js site/
 mkdir -p site/api && cp web/api/*.js site/api/
 cp web/version.json site/version.json
@@ -73,6 +79,9 @@ cat > site/vercel.json <<'JSON'
     {"source": "/sw.js", "headers": [
       {"key": "Cache-Control", "value": "no-cache"},
       {"key": "Service-Worker-Allowed", "value": "/"}
+    ]},
+    {"source": "/vendor/(.*)", "headers": [
+      {"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}
     ]},
     {"source": "/fonts/(.*)", "headers": [
       {"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}

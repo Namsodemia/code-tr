@@ -10,3 +10,5 @@ deploy/
 __pycache__/
 *.pyc
 mac/icon.svg.png
+# FFmpeg cekirdegi (build.sh indirir)
+web/vendor/
