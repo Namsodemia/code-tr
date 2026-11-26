@@ -695,7 +695,7 @@ function faceAvoid(y, h, H, face, lo = .1, hi = .765){
 const capY = (y, fs, H) => STYLE.face ? faceAvoid(y, fs * 1.5, H, STYLE.face, .1, .78) : y;
 
 // Kurgu plani: konusma, vurgular ve kesme noktalarindan; yapay zekanin ozel olaylari (plan.kurgu.olaylar) once gelir.
-export const KURGU_TIPLER = ["punch", "shake", "whip", "zoomblur", "glitch", "flash"];
+export const KURGU_TIPLER = ["punch", "shake", "whip", "zoomblur", "glitch", "lens", "spin", "shakecut", "burn", "flash"];
 export function planEdits({words, groups, emph, cuts = [], dur, level = "orta", ai = [], brand = false, sfx = false}){
   const L = brand ? "sade" : level, out = {punch: [], shake: [], trans: [], sfx: [], intro: L !== "sade", level: L};
   const gap = L === "dinamik" ? 1.8 : L === "orta" ? 2.6 : 4.5, amt = L === "dinamik" ? .16 : L === "orta" ? .12 : .08;
@@ -705,7 +705,7 @@ export function planEdits({words, groups, emph, cuts = [], dur, level = "orta", 
     const t = +e.t; if(!(t >= 0 && t < dur)) continue;
     if(e.tip === "punch") out.punch.push({t, end: Math.min(dur, grpEnd(t)), amt});
     else if(e.tip === "shake" && !brand) out.shake.push({t, amp: L === "dinamik" ? 1 : .7, seed: Math.round(t * 100)});
-    else if(["whip", "zoomblur", "glitch", "flash"].includes(e.tip) && !brand) out.trans.push({t, tip: e.tip, ai: true});
+    else if(["whip", "zoomblur", "glitch", "lens", "spin", "shakecut", "burn", "flash"].includes(e.tip) && !brand) out.trans.push({t, tip: e.tip, ai: true});
   }
   // vurgulu kelimelerde punch-in (aralik kurali: her 2-4 sn'de yeni bir sey)
   let last = out.punch.length ? -9 : -9;
@@ -715,17 +715,17 @@ export function planEdits({words, groups, emph, cuts = [], dur, level = "orta", 
   // sarsinti: unlemli ve sayili guclu anlar (yalniz dinamik)
   if(L === "dinamik") words.forEach((w, k) => { if((/!$/.test(w.w) || (emph.has(k) && /\d/.test(w.w))) && !out.shake.some(s => Math.abs(s.t - w.s) < 3)) out.shake.push({t: w.s, amp: .8, seed: k + 11}); });
   // kesme noktalari: atlama kurgusunu gecisle ort (sade: sert kesme + zoom degisimi)
-  const cyc = L === "dinamik" ? ["whip", "zoomblur", "glitch", "whip", "zoomblur"] : ["cut", "cut", "whip", "cut", "zoomblur"];
+  const cyc = L === "dinamik" ? ["whip", "zoomblur", "glitch", "lens", "spin", "whip", "shakecut"] : ["cut", "whip", "cut", "zoomblur", "cut", "lens"];
   cuts.forEach((t, i) => { if(out.trans.some(x => Math.abs(x.t - t) < .5)) return; const tip = L === "sade" ? "cut" : cyc[i % cyc.length]; out.trans.push({t, tip, cut: true}); });
   // flas en fazla 1 kez (yapisal an): dinamikte kanca bitisi
-  const fl = out.trans.filter(x => x.tip === "flash"); if(fl.length > 1) fl.slice(1).forEach(x => x.tip = "zoomblur");
+  for(const one of ["flash", "burn"]){ const fl = out.trans.filter(x => x.tip === one); if(fl.length > 1) fl.slice(1).forEach(x => x.tip = "zoomblur"); }   // flas ve isik sizintisi en fazla 1 kez
   out.trans.sort((a, b) => a.t - b.t);
-  out.trans.forEach((x, i) => { x.d = x.tip === "glitch" ? .2 : x.tip === "flash" ? .22 : .24; x.dir = i % 2 ? -1 : 1; });
+  out.trans.forEach((x, i) => { x.d = GL_DUR[x.tip] || .24; x.dir = i % 2 ? -1 : 1; });
   out.punch.sort((a, b) => a.t - b.t);
   for(let i = 1; i < out.punch.length; i++) if(out.punch[i].t < out.punch[i - 1].end + .3) out.punch[i - 1].end = Math.max(out.punch[i - 1].t + .5, out.punch[i].t - .3);
   // ses efektleri: gecislerde whoosh/glitch, sarsintida darbe; kancada hafif darbe
   if(sfx && !brand){
-    out.trans.forEach(x => { if(x.tip === "whip" || x.tip === "zoomblur") out.sfx.push({t: x.t + x.d * .5, k: "whoosh"}); else if(x.tip === "glitch") out.sfx.push({t: x.t, k: "glitch"}); else if(x.tip === "flash") out.sfx.push({t: x.t, k: "impact"}); });
+    out.trans.forEach(x => { if(["whip", "zoomblur", "lens", "spin"].includes(x.tip)) out.sfx.push({t: x.t + x.d * .5, k: "whoosh"}); else if(x.tip === "glitch") out.sfx.push({t: x.t, k: "glitch"}); else if(x.tip === "flash" || x.tip === "shakecut" || x.tip === "burn") out.sfx.push({t: x.t + (x.tip === "shakecut" ? x.d * .5 : 0), k: "impact"}); });
     out.shake.forEach(s => out.sfx.push({t: s.t, k: "thud"}));
     if(L === "dinamik") out.punch.forEach(p => out.sfx.push({t: p.t, k: "tick"}));
   }
@@ -758,7 +758,49 @@ function drawCam(c, src, W, H, cam, anchor, filter){
   else draw(0, 0, 1);
   c.filter = "none";
 }
-// Gecisler: A (kesmeden onceki son kare) ve B (yeni goruntu) ayni anda ekranda; bos kare yok
+// GPU gecisleri: gl-transitions (MIT) shader'lari WebGL ile cizilir (web/gltr.js); WebGL yoksa 2B yedek gecisler.
+const GL_MAP = {whip: "WhipPan", zoomblur: "CrossZoom", glitch: "StripDatamoshGlitch", lens: "LensPush", spin: "WhipSpin", shakecut: "CameraShake", burn: "FilmBurn"};
+const GL_DUR = {whip: .3, zoomblur: .42, glitch: .3, lens: .38, spin: .42, shakecut: .34, burn: .6, flash: .22};
+async function glInit(W, H){
+  try{
+    if(typeof OffscreenCanvas === "undefined") return null;
+    const {GL_TRANSITIONS} = await import("/gltr.js");
+    const cv = new OffscreenCanvas(W, H), gl = cv.getContext("webgl", {premultipliedAlpha: false, preserveDrawingBuffer: true, antialias: false});
+    if(!gl) return null;
+    const VS = "attribute vec2 p; varying vec2 _uv; void main(){ _uv = (p + 1.0) * 0.5; gl_Position = vec4(p, 0.0, 1.0); }";
+    const HEAD = "precision highp float;\nvarying vec2 _uv;\nuniform sampler2D from, to;\nuniform float progress, ratio;\nvec4 getFromColor(vec2 uv){ return texture2D(from, uv); }\nvec4 getToColor(vec2 uv){ return texture2D(to, uv); }\n";
+    const sh = (type, src) => { const x = gl.createShader(type); gl.shaderSource(x, src); gl.compileShader(x); if(!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x)); return x; };
+    const vsh = sh(gl.VERTEX_SHADER, VS);
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    const progs = {};
+    const prog = name => {
+      if(name in progs) return progs[name];
+      const T = GL_TRANSITIONS[name]; progs[name] = null; if(!T) return null;
+      try{ const pr = gl.createProgram(); gl.attachShader(pr, vsh); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, HEAD + T.glsl + "\nvoid main(){ gl_FragColor = transition(_uv); }"));
+        gl.bindAttribLocation(pr, 0, "p"); gl.linkProgram(pr); if(!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr));
+        const loc = {}; for(const k of ["from", "to", "progress", "ratio", ...Object.keys(T.types || {})]) loc[k] = gl.getUniformLocation(pr, k);
+        progs[name] = {pr, T, loc}; }catch(e){ console.warn("GPU geçişi derlenemedi:", name, e); }
+      return progs[name];
+    };
+    const tex = () => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); return t; };
+    const tA = tex(), tB = tex(); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    // tum gecisleri onceden derle: hata varsa o tip 2B'ye duser
+    const ok = {}; for(const [k, n] of Object.entries(GL_MAP)) ok[k] = !!prog(n);
+    return {cv, ok, draw(tip, p, A, B, upA, extra = {}){
+      const P = prog(GL_MAP[tip]); if(!P) return false;
+      gl.viewport(0, 0, W, H); gl.useProgram(P.pr);
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tA); if(upA) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, A);
+      gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, tB); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, B);
+      gl.uniform1i(P.loc.from, 0); gl.uniform1i(P.loc.to, 1); gl.uniform1f(P.loc.progress, p); gl.uniform1f(P.loc.ratio, W / H);
+      for(const [k, ty] of Object.entries(P.T.types || {})){ const v = k in extra ? extra[k] : P.T.params[k], L = P.loc[k]; if(L == null || v === undefined) continue;
+        if(ty === "float") gl.uniform1f(L, +v); else if(ty === "int" || ty === "bool") gl.uniform1i(L, +v); else if(ty === "vec2") gl.uniform2fv(L, v); else if(ty === "vec3") gl.uniform3fv(L, v); else if(ty === "vec4") gl.uniform4fv(L, v); }
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); return true; }};
+  }catch(e){ console.warn("WebGL geçişleri kapalı:", e); return null; }
+}
+// Gecisler (2B yedek): A (kesmeden onceki son kare) ve B (yeni goruntu) ayni anda ekranda; bos kare yok
 function blurStrip(c, img, x, y, w, h, dx, dy, n){ for(let k = 0; k < n; k++){ const u = n > 1 ? k / (n - 1) - .5 : 0; c.globalAlpha = k ? 1 / (k + 1) : 1; c.drawImage(img, x + dx * u, y + dy * u, w, h); } c.globalAlpha = 1; }
 function drawTransition(c, tr, p, A, B, W, H, tmp, frameNo){
   const S = Math.min(W, H) / 1080;
@@ -936,13 +978,20 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
   // Kamera + gecisler: video once vb'ye (kamera ile), sonra gecisle ana kareye
   const vb = new OffscreenCanvas(W, H), vbc = vb.getContext("2d"), holdC = new OffscreenCanvas(W, H), holdX = holdC.getContext("2d");
   let tmp = null; const anchor = face ? {x: face.cx, y: face.cy} : {x: .5, y: .4};
+  const GLT = E.trans.some(x => x.tip !== "cut") ? await glInit(W, H) : null;
+  plan.__kurgu.gpu = !!GLT;
+  const FALL = {lens: "whip", spin: "zoomblur", shakecut: "zoomblur", burn: "flash"};
   const drawVid0 = (src, t, gf) => {
     const tr = E.trans.find(x => x.tip !== "cut" && t >= x.t && t < x.t + x.d);
-    if(tr && !tr.h){ holdX.drawImage(vb, 0, 0); tr.h = true; }   // kesmeden onceki son kare (A)
+    let first = false; if(tr && !tr.h){ holdX.drawImage(vb, 0, 0); tr.h = true; first = true; }   // kesmeden onceki son kare (A)
     const cam = camAt(t, E, zoomAt(t)); drawCam(vbc, src, W, H, cam, anchor, gf || "");
     if(face){ const z = Math.max(1, cam.z), sc = (v, a) => a + (v - a) * z;   // yakinlasinca yuz buyur: yazilar yeni kutuya gore kacar
       STYLE.face = {...face, y0: clamp(sc(face.y0, anchor.y)), y1: clamp(sc(face.y1, anchor.y)), x0: clamp(sc(face.x0, anchor.x)), x1: clamp(sc(face.x1, anchor.x))}; }
-    if(tr){ if(tr.tip === "glitch" && !tmp) tmp = [new OffscreenCanvas(W, H), new OffscreenCanvas(W, H)]; drawTransition(ctx, tr, (t - tr.t) / tr.d, holdC, vb, W, H, tmp, i); }
+    if(tr){
+      const p = (t - tr.t) / tr.d;
+      if(GLT && GLT.ok[tr.tip] && GLT.draw(tr.tip, p, holdC, vb, first, tr.tip === "whip" || tr.tip === "lens" ? {direction: [tr.dir, 0]} : {})) ctx.drawImage(GLT.cv, 0, 0);
+      else { const t2 = {...tr, tip: GL_MAP[tr.tip] && !["whip", "zoomblur", "glitch"].includes(tr.tip) ? FALL[tr.tip] : tr.tip}; if(t2.tip === "glitch" && !tmp) tmp = [new OffscreenCanvas(W, H), new OffscreenCanvas(W, H)]; drawTransition(ctx, t2, p, holdC, vb, W, H, tmp, i); }
+    }
     else ctx.drawImage(vb, 0, 0);
   };
   let i = 0, t0 = performance.now();

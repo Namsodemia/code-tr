@@ -1,15 +1,15 @@
 {
-  "version": "1.32.0",
-  "mac": "1.32.0",
+  "version": "1.33.0",
+  "mac": "1.33.0",
   "date": "2026-11-27",
   "notes": [
+    "Geçişler artık ekran kartında (GPU): sinema kalitesinde hızlı kaydırma, zoom bulanıklığı ve datamosh glitch; açık kaynak gl-transitions koleksiyonundan (MIT)",
+    "Yeni geçişler: mercek itmesi, dönen geçiş, sarsıntılı kesme ve sıcak ışık sızıntısı (film yanığı); yapay zekâ konuşmanın anına göre seçer",
+    "Ekran kartı desteklenmeyen cihazlarda eski geçişler otomatik devreye girer",
     "Profesyonel kurgu (After Effects tarzı): yüze odaklı yakınlaştırma vuruşları, kamera sarsıntısı, hareket bulanıklığıyla hızlı kaydırma, zoom bulanıklığı ve glitch geçişleri; kesmeler artık geçişle örtülüyor",
     "Ses efektleri: geçişlerde whoosh, güçlü anlarda darbe sesi; konuşmayı bastırmadan, koddan üretilir (\"ses efekti olmasın\" yazarsan eklenmez)",
     "Yüz algılama: yazılar, başlıklar ve sayılar yüzün üstüne gelmez; yakınlaşınca da yüzü takip edip kaçar",
     "Kurgu yoğunluğu isteğine göre: \"dinamik kurgu\", \"sade kurgu\", \"geçiş olmasın\", \"zoom yok\"; teslimde ne yapıldığı yazılır (dolgu temizliği ve yazım düzeltmeleri dahil)",
-    "Video modunda açılış ekranında video önerileri",
-    "Müşteriye link: projeni ya da sohbetteki HTML sayfasını tek tıkla coder-tr.vercel.app/p/… linkiyle yayınla, WhatsApp ya da e-postayla gönder; müşterin hesap açmadan görür",
-    "Editörde \"🔗 Müşteriye gönder\", sohbetteki kodlarda \"🔗 Link\"; projeyi değiştirince \"Linki güncelle\" de, link aynı kalır",
-    "Linklerin güvenli: sayfalar Code-Tr hesabına ve verilerine erişemez, Google'da çıkmaz; \"Linklerim\"den istediğini silebilirsin"
+    "Video modunda açılış ekranında video önerileri"
   ]
 }

@@ -74,7 +74,7 @@ if [ ! -f web/vendor/mediapipe/blaze_face_short_range.tflite ]; then
   curl -sfL -o web/vendor/mediapipe/blaze_face_short_range.tflite https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite
 fi
 cp -R web/vendor/mediapipe site/vendor/
-cp web/manifest.webmanifest web/sw.js web/motion.js web/yayin-giris.html site/
+cp web/manifest.webmanifest web/sw.js web/motion.js web/gltr.js web/yayin-giris.html site/
 mkdir -p site/api && cp web/api/*.js site/api/
 cp web/version.json site/version.json
 CONTACT=$(cat mac/contact.txt 2>/dev/null || echo "iletisim@coder-tr.vercel.app")
