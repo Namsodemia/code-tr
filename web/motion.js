@@ -29,11 +29,12 @@ export function pickLook(prev = {}, prefer = "", ai = {}){
   const colors = {mavi: "okyanus", lacivert: "lacivert", kurumsal: "lacivert", yeşil: "zumrut", mor: "murekkep", sarı: "komur", siyah: "komur", bordo: "bordo", pembe: "bordo", kırmızı: "lacivert", doğa: "orman"};
   const ck = Object.keys(colors).find(k => q.includes(k));
   const palKey = PAL[ai.renk] ? ai.renk : ck ? colors[ck] : pick(Object.keys(PAL), prev.pal);
+  if(ai.altyazi === "pop" && !has(/zıpla|pop/)) ai = {...ai, altyazi: ""};   // sert altyazi istenmedikce yok
   const cap = CAPS.includes(ai.altyazi) ? ai.altyazi : has(/karaoke/) ? "karaoke" : has(/kelime kelime|yumuşak|soft|zarif/) ? "glide" : has(/sola|sol hizalı/) ? "left" : has(/iki katman|büyük altyazı|vurgulu/) ? "twolayer" : has(/zıpla|pop/) ? "pop" : pick(SOFT_CAPS, prev.cap);
   const font = FONTS.includes(ai.font) ? ai.font : has(/dar|condensed/) ? "Barlow Condensed" : has(/modern|teknoloji/) ? "Space Grotesk" : pick(FONTS, prev.font);
   const hex = (String(prefer).match(/#[0-9a-f]{6}\b/gi) || []).slice(0, 2);
   const fm = String(prefer).match(/font\s*[:=]\s*([A-Za-zÇĞİÖŞÜçğıöşü ]{3,30}?)(?:[,.\n]|$)/i);
-  return {fmt, pal: palKey, font: fm ? fm[1].trim() : font, hex: hex.length ? hex : null, bg: pick(BGS, prev.bg), wipe: pick(WIPES, prev.wipe), cap, full: /arka ?plansız|şeffaf|seffaf|kesme|kesmesin/i.test(prefer) ? "none" : /tam ekran/i.test(prefer) ? "all" : ""};
+  return {fmt, cards: has(/kart|ikon|donanım/), align: Math.random() < .5 ? "center" : "left", pal: palKey, font: fm ? fm[1].trim() : font, hex: hex.length ? hex : null, bg: pick(BGS, prev.bg), wipe: pick(WIPES, prev.wipe), cap, full: /arka ?plansız|şeffaf|seffaf|kesme|kesmesin/i.test(prefer) ? "none" : /tam ekran/i.test(prefer) ? "all" : ""};
 }
 export function lookPalette(l){ const c = l.hex ? {navy: l.hex[0], red: l.hex[1] || l.hex[0]} : (PAL[l.pal] || PAL.lacivert); return {bg1: "#f5f5f3", bg2: "#e8e8e4", navy: c.navy, red: c.red, gray: "#5f6368", line: "#d0d0cc", card: "#ffffff"}; }
 export function brandPalette(b){ return {bg1: "#f6f6f4", bg2: "#ecebe7", navy: b.c1, red: b.c2, gray: "#5f6368", line: "#d4d4d0", card: "#ffffff"}; }
@@ -273,12 +274,41 @@ function layout(W, H){
   const cw = Math.min(W * .86, H * .5); const s = cw / 680;
   return {x: (W - cw) / 2, y: H * .15, w: cw, s};
 }
+// Editoryal tipografi: kart, ikon, yildiz yok. Buyuk temiz yazi, ince cizgiler, buyuk rakam. (Donanim sablonundan bagimsiz dil)
+function typoScene(ctx, L, t, P, d, W, H){
+  const {x, w, s} = L, OV = STYLE.ov, ink = OV ? "#ffffff" : P.navy, sub = OV ? "rgba(255,255,255,.8)" : P.gray;
+  const center = STYLE.align === "center", ax = center ? x + w / 2 : x;
+  const items = (d.items || []).map(i => typeof i === "string" ? i : (i.label || "")).filter(Boolean);
+  if(!items.length){ if(d.bas) items.push(d.bas); if(d.son) items.push(d.son); if(d.label && !d.adet) items.push(d.label); if(d.alt) items.push(d.alt); }
+  const stroke = (txt, xx, yy) => { if(OV){ ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = Math.max(2, parseInt(ctx.font.match(/(\d+)px/)[1]) * .07); ctx.lineJoin = "round"; ctx.strokeText(txt, xx, yy); } ctx.fillText(txt, xx, yy); };
+  ctx.save(); ctx.textAlign = center ? "center" : "left"; ctx.textBaseline = "alphabetic";
+  let y = L.y + 40 * s;
+  const pe = easeOut(prog(t, .05, .4));
+  ctx.globalAlpha = pe; ctx.fillStyle = OV ? "#ffffff" : P.red; font(ctx, 22 * s, 700); ctx.fillText(String(d.eyebrow || "").toLocaleUpperCase("tr").split("").join(" "), ax, y);
+  ctx.globalAlpha = pe; ctx.fillStyle = OV ? "#ffffff" : P.red; ctx.fillRect(center ? ax - 20 * s : ax, y + 18 * s, 40 * s * pe, 3 * s);
+  y += 90 * s;
+  [[d.title1, ink, 74], [d.title2, OV ? "#ffffff" : P.red, 74]].forEach(([txt, col, sz], i) => { if(!txt) return;
+    const size = fitText(ctx, txt, w, sz * s, 800), p = easeOut(prog(t, .12 + i * .12, .5));
+    ctx.globalAlpha = p; ctx.fillStyle = col; font(ctx, size, 800); stroke(txt, ax, y + (1 - p) * 16 * s); y += size * 1.12; });
+  if(d.adet && !items.length){ const p = easeOut(prog(t, .45, .6)), n = Math.round((parseInt(d.adet) || 0) * p);
+    ctx.globalAlpha = p; ctx.fillStyle = OV ? "#ffffff" : P.red; font(ctx, 220 * s, 300); stroke(String(n), ax, y + 200 * s);
+    if(d.label){ ctx.fillStyle = sub; font(ctx, 30 * s, 600); stroke(String(d.label), ax, y + 250 * s); } ctx.restore(); return; }
+  y += 30 * s;
+  items.slice(0, 5).forEach((it, i) => {
+    const p = easeOut(prog(t, .45 + i * .35, .55)); if(p <= 0) return;
+    const last = i === Math.min(items.length, 5) - 1, size = fitText(ctx, it, w, 44 * s, last ? 800 : 600);
+    ctx.globalAlpha = p; ctx.fillStyle = OV ? "rgba(255,255,255,.5)" : P.line; ctx.fillRect(center ? ax - w / 2 : ax, y, w * p, 1.5 * s);
+    ctx.fillStyle = last ? (OV ? "#ffffff" : P.red) : ink; font(ctx, size, last ? 800 : 600); stroke(it, ax, y + 30 * s + size * .9 + (1 - p) * 12 * s);
+    y += size + 60 * s;
+  });
+  ctx.restore();
+}
 function drawScene(ctx, W, H, sc, t, P){
   const dark = sc.type === "alinti";
   STYLE.ov = !!sc.ov;
-  if(sc.ov){ ctx.clearRect(0, 0, W, H); const fn = SCENES[sc.type] || SCENES.kartlar; try{ fn(ctx, layout(W, H), t, P, sc, W, H); }catch(e){} STYLE.ov = false; return; }
+  if(sc.ov){ ctx.clearRect(0, 0, W, H); const fn = STYLE.typo && sc.type !== "alinti" ? typoScene : (SCENES[sc.type] || SCENES.kartlar); try{ fn(ctx, layout(W, H), t, P, sc, W, H); }catch(e){} STYLE.ov = false; return; }
   background(ctx, W, H, t, P, dark);
-  const fn = SCENES[sc.type] || SCENES.kartlar;
+  const fn = STYLE.typo && !dark ? typoScene : (SCENES[sc.type] || SCENES.kartlar);
   try{ fn(ctx, layout(W, H), t, P, sc, W, H); }catch(e){}
   wipe(ctx, W, H, t, P);
 }
@@ -332,9 +362,6 @@ export async function renderMotion({ff, input, W, H, words, plan, palette = "kur
   const P = PALETTES[palette] || PALETTES.kurumsal;
   await loadFonts();
   const scenes = (plan.sahneler || []).filter(sc => SCENES[sc.type] && +sc.end > +sc.start).map(sc => ({...sc, start: +sc.start, end: +sc.end})).sort((a, b) => a.start - b.start).slice(0, 14);
-  // Video surekli kesilmesin: tam ekran yalniz ilk sahne ve alinti; digerleri seffaf (videonun ustunde).
-  const full = brand ? null : (look && look.full);
-  scenes.forEach((sc, i) => { sc.ov = full === "all" ? false : full === "none" ? sc.type !== "alinti" : sc.type !== "alinti"; });
   plan.sahneler = scenes;
   // 1) sahneleri kare kare ciz -> JPEG
   const cv = typeof OffscreenCanvas !== "undefined" ? new OffscreenCanvas(W, H) : Object.assign(document.createElement("canvas"), {width: W, height: H});
@@ -550,13 +577,16 @@ export function parseWishes(q){
 export async function renderFast({file, W, H, words, plan, palette = "kurumsal", brand = null, look = null, cut = false, wish = {}, onStep = () => {}}){
   if(typeof VideoEncoder === "undefined") throw new Error("NO_WEBCODECS");
   const MB = await import("/vendor/mediabunny/mediabunny.min.mjs");
-  STYLE = brand ? {glow: true, font: brand.font, italic: !!brand.italic, nobox: !!brand.nobox, lower: !!brand.lower} : {};
-  if(!brand && look) STYLE = {font: look.font, bg: look.bg, wipe: look.wipe, cap: look.cap, noback: look.cap !== "pop"};
+  STYLE = brand ? {glow: true, font: brand.font, italic: !!brand.italic, nobox: !!brand.nobox, lower: !!brand.lower, typo: brand.id !== "donanim"} : {};
+  if(!brand && look) STYLE = {font: look.font, bg: look.bg, wipe: look.wipe, cap: look.cap, noback: look.cap !== "pop", typo: !look.cards, align: look.align};
   const P = brand ? brandPalette(brand) : look ? lookPalette(look) : (PALETTES[palette] || PALETTES.kurumsal);
   await loadFonts();
   if(!brand && look && look.font !== "Montserrat"){ onStep("Font yükleniyor (" + look.font + ")…"); await loadBrandFont(look.font); }
   if(brand){ onStep("Marka fontu yükleniyor (" + brand.font + ")…"); await loadBrandFont(brand.font, brand.italic); }
   const scenes = (plan.sahneler || []).filter(sc => SCENES[sc.type] && +sc.end > +sc.start).map(sc => ({...sc, start: +sc.start, end: +sc.end})).sort((a, b) => a.start - b.start).slice(0, 14);
+  // Video surekli kesilmesin: sahneler seffaf (videonun ustunde); yalniz alinti ve "tam ekran" istenirse tam ekran.
+  const full = brand ? null : (look && look.full);
+  scenes.forEach(sc => { sc.ov = full === "all" ? false : sc.type !== "alinti"; });
   plan.sahneler = scenes;
   let groups = captionGroups(words); const emph = new Set(plan.vurgu || []);
   const input = new MB.Input({source: new MB.BlobSource(file), formats: MB.ALL_FORMATS});
@@ -628,8 +658,15 @@ export async function renderFast({file, W, H, words, plan, palette = "kurumsal",
       } else if(fmt === "bolunmus"){
         const sc = scenes.find(x => t >= x.start && t < x.end);
         if(src){ if(sc) crop(src, 0, 0, W, H / 2); else ctx.drawImage(src, 0, 0, W, H); }
-        if(sc){ const hc = half.getContext("2d"); drawScene(hc, W, H / 2, {...sc, ov: false}, t - sc.start, P); const k = easeOut(clamp((t - sc.start) / .35)); ctx.drawImage(half, 0, H / 2 + (1 - k) * H / 2); ctx.fillStyle = P.red; ctx.fillRect(0, H / 2 - 4 * S, W * k, 8 * S); }
-        drawCaption(ctx, W, H, t, groups, emph, P, !!sc);
+        if(sc){
+          // sahneyi tam boyutta ciz, icerik bolgesini (y .12H-.70H) alt yariya orantili sigdir: kartlar okunur boyutta kalir
+          drawScene(sctx, W, H, {...sc, ov: false}, t - sc.start, P);
+          const k = easeOut(clamp((t - sc.start) / .7)), sy = H * .12, sh = H * .58, dh = H / 2, dw = W * dh / sh, dx = (W - dw) / 2;
+          ctx.save(); ctx.globalAlpha = k * easeOut(clamp((sc.end - t) / .5)); ctx.fillStyle = P.bg1; ctx.fillRect(0, H / 2, W, H / 2);
+          ctx.drawImage(scv, 0, sy, W, sh, dx, H / 2 + (1 - k) * 30 * S, dw, dh); ctx.restore();
+          ctx.fillStyle = P.red; ctx.fillRect(0, H / 2 - 3 * S, W * k, 6 * S);
+          ctx.save(); ctx.translate(0, -H * .27); drawCaption(ctx, W, H, t, groups, emph, P, false); ctx.restore();   // altyazi ust yarida
+        } else drawCaption(ctx, W, H, t, groups, emph, P, false);
       } else if(src) drawVid(src, t);
       if(fmt === "kinetik"){
         const b = bigWords.find(x => t >= x.s - .05 && t < x.s + 1.1);
