@@ -87,6 +87,14 @@ cat > site/vercel.json <<'JSON'
   ]
 }
 JSON
+# duman testi: sayfa betigi gorunmez tarayicida sonuna kadar hatasiz calismali
+CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+if [ -x "$CHROME" ]; then
+  if ! "$CHROME" --headless=new --disable-gpu --virtual-time-budget=4000 --dump-dom "file://$PWD/site/index.html" 2>/dev/null | grep -q 'data-ok="1"'; then
+    echo "HATA: sayfa betigi calismiyor (duman testi basarisiz) - yukleme durduruldu" >&2; exit 1
+  fi
+  echo "Duman testi gecti."
+fi
 echo "Surum $VERSION hazir: dist/Code-Tr-mac.zip ($(du -h dist/Code-Tr-mac.zip | cut -f1)), site/"
 
 if [ "$1" = "install" ]; then

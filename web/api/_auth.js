@@ -35,7 +35,9 @@ export async function createUser({email, name, password, google}) {
   await setJSON("user:" + id, user);
   return user;
 }
-export const publicUser = u => u && {id: u.id, email: u.email, name: u.name, google: Boolean(u.google), hasPassword: Boolean(u.hash)};
+const ADMINS = (process.env.ADMIN_EMAILS || "").toLowerCase().split(",").map(s => s.trim()).filter(Boolean);
+export const isAdmin = u => Boolean(u && ADMINS.includes(String(u.email).toLowerCase()));
+export const publicUser = u => u && {id: u.id, email: u.email, name: u.name, google: Boolean(u.google), hasPassword: Boolean(u.hash), admin: isAdmin(u)};
 
 export async function newSession(userId) {
   const tok = randomToken(32);

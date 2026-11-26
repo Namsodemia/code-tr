@@ -19,7 +19,7 @@ export async function POST(req) {
   try { body = await req.json(); } catch { return json({error: {message: "Geçersiz istek"}}, 400); }
 
   // Yalnizca ucretsiz modeller: anahtar kotuye kullanilsa bile para harcanamaz.
-  if (typeof body.model !== "string" || !(body.model.endsWith(":free") || body.model === "openrouter/free")) {
+  if (typeof body.model !== "string" || !(body.model.endsWith(":free") || body.model === "openrouter/free" || body.model === "auto")) {
     return json({error: {message: "Bu sitede yalnızca ücretsiz modeller kullanılabilir."}}, 400);
   }
   if (!Array.isArray(body.messages) || body.messages.length > 200) {
@@ -29,7 +29,7 @@ export async function POST(req) {
   // Secilen model mesgulse (ucretsiz modellerde sik olur) baska ucretsiz modellere,
   // en sonda da OpenRouter'in bosta olan ucretsiz modeli secen yonlendiricisine gec.
   const hasImage = body.messages.some(m => Array.isArray(m.content) && m.content.some(p => p && p.type === "image_url"));
-  const candidates = [body.model];
+  const candidates = body.model === "auto" ? [] : [body.model];
   try {
     for (const m of await getAllFree()) {
       if (candidates.length >= 6) break;

@@ -156,6 +156,17 @@ input,textarea,select{font:inherit;color:inherit}
 .msg:hover .a-actions{opacity:1}
 .a-actions button{border:0;background:transparent;color:var(--faint);font-size:12.5px;padding:3px 8px;border-radius:6px}
 .a-actions button:hover{background:var(--line);color:var(--text)}
+.a-actions .regen{display:none}
+.a-actions .vote.on{color:var(--accent);background:var(--accent-soft)}
+.learn-item{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 10px}
+.learn-item .q{font-weight:700;margin:0 0 4px}
+.learn-item textarea{width:100%;min-height:70px;border:1px solid var(--line2);background:var(--bg);border-radius:9px;padding:8px 10px;font:inherit;resize:vertical}
+.learn-item .meta{font-size:12px;color:var(--faint);margin:6px 0 8px}
+.stats{display:flex;gap:10px;margin:0 0 14px;flex-wrap:wrap}
+.stats div{flex:1;min-width:90px;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stats b{display:block;font:800 22px var(--display)}
+.stats span{font-size:12.5px;color:var(--muted)}
+.thread > .msg.assistant:last-child .a-actions .regen{display:inline-block}
 
 /* ---------- yazma kutusu ---------- */
 .composer-wrap{padding:0 24px 18px}
@@ -478,6 +489,7 @@ body{letter-spacing:-.005em}
       </div>
       <button class="btn primary" id="mSave">Kaydet</button>
     </div>
+    <button class="btn wide" id="learnBtn" style="display:none;margin:0 0 12px">🧠 Öğrenme paneli</button>
     <div class="row" style="justify-content:space-between">
       <button class="btn" id="logoutBtn">Çıkış yap</button>
       <button class="btn danger" id="deleteBtn">Hesabımı sil</button>
@@ -506,6 +518,31 @@ body{letter-spacing:-.005em}
     <details style="font-size:14px;color:var(--muted)"><summary style="cursor:pointer">İnternetsiz Mac sürümü (gelişmiş)</summary>
       <p style="margin:8px 0">Mac'te Ollama ile internetsiz yerel modellerle çalışan sürüm. Zip'i aç, Code-Tr.app'i Uygulamalar'a taşı; ilk açılışta sağ tık → <b>Aç</b>.</p>
       <a class="btn" href="/Code-Tr-mac.zip" download style="text-decoration:none;display:inline-block">Code-Tr-mac.zip indir</a></details>
+    <div class="modal-foot"><button class="btn" data-close>Kapat</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="teachModal">
+  <div class="modal auth">
+    <h2>🧠 Code-Tr'ye öğret</h2>
+    <p class="sub">Cevap yanlış ya da eksikse doğrusunu yaz. Onaylanırsa Code-Tr bunu topluluk hafızasına ekler ve benzer sorularda herkese doğru cevabı verir.</p>
+    <div class="err-box" id="teachErr"></div>
+    <div class="field"><label>Soru</label><input id="tQ" maxlength="600"></div>
+    <div class="field"><label>Doğru cevap</label><textarea id="tA" maxlength="3000" style="min-height:120px;border:1px solid var(--line2);background:var(--bg);border-radius:9px;padding:8px 10px;font:inherit;resize:vertical" placeholder="Doğru ve kaynaklı bilgiyi kısa ve net yaz…"></textarea></div>
+    <p class="fine" style="text-align:left;margin:0 0 12px">Katkın adın gösterilmeden, anonim olarak eklenir. Kişisel bilgi (telefon, adres, kimlik vb.) yazma. Ayrıntılar <a href="/gizlilik.html" target="_blank">Gizlilik Politikası</a>'nda.</p>
+    <div class="modal-foot"><button class="btn" data-close>Vazgeç</button><button class="btn primary" id="tSend">Gönder</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="learnModal">
+  <div class="modal" style="max-width:760px">
+    <h2>🧠 Öğrenme paneli</h2>
+    <p class="sub">Kullanıcıların gönderdiği bilgileri onayla; onaylananlar Code-Tr'nin topluluk hafızasına girer.</p>
+    <div class="stats" id="lStats"></div>
+    <h3 style="margin:6px 0 10px">Onay bekleyenler</h3>
+    <div id="lPending"></div>
+    <details style="margin-top:14px"><summary style="cursor:pointer;font-weight:700">Topluluk hafızası</summary><div id="lKB" style="margin-top:10px"></div></details>
+    <details style="margin-top:10px"><summary style="cursor:pointer;font-weight:700">Son 👎 alan cevaplar</summary><div id="lRecent" style="margin-top:10px"></div></details>
     <div class="modal-foot"><button class="btn" data-close>Kapat</button></div>
   </div>
 </div>
@@ -629,8 +666,25 @@ ${listing}
 
 Araç sonucu sana "ARAC_SONUCU" olarak gelir. İş bitince ya da araç gerekmiyorsa JSON YAZMADAN, doğrudan kullanıcıya normal metinle (Markdown) cevap ver.
 Kurallar: tahmin etme, önce list_dir/read_file ile bak; küçük değişikliklerde edit_file kullan; aynı anda tek araç çağır; kullanıcının dilinde kısa ve net cevap ver.`;
-const CHAT_PROMPT = "Sen Coder'sin: yardımsever, bilgili ve samimi bir asistansın. Kullanıcının dilinde (genelde Türkçe) cevap ver. Net ve doğru ol; bilmiyorsan uydurma. Kod gerekiyorsa Markdown kod bloğu kullan. Ekli görsel/PDF varsa içeriğine dayanarak cevap ver.";
-const CODE_PROMPT = "Sen Coder'sin: usta bir yazılım geliştiricisin. Çalışan, eksiksiz kod yaz; her dosyayı ayrı Markdown kod bloğunda, dosya adıyla birlikte ver. Kısa açıkla, gerekirse nasıl çalıştırılacağını yaz. Kullanıcının dilinde cevap ver.";
+const TODAY = () => new Date().toLocaleDateString("tr-TR", {day: "numeric", month: "long", year: "numeric", weekday: "long"});
+const WHO = () => { try{ return ACC.user ? "Kullanıcının adı: " + ACC.user.name.split(" ")[0] + ". " : ""; }catch(e){ return ""; } };
+const BASE_RULES = `Kurallar:
+- Kullanıcının dilinde cevap ver (genelde Türkçe). Türkçen doğal, akıcı ve imla kurallarına uygun olsun; çeviri kokan cümle kurma.
+- Önce doğrudan cevabı ver, sonra gerekiyorsa kısa açıklama. Gereksiz giriş cümleleri, tekrar ve dolgu yazma.
+- Bilmediğin ya da emin olmadığın konuda uydurma; "emin değilim" de ve nasıl doğrulanabileceğini söyle. Güncel olaylar, fiyatlar ve tarihler konusunda bilgilerinin eskimiş olabileceğini belirt.
+- Uygun yerde Markdown kullan: kısa başlıklar, madde listeleri, tablolar; kod her zaman dil etiketiyle kod bloğunda.
+- Sağlık, hukuk ve para konularında genel bilgi ver ama profesyonel tavsiye yerine geçmediğini hatırlat.
+- Ekli görsel, PDF ya da dosya varsa cevabını onların içeriğine dayandır; göremediğin bir şeyi görmüş gibi yapma.
+- "Topluluk bilgisi" başlığıyla verilen notlar Code-Tr kullanıcılarının onaylanmış katkılarıdır; soruyla ilgiliyse kullan, değilse görmezden gel.`;
+const CHAT_PROMPT_FN = () => `Sen Code-Tr'sin: Türkçe konuşan, yardımsever, bilgili ve samimi bir yapay zekâ asistanı. Bugün ${TODAY()}. ${WHO()}
+${BASE_RULES}`;
+const CODE_PROMPT_FN = () => `Sen Code-Tr'sin: usta, titiz bir yazılım geliştiricisin. Bugün ${TODAY()}. ${WHO()}
+- Çalışan, eksiksiz ve güncel en iyi uygulamalara uygun kod yaz; yer tutucu ("..." ya da "buraya kod") bırakma.
+- Her dosyayı ayrı Markdown kod bloğunda, başında dosya adıyla ver. Gerekirse kurulum ve çalıştırma komutlarını ekle.
+- Önce yaklaşımı 1-2 cümleyle özetle, sonra kodu ver, sonunda önemli noktaları kısaca açıkla.
+- Hata ayıklarken olası sebebi ve çözümü net söyle; güvenlik açıklarına (gizli anahtar, SQL enjeksiyonu vb.) dikkat çek.
+${BASE_RULES}`;
+
 
 let pdfjsP = null;
 function loadPdfJs(){
@@ -663,7 +717,51 @@ async function webPdf(dataUrl, vision){
   return {text: "", images};
 }
 
+/* ---------- Code-Tr Yerel: modeli kullanicinin cihazinda (WebGPU) calistirir; sunucuya ya da sirkete bagli degil ---------- */
+const WEBLLM_VER = "0.2.87";
+const LOCAL_MODELS = [
+  {id: "webllm:Qwen3.5-2B-q4f16_1-MLC", name: "Code-Tr Yerel · Hafif (Qwen 3.5 2B)", size: "≈2,2 GB", vision: false},
+  {id: "webllm:gemma-4-E2B-it-q4f16_1-MLC", name: "Code-Tr Yerel · Güçlü (Gemma 4 E2B)", size: "≈3,4 GB", vision: false},
+];
+const LLM = {engine: null, id: "", loading: null};
+async function getLocalEngine(id, onProgress){
+  if(!navigator.gpu) throw new Error("Bu tarayıcı Code-Tr Yerel'i desteklemiyor (WebGPU yok). Güncel Chrome ya da Edge ile dene veya bulut modeline geç.");
+  if(LLM.engine && LLM.id === id) return LLM.engine;
+  if(LLM.loading && LLM.id === id) return LLM.loading;
+  if(LLM.engine){ try{ await LLM.engine.unload(); }catch(e){} LLM.engine = null; }
+  LLM.id = id;
+  LLM.loading = (async () => {
+    const webllm = await import("https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@" + WEBLLM_VER + "/+esm");
+    const eng = await webllm.CreateMLCEngine(id, {initProgressCallback: r => onProgress && onProgress(r)});
+    LLM.engine = eng; LLM.loading = null; return eng;
+  })();
+  try{ return await LLM.loading; }catch(e){ LLM.loading = null; LLM.id = ""; throw e; }
+}
+async function localStream(name, messages, onToken, signal){
+  const id = name.replace(/^webllm:/, "");
+  const eng = await getLocalEngine(id, r => { if(WEB.onLocalProgress) WEB.onLocalProgress(r); });
+  if(WEB.onLocalProgress) WEB.onLocalProgress(null);
+  // kucuk modelin baglami ~4 bin token: sistem talimatini kisa tut, gecmisi daralt
+  const sys = messages.find(m => m.role === "system");
+  const notesPart = sys ? (sys.content.split("Topluluk bilgisi")[1] || "") : "";
+  const rest = trimHistory(messages.filter(m => m.role !== "system").map(m => ({role: m.role, content: String(m.content || "")})), 6000);
+  const msgs = [{role: "system", content: (sys ? sys.content.split("\n")[0] : "Sen Code-Tr'sin, yardımsever bir asistansın.") + " Kullanıcının dilinde, kısa ve net cevap ver." + (notesPart ? "\nTopluluk bilgisi" + notesPart.slice(0, 1500) : "")}, ...rest];
+  const stream = await eng.chat.completions.create({messages: msgs, stream: true, temperature: 0.5, max_tokens: 1200, extra_body: {enable_thinking: false}});
+  // Dusunme bloklari (<think>...</think>) parca parca gelebilir: ham metni biriktir, gorunur kismi hesapla.
+  let raw = "", sent = 0;
+  const visible = () => raw.replace(/<think>[\s\S]*?<\/think>/g, "").replace(/<think>[\s\S]*$/, "").replace(/<\/?t?h?i?n?k?$/, "").replace(/^\s+/, "");
+  for await (const chunk of stream){
+    if(signal && signal.aborted){ try{ eng.interruptGenerate(); }catch(e){} break; }
+    const piece = ((chunk.choices || [{}])[0].delta || {}).content || "";
+    if(!piece) continue;
+    raw += piece;
+    const v = visible();
+    if(v.length > sent){ onToken(v.slice(sent)); sent = v.length; }
+  }
+  return visible().trim();
+}
 async function webStream(s, name, messages, onToken, signal){
+  if(String(name).startsWith("webllm:")) return localStream(name, messages, onToken, signal);
   const viaShared = !s.cloud_key && WEB.shared;
   if(!s.cloud_key && !viaShared) throw new Error("Önce Ayarlar'dan ücretsiz API anahtarını ekle.");
   const msgs = messages.map(m => m.images && m.images.length
@@ -762,6 +860,24 @@ function extractAction(text){
   }
   return null;
 }
+// Modelin baglam sinirini asmamak icin eski mesajlari kisalt: son mesajlar oncelikli, toplam ~48 bin karakter.
+function trimHistory(list, budget = 48000){
+  const out = []; let used = 0;
+  for(let i = list.length - 1; i >= 0; i--){
+    const m = list[i]; const len = (m.content || "").length + (m.extra || "").length;
+    if(out.length && used + len > budget) break;
+    out.unshift(m); used += len;
+  }
+  if(out.length < list.length) out.unshift({role: "user", content: "(Önceki konuşmanın bir kısmı uzunluk nedeniyle kısaltıldı.)"}, {role: "assistant", content: "Anladım."});
+  return out;
+}
+async function fetchNotes(q){
+  try{
+    const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 1500);
+    const j = await (await fetch("/api/learn?action=search&q=" + encodeURIComponent(String(q).slice(0, 400)), {signal: ctrl.signal})).json();
+    clearTimeout(to); return j.notes || [];
+  }catch(e){ return []; }
+}
 async function webRun(req, emit, signal){
   const s = WEB.settings();
   const name = req.model.replace(/^cloud:/, "");
@@ -780,17 +896,22 @@ async function webRun(req, emit, signal){
     }
   }
   if(texts.length) emit({type: "att_text", text: texts.join("\n\n")});
-  const msgs = req.messages.map((m, i) => {
+  const msgs = trimHistory(req.messages).map((m, i, arr) => {
     let c = m.content + (m.extra ? "\n\n" + m.extra : "");
-    if(i === req.messages.length - 1 && m.role === "user"){ if(texts.length) c += "\n\n" + texts.join("\n\n"); return {role: "user", content: c, images}; }
+    if(i === arr.length - 1 && m.role === "user"){ if(texts.length) c += "\n\n" + texts.join("\n\n"); return {role: "user", content: c, images}; }
     return {role: m.role, content: c};
   });
   const onToken = t => emit({type: "token", text: t});
+  // Ogrenen Code-Tr: benzer sorular icin onaylanmis topluluk bilgisini getir
+  const lastUser = [...req.messages].reverse().find(m => m.role === "user");
+  const notes = (!LOCAL && lastUser) ? await fetchNotes(lastUser.content) : [];
+  if(notes.length) msgs.unshift({role: "system", content: "Topluluk bilgisi (Code-Tr kullanıcılarının onaylanmış katkıları):\n" + notes.map(n => "- Soru: " + n.q + "\n  Doğru bilgi: " + n.a).join("\n")});
   let busyShown = false;
+  WEB.onLocalProgress = r => emit({type: "local_progress", r});
   WEB.onBusy = null; void busyShown;
   WEB.onSwitch = used => { const m = WEB.sharedModels.find(x => x.id === used); void m; WEB.onSwitch = null; };
   if(req.mode !== "agent" || !WEB.dir){
-    const sys = {role: "system", content: req.mode === "agent" ? CODE_PROMPT : CHAT_PROMPT};
+    const sys = {role: "system", content: (req.mode === "agent" ? CODE_PROMPT_FN() : CHAT_PROMPT_FN()) + (msgs[0] && msgs[0].role === "system" ? "\n\n" + msgs.shift().content : "")};
     emit({type: "final", text: await webStream(s, name, [sys, ...msgs], onToken, signal)});
     return;
   }
@@ -829,7 +950,7 @@ if(!LOCAL){
     if(path === "/api/models"){
       const own = s.cloud_key ? s.cloud_models : [];
       const list = own.length ? own : WEB.sharedModels;
-      return resp({local: [], ollama_ok: false, web: true, cloud_ready: !!s.cloud_key || (WEB.shared && list.length > 0),
+      return resp({local: LOCAL_MODELS, ollama_ok: true, web: true, cloud_ready: !!s.cloud_key || (WEB.shared && list.length > 0),
         cloud: list.map(m => ({id: "cloud:" + m.id, name: m.name || m.id, vision: !!m.vision}))});
     }
     if(path === "/api/settings" && body === undefined) return resp(Object.assign({}, s, {cloud_key: s.cloud_key ? "••••••••" + s.cloud_key.slice(-4) : ""}));
@@ -1003,8 +1124,33 @@ function toolEl(t){
   d.querySelector("pre").textContent = t.result == null ? "çalışıyor…" : t.result;
   return d;
 }
-function addActions(el, text){
+function regenerate(){
+  if(busy || !current) return;
+  let i = current.messages.length - 1;
+  while(i >= 0 && current.messages[i].role !== "user") i--;
+  if(i < 0) return;
+  const u = current.messages[i];
+  current.messages.splice(i);
+  renderThread(); saveChats();
+  if(u.content.startsWith("🎨 ")) return makeImage(u.content.slice(3));
+  send(u.content === "(ekteki dosyaya bak)" ? "" : u.content);
+}
+function addActions(el, text, q){
   const a = el.querySelector(".a-actions"); a.innerHTML = "";
+  if(!LOCAL && ACC.enabled && text){
+    const mk = (label, title, fn) => { const b = document.createElement("button"); b.textContent = label; b.title = title; b.onclick = fn; a.appendChild(b); return b; };
+    const up = mk("👍", "İyi cevap", () => vote(1, up, down)); up.className = "vote";
+    const down = mk("👎", "Kötü cevap", () => vote(-1, down, up)); down.className = "vote";
+    mk("✎ Doğrusunu öğret", "Yanlışsa doğrusunu Code-Tr'ye öğret", () => openTeach(q || "", text));
+    function vote(v, on, off){
+      if(on.classList.contains("on")) return;
+      on.classList.add("on"); off.classList.remove("on");
+      fetch("/api/learn?action=vote", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({vote: v, q: q || "", a: text, model})}).catch(() => {});
+      if(v < 0) toast("Teşekkürler! İstersen ✎ ile doğrusunu öğretebilirsin.");
+    }
+  }
+  const again = document.createElement("button"); again.textContent = "↻ Yeniden yanıtla"; again.className = "regen";
+  again.onclick = regenerate; a.appendChild(again);
   const copy = document.createElement("button"); copy.textContent = "Kopyala";
   copy.onclick = () => { navigator.clipboard.writeText(text); copy.textContent = "Kopyalandı"; setTimeout(() => copy.textContent = "Kopyala", 1200); };
   a.appendChild(copy);
@@ -1014,13 +1160,14 @@ function renderThread(){
   const has = current && current.messages.length;
   $("#empty").style.display = has ? "none" : "";
   if(!has) return;
+  let lastQ = "";
   for(const m of current.messages){
-    if(m.role === "user"){ t.appendChild(userEl(m)); continue; }
+    if(m.role === "user"){ lastQ = m.content; t.appendChild(userEl(m)); continue; }
     const el = assistantEl();
     for(const s of m.steps || []) el.querySelector(".steps").appendChild(toolEl(s));
     for(const n of m.notices || []) el.querySelector(".steps").appendChild(noticeEl(n.text, n.err));
     el.querySelector(".md").innerHTML = md(m.content || "");
-    addActions(el, m.content || "");
+    addActions(el, m.content || "", lastQ);
     t.appendChild(el);
   }
   scrollDown(true);
@@ -1122,7 +1269,12 @@ async function send(textOverride){
   const body = {model, mode, workspace, messages: history, attachments: atts.map(a => ({name: a.name, type: a.type, data: a.data}))};
   try{
     await streamApi("/api/chat", body, ev => {
-      if(ev.type === "token"){ live += ev.text; if(!raf) raf = requestAnimationFrame(paintLive); }
+      if(ev.type === "local_progress"){
+        if(liveEl && ev.r){ const pct = Math.round((ev.r.progress || 0) * 100);
+          liveEl.innerHTML = '<div class="thinking"><span class="spin"></span>Code-Tr Yerel hazırlanıyor… %' + pct + ' <span style="color:var(--faint)">(model yalnızca ilk seferde indirilir)</span></div>'; }
+        else if(liveEl && !ev.r){ liveEl.innerHTML = '<div class="thinking"><span class="spin"></span>Düşünüyor…</div>'; }
+      }
+      else if(ev.type === "token"){ live += ev.text; if(!raf) raf = requestAnimationFrame(paintLive); }
       else if(ev.type === "step_start"){ if(ev.step > 1){ live = ""; thinking(); } }
       else if(ev.type === "att_text"){ userMsg.extra = ev.text; }
       else if(ev.type === "notice"){ aMsg.notices.push({text: ev.text}); stepsBox.insertBefore(noticeEl(ev.text), stepsBox.firstChild); }
@@ -1162,7 +1314,7 @@ async function send(textOverride){
   }
   if(raf) cancelAnimationFrame(raf);
   stepsBox.querySelectorAll(".approve:not(.done) button").forEach(b => b.disabled = true);
-  addActions(el, aMsg.content);
+  addActions(el, aMsg.content, userMsg.content);
   current.messages.push(aMsg); current.updated = Date.now(); saveChats(); renderChats();
   busy = null; updateSend(); scrollDown();
 }
@@ -1182,6 +1334,7 @@ async function loadModels(){
     models = await (await api("/api/models")).json();
   }catch(e){ models = {local: [], cloud: [], ollama_ok: false, cloud_ready: false}; }
   const all = [...models.cloud, ...models.local];
+  if(!store.get("coder.autoDefault", false) && models.cloud.some(m => m.id === "cloud:auto")){ model = "cloud:auto"; store.set("coder.autoDefault", true); }
   if(!all.find(m => m.id === model)) model = (models.cloud_ready && models.cloud[0] ? models.cloud[0].id : (models.local[0] || {}).id) || "";
   store.set("coder.model", model);
   const cur = all.find(m => m.id === model);
@@ -1200,6 +1353,7 @@ function buildMenu(){
     if(!list.length){ const e = document.createElement("div"); e.className = "empty-m"; e.innerHTML = note; m.appendChild(e); return; }
     for(const x of list){
       const b = document.createElement("button"); b.className = "opt" + (x.id === model ? " sel" : "");
+      if(String(x.id).startsWith("webllm:")) b.title = "İlk kullanımda model cihazına bir kez indirilir; sonra internet ve sunucu olmadan çalışır.";
       b.innerHTML = "<span>" + esc(x.name) + "</span>" + (x.vision ? '<span class="tag" title="Görselleri görebilir">👁 görsel</span>' : "");
       b.onclick = () => { model = x.id; store.set("coder.model", model); $("#modelName").textContent = x.name.replace(/ \(free\)$/i, ""); m.style.display = "none"; buildMenu(); };
       m.appendChild(b);
@@ -1207,7 +1361,7 @@ function buildMenu(){
   };
   group("Bulut · ücretsiz", models.cloud_ready ? models.cloud : [], models.cloud_ready ? "Ayarlar'dan model ekle." : "Ayarlar'dan ücretsiz bir API anahtarı ekle.");
   if(LOCAL) group("Bu Mac'te · internetsiz", models.local, models.ollama_ok ? "Yüklü model yok." : "Ollama çalışmıyor.");
-  else group("Bu Mac'te · internetsiz", [], 'İnternetsiz kullanım için <a href="#" onclick="openInstall();return false">uygulamayı yükle</a>.');
+  else group("Cihazında · bağımsız, internetsiz", LOCAL_MODELS.map(x => ({...x, name: x.name + " · " + x.size})), "");
   const s = document.createElement("button"); s.className = "opt"; s.innerHTML = "<span>⚙︎ Model ekle / ayarlar…</span>";
   s.onclick = () => { m.style.display = "none"; openSettings(); }; m.appendChild(s);
 }
@@ -1390,6 +1544,20 @@ function imageActions(el, url, prompt, r){
   a.children[2].onclick = () => { if(!busy) makeImage(prompt, r); };
   el.querySelector(".md").after(a);
 }
+// Turkce tarifi, gorsel modelinin daha iyi anladigi ayrintili Ingilizce tarife cevirir (basarisizsa orijinali kullanilir).
+async function enhancePrompt(prompt){
+  if(LOCAL || !WEB.shared) return prompt;
+  try{
+    const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 15000);
+    let out = "";
+    await webStream(WEB.settings(), "auto", [
+      {role: "system", content: "You turn a user's image idea (any language) into ONE vivid English prompt for an image generation model. Keep the user's subject, add style, lighting, composition and detail. Max 60 words. Output ONLY the prompt, no quotes, no explanations. If the idea asks for text in the image, keep that text exactly as written."},
+      {role: "user", content: prompt}], t => { out += t; }, ctrl.signal);
+    clearTimeout(to);
+    out = out.replace(/^["'\s]+|["'\s]+$/g, "").split("\n")[0].trim();
+    return out.length > 8 ? out : prompt;
+  }catch(e){ return prompt; }
+}
 async function makeImage(prompt, ratio){
   if(busy) return;
   if(ACC.enabled && !ACC.user){ ACC.gate(); return; }
@@ -1405,7 +1573,9 @@ async function makeImage(prompt, ratio){
   $("#thread").appendChild(userEl(userMsg));
   const el = assistantEl(); $("#thread").appendChild(el);
   busy = {abort(){}}; updateSend();
-  const url = await imageBlock(el, prompt, r);
+  const box0 = el.querySelector(".md"); box0.innerHTML = '<div class="thinking"><span class="spin"></span>Tarif hazırlanıyor…</div>';
+  const better = await enhancePrompt(prompt);
+  const url = await imageBlock(el, better, r);
   const aMsg = {role: "assistant", content: url ? "![" + prompt.replace(/[\[\]]/g, "") + "](" + url + ")" : "", notices: url ? [] : [{text: "Görsel şu an üretilemedi, ücretsiz servis çok yoğun. Bir dakika sonra ↻ ile tekrar dene.", err: true}], image: true};
   if(url) imageActions(el, url, prompt, r); else el.querySelector(".steps").appendChild(noticeEl(aMsg.notices[0].text, true));
   current.messages.push(aMsg); current.updated = Date.now(); saveChats(); renderChats();
@@ -1482,6 +1652,7 @@ const ACC = {
     $("#acctSub").textContent = this.user.email + (this.user.google ? " · Google hesabı" : "");
     $("#mName").value = this.user.name; $("#mPass").value = ""; $("#mNew").value = "";
     $("#pwFields").style.display = this.user.hasPassword ? "" : "none";
+    $("#learnBtn").style.display = this.user.admin ? "" : "none";
     openModal("acctModal");
   },
   async save(){
@@ -1575,6 +1746,56 @@ async function checkNews(){
 setInterval(checkUpdate, 5 * 60 * 1000);
 document.addEventListener("visibilitychange", () => { if(!document.hidden) checkUpdate(); });
 
+/* ---------------- Ogrenen Code-Tr ---------------- */
+function openTeach(q, a){
+  $("#teachErr").style.display = "none";
+  $("#tQ").value = String(q).replace(/^🎨 /, "").slice(0, 600); $("#tA").value = "";
+  openModal("teachModal"); setTimeout(() => $("#tA").focus(), 50);
+}
+$("#tSend").onclick = async () => {
+  const err = $("#teachErr"); err.style.display = "none";
+  try{
+    const r = await fetch("/api/learn?action=teach", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({q: $("#tQ").value, a: $("#tA").value})});
+    const j = await r.json(); if(!r.ok) throw new Error(j.error || "Gönderilemedi");
+    closeModal("teachModal"); toast("Teşekkürler! Katkın onaylanınca Code-Tr bunu öğrenecek 🧠");
+  }catch(e){ err.textContent = e.message; err.style.display = "block"; }
+};
+async function openLearn(){
+  closeModal("acctModal"); openModal("learnModal");
+  $("#lPending").innerHTML = '<div class="thinking"><span class="spin"></span>Yükleniyor…</div>';
+  try{
+    const j = await (await fetch("/api/learn?action=pending")).json();
+    if(j.error) throw new Error(j.error);
+    $("#lStats").innerHTML = '<div><b>' + j.items.length + '</b><span>onay bekleyen</span></div><div><b>' + j.stats.kb + '</b><span>öğrenilmiş bilgi</span></div><div><b>' + j.stats.up + '</b><span>👍 beğeni</span></div><div><b>' + j.stats.down + '</b><span>👎 beğenmeme</span></div>';
+    $("#lPending").innerHTML = j.items.length ? "" : '<p class="sub">Şu an onay bekleyen katkı yok.</p>';
+    for(const it of j.items){
+      const d = document.createElement("div"); d.className = "learn-item";
+      d.innerHTML = '<div class="field"><label>Soru</label><input class="eq"></div><div class="field"><label>Öğretilen cevap</label><textarea class="ea"></textarea></div><div class="meta"></div><div class="row"><button class="btn primary">✓ Onayla</button><button class="btn danger">✕ Reddet</button></div>';
+      d.querySelector(".eq").value = it.q; d.querySelector(".ea").value = it.a;
+      d.querySelector(".meta").textContent = new Date(it.t).toLocaleString("tr-TR") + " · gönderen: " + (it.name || "kullanıcı");
+      const [ok, no] = d.querySelectorAll("button");
+      const act = async a => { ok.disabled = no.disabled = true;
+        const r = await fetch("/api/learn?action=" + a, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({id: it.id, q: d.querySelector(".eq").value, a: d.querySelector(".ea").value})});
+        if(r.ok){ d.remove(); toast(a === "approve" ? "Öğrenildi ✓" : "Reddedildi"); } else { ok.disabled = no.disabled = false; toast("İşlem yapılamadı"); } };
+      ok.onclick = () => act("approve"); no.onclick = () => act("reject");
+      $("#lPending").appendChild(d);
+    }
+    const recent = j.recent || [];
+    $("#lRecent").innerHTML = recent.length ? recent.map(r => '<div class="learn-item"><div class="q">' + esc(r.q) + '</div><div style="color:var(--muted);font-size:14px;white-space:pre-wrap">' + esc(r.a.slice(0, 400)) + '</div><div class="meta">' + esc(r.model || "") + '</div></div>').join("") : '<p class="sub">Henüz yok.</p>';
+    const kb = (await (await fetch("/api/learn?action=kb")).json()).items || [];
+    $("#lKB").innerHTML = "";
+    if(!kb.length) $("#lKB").innerHTML = '<p class="sub">Henüz öğrenilmiş bilgi yok.</p>';
+    for(const e of kb){
+      const d = document.createElement("div"); d.className = "learn-item";
+      d.innerHTML = '<div class="q"></div><div style="color:var(--muted);font-size:14px;white-space:pre-wrap" class="a"></div><div class="row" style="margin-top:8px"><button class="btn">Unut</button></div>';
+      d.querySelector(".q").textContent = e.q; d.querySelector(".a").textContent = e.a;
+      d.querySelector("button").onclick = async () => { await fetch("/api/learn?action=forget", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({id: e.id})}); d.remove(); };
+      $("#lKB").appendChild(d);
+    }
+  }catch(e){ $("#lPending").innerHTML = '<div class="notice err">' + esc(e.message) + '</div>'; }
+}
+$("#learnBtn").onclick = openLearn;
+
 /* ---------------- uygulama olarak yukleme (PWA) ---------------- */
 let installEvt = null;
 const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
@@ -1623,6 +1844,7 @@ $("#installFromSettings").onclick = () => { $("#settings").classList.remove("on"
   if(!model && LOCAL) openSettings();
   if(LOCAL) checkNews();
 })();
+document.documentElement.dataset.ok = "1";   // build.sh duman testi: betik sonuna kadar hatasiz calisti
 </script>
 </body>
 </html>

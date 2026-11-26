@@ -1,13 +1,13 @@
 {
-  "version": "1.3.0",
-  "mac": "1.3.0",
+  "version": "1.4.0",
+  "mac": "1.4.0",
   "date": "2026-11-26",
   "notes": [
-    "Yeni isim, yeni yüz: Coder-tr artık Code-Tr! Yeni logo, renkler ve baştan yenilenen tasarım.",
-    "Code-Tr'yi uygulama olarak yükle: Windows, Mac, Android ve iPhone'da tek tıkla, kendi simgesiyle.",
-    "Google ile tek tıkla giriş; sohbetlerin her cihazda seninle.",
-    "Görsel modu: yazdığını ücretsiz görsele çevir; gönderi, hikâye ve kapak boyutları.",
-    "Daha hızlı cevaplar: bir model meşgulse anında başka ücretsiz modele geçiliyor.",
-    "Yeni sürüm çıkınca \"Güncelle\" penceresi; Hakkında, Gizlilik (KVKK) ve Kullanım Şartları sayfaları."
+    "🧠 Öğrenen Code-Tr: cevapları 👍/👎 ile değerlendir, yanlışsa \"Doğrusunu öğret\"; onaylanan bilgiler herkes için Code-Tr'yi daha doğru yapar.",
+    "💻 Code-Tr Yerel: yapay zekâyı tamamen kendi cihazında, internetsiz ve hiçbir şirkete bağlı olmadan çalıştır (model menüsünde).",
+    "⚡ Otomatik (en iyi): her soruda boşta olan en güçlü ücretsiz model seçiliyor; zayıf modeller listeden çıkarıldı.",
+    "✍️ Daha iyi cevaplar: yenilenen talimatlarla daha doğal Türkçe, daha düzenli cevaplar; uzun sohbetlerde akıllı kısaltma.",
+    "↻ Yeniden yanıtla: beğenmediğin cevabı tek tıkla yeniden ürettir.",
+    "🎨 Daha güzel görseller: Türkçe tarifin, görsel modeli için otomatik olarak ayrıntılı tarife çevriliyor."
   ]
 }
