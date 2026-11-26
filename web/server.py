@@ -35,7 +35,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-VERSION = "1.18.0"
+VERSION = "1.19.0"
 PORT = int(os.environ.get("CODER_PORT", "8777"))
 TOKEN = secrets.token_urlsafe(24)
 DATA_DIR = Path.home() / "Library" / "Application Support" / "Coder"

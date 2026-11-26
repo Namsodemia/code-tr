@@ -17,7 +17,7 @@ const PAL = {
   orman: {navy: "#1f3d2b", red: "#7fb33a"}, gece: {navy: "#10141f", red: "#3d7bff"},
 };
 const FONTS = ["Montserrat", "Archivo", "Sora", "Space Grotesk", "Outfit", "Plus Jakarta Sans", "Barlow Condensed", "Bricolage Grotesque", "Lexend", "Manrope"];
-const BGS = ["gradient", "solid", "grid", "editorial"], WIPES = ["none", "none", "diag"], CAPS = ["pop", "glide", "twolayer", "karaoke", "left"], SOFT_CAPS = ["glide", "glide", "twolayer", "karaoke", "left"];
+const BGS = ["gradient", "solid", "grid", "editorial"], WIPES = ["none", "none", "diag"], CAPS = ["pop", "glide", "twolayer", "karaoke", "left", "highlight", "spotlight"], SOFT_CAPS = ["glide", "twolayer", "karaoke", "left", "highlight", "highlight", "spotlight"];
 export const FORMATS = ["info", "kinetik", "cerceve", "sade", "bolunmus"];
 // Kullanicinin istegindeki kelimeler once gelir; yazmadigi her sey bir oncekinden farkli secilir.
 export function pickLook(prev = {}, prefer = "", ai = {}){
@@ -30,7 +30,7 @@ export function pickLook(prev = {}, prefer = "", ai = {}){
   const ck = Object.keys(colors).find(k => q.includes(k));
   const palKey = PAL[ai.renk] ? ai.renk : ck ? colors[ck] : pick(Object.keys(PAL), prev.pal);
   if(ai.altyazi === "pop" && !has(/zıpla|pop/)) ai = {...ai, altyazi: ""};   // sert altyazi istenmedikce yok
-  const cap = CAPS.includes(ai.altyazi) ? ai.altyazi : has(/karaoke/) ? "karaoke" : has(/kelime kelime|yumuşak|soft|zarif/) ? "glide" : has(/sola|sol hizalı/) ? "left" : has(/iki katman|büyük altyazı|vurgulu/) ? "twolayer" : has(/zıpla|pop/) ? "pop" : pick(SOFT_CAPS, prev.cap);
+  const cap = CAPS.includes(ai.altyazi) ? ai.altyazi : has(/karaoke/) ? "karaoke" : has(/kutu|vurgu kutusu|highlight|kayan/) ? "highlight" : has(/spot|odak/) ? "spotlight" : has(/kelime kelime|yumuşak|soft|zarif/) ? "glide" : has(/sola|sol hizalı/) ? "left" : has(/iki katman|büyük altyazı|vurgulu/) ? "twolayer" : has(/zıpla|pop/) ? "pop" : pick(SOFT_CAPS, prev.cap);
   const font = FONTS.includes(ai.font) ? ai.font : has(/dar|condensed/) ? "Barlow Condensed" : has(/modern|teknoloji/) ? "Space Grotesk" : pick(FONTS, prev.font);
   const hex = (String(prefer).match(/#[0-9a-f]{6}\b/gi) || []).slice(0, 2);
   const fm = String(prefer).match(/font\s*[:=]\s*([A-Za-zÇĞİÖŞÜçğıöşü ]{3,30}?)(?:[,.\n]|$)/i);
@@ -523,6 +523,27 @@ function drawCaption(ctx, W, H, t, groups, emph, P, onScene){
   if(STYLE.noCaps) return;
   if(STYLE.capColor && !STYLE.__cc){ const f = ctx.fillText.bind(ctx); STYLE.__cc = 1; ctx.fillText = function(txt, x, y, m){ if(this.fillStyle === "#ffffff") this.fillStyle = STYLE.capColor; return m === undefined ? f(txt, x, y) : f(txt, x, y, m); }; }
   if(STYLE.glow || STYLE.cap === "glide") return drawCaptionGlow(ctx, W, H, t, groups, emph, P, onScene);
+  if(STYLE.cap === "highlight" || STYLE.cap === "spotlight"){
+    // Profesyonel kurgucularin stili: 2-5 kelime, kalin beyaz + ince kontur; aktif kelimenin arkasinda renkli kutu kelimeden kelimeye yumusakca kayar (highlight)
+    // ya da aktif kelime parlak, digerleri soluk (spotlight)
+    if(onScene) return;
+    const g = groups.find(x => t >= x.st && t < x.en); if(!g) return;
+    const s = Math.min(W, H) / 1080, vert = W < H, fs = 74 * s, y = vert ? H * .72 : H * .85;
+    const a0 = easeOut(clamp((t - g.st + .05) / .25)) * easeOut(clamp((g.en - t) / .22));
+    font(ctx, fs, 800); const sp = ctx.measureText(" ").width;
+    const parts = g.words.map(w => ({w, t: w.w, wd: ctx.measureText(w.w).width}));
+    const total = parts.reduce((a, p) => a + p.wd, 0) + sp * (parts.length - 1), k = Math.min(1, W * .8 / total);
+    font(ctx, fs * k, 800); let x = W / 2 - total * k / 2; parts.forEach(p => { p.x = x; p.wd *= k; x += p.wd + sp * k; });
+    const ci = Math.max(0, parts.findLastIndex(p => t >= p.w.s - .04)), cur = parts[ci], prev = parts[Math.max(0, ci - 1)];
+    const m = easeOut(clamp((t - cur.w.s + .04) / .16)), pad = 12 * s * k;
+    ctx.save(); ctx.globalAlpha = a0; ctx.textBaseline = "middle"; ctx.textAlign = "left"; ctx.lineJoin = "round";
+    if(STYLE.cap === "highlight"){ const bx = prev.x + (cur.x - prev.x) * m, bw = prev.wd + (cur.wd - prev.wd) * m; ctx.fillStyle = P.red; rr(ctx, bx - pad, y - fs * k * .62, bw + pad * 2, fs * k * 1.22, 8 * s); ctx.fill(); }
+    for(const p of parts){ const on = p === cur, said = t >= p.w.s - .04;
+      ctx.globalAlpha = a0 * (STYLE.cap === "spotlight" ? (on ? 1 : said ? .7 : .4) : 1);
+      ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.lineWidth = fs * k * .1; if(!(STYLE.cap === "highlight" && on)) ctx.strokeText(p.t, p.x, y);
+      ctx.fillStyle = STYLE.cap === "spotlight" && on && emph.has(p.w.i) ? P.red : "#ffffff"; ctx.fillText(p.t, p.x, y); }
+    ctx.restore(); return;
+  }
   if(STYLE.cap === "karaoke" || STYLE.cap === "twolayer" || STYLE.cap === "left"){
     if(onScene) return;
     const g = groups.find(x => t >= x.st && t < x.en); if(!g) return;

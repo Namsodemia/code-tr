@@ -1,12 +1,12 @@
 {
-  "version": "1.18.0",
-  "mac": "1.18.0",
+  "version": "1.19.0",
+  "mac": "1.19.0",
   "date": "2026-11-26",
   "notes": [
+    "İki yeni profesyonel altyazı: kelimeden kelimeye yumuşakça kayan vurgu kutusu ve konuşulan kelimeyi parlatan spot ışığı",
+    "Altyazılar daha büyük ve okunaklı",
     "Her videoya özel konsept: yapay zekâ içeriğe bakıp yerleşimi, giriş hareketini (maske, yazılma, kayma…), motifi (yaprak, nabız, dalga, çember…), boyutu ve temposu tasarlar; bir önceki videoyu tekrarlamaz",
     "Videonun üstündeki yazılar daha okunaklı",
-    "Yeni görsel dil: kart, ikon ve yıldız yerine editoryal tipografi (büyük temiz yazı, ince çizgiler, büyük rakam); Donanım tarzı kartlar yalnız \"kart\" dersen",
-    "Hata düzeltildi: grafikler artık gerçekten videonun üstüne şeffaf biner, videoyu tam ekran kesmez",
-    "Bölünmüş ekranda grafikler okunur boyutta, altyazı üst yarıda; zıplayan altyazı istenmedikçe yok"
+    "Yeni görsel dil: kart, ikon ve yıldız yerine editoryal tipografi (büyük temiz yazı, ince çizgiler, büyük rakam); Donanım tarzı kartlar yalnız \"kart\" dersen"
   ]
 }
