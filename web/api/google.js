@@ -28,24 +28,25 @@ export async function GET(req) {
 
   // 2) Google'dan donus
   const clear = "coder_oauth=; Path=/api/google; HttpOnly; Secure; SameSite=Lax; Max-Age=0";
-  if (url.searchParams.get("error") || url.searchParams.get("state") !== readCookie(req, "coder_oauth"))
-    return redirect("/?hata=google", [clear]);
+  if (url.searchParams.get("error")) { console.error("google: kullanici/izin hatasi", url.searchParams.get("error")); return redirect("/?hata=google", [clear]); }
+  if (url.searchParams.get("state") !== readCookie(req, "coder_oauth")) { console.error("google: state uyusmadi", Boolean(readCookie(req, "coder_oauth"))); return redirect("/?hata=google", [clear]); }
   try {
     const tr = await fetch("https://oauth2.googleapis.com/token", {method: "POST",
       headers: {"Content-Type": "application/x-www-form-urlencoded"},
       body: new URLSearchParams({code: url.searchParams.get("code"), client_id: ID, client_secret: SECRET,
         redirect_uri: back, grant_type: "authorization_code"})});
     const tok = await tr.json();
-    if (!tok.access_token) throw new Error("token");
+    if (!tok.access_token) throw new Error("token: " + (tok.error || "?") + " " + (tok.error_description || ""));
     const info = await (await fetch("https://openidconnect.googleapis.com/v1/userinfo",
       {headers: {Authorization: "Bearer " + tok.access_token}})).json();
-    if (!info.email || !info.email_verified) throw new Error("email");
+    if (!info.email || !info.email_verified) throw new Error("email dogrulanmamis");
     let user = await getUserByEmail(info.email);
     if (!user) user = await createUser({email: info.email, name: info.name, google: info.sub});
     else if (!user.google) { user.google = info.sub; await setJSON("user:" + user.id, user); }
     if (!user) throw new Error("user");
     return redirect("/?giris=ok", [clear, sessionCookie(await newSession(user.id))]);
   } catch (e) {
+    console.error("google: giris hatasi", e && e.message);
     return redirect("/?hata=google", [clear]);
   }
 }

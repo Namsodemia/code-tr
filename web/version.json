@@ -1,11 +1,15 @@
 {
-  "version": "1.1.0",
-  "mac": "1.1.0",
+  "version": "1.2.0",
+  "mac": "1.2.0",
   "date": "2026-11-26",
   "notes": [
-    "Hesap sistemi: e-posta ya da Google ile giriş yap, sohbetlerin her cihazda seninle.",
-    "Yeni Görsel modu: yazdığını ücretsiz olarak görsele çevir (kare, dikey, yatay, gönderi boyutu).",
-    "Çok daha hızlı cevaplar: bir model meşgulse anında başka ücretsiz modele geçiliyor.",
-    "Gizlilik Politikası ve Kullanım Şartları eklendi; hesabını ve tüm verilerini istediğin an silebilirsin."
+    "Google ile tek tıkla giriş geldi; e-posta ve şifreyle de kayıt olabilirsin.",
+    "Hesabınla giriş yapınca sohbetlerin her cihazda seninle.",
+    "Yeni Görsel modu: yazdığını ücretsiz görsele çevir; kare, dikey, yatay ve gönderi boyutları. Sıra varsa geri sayım gösterilir.",
+    "Çok daha hızlı cevaplar: bir model meşgulse anında başka ücretsiz modele geçiliyor, 'yoğun' uyarısı yok.",
+    "Bir sorun olursa anlaşılır mesaj ve tek tıkla \"Tekrar dene\".",
+    "Yeni sürüm çıkınca \"Güncelle\" penceresi; tek tıkla en güncel hale geç.",
+    "Telefonda daha düzgün görünüm.",
+    "Hakkında sayfası, iletişim formu, Gizlilik Politikası (KVKK) ve Kullanım Şartları eklendi; hesabını ve tüm verilerini istediğin an silebilirsin."
   ]
 }

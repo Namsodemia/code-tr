@@ -192,6 +192,7 @@ textarea#input::placeholder{color:var(--faint)}
 /* ayarlar */
 .modal-bg{position:fixed;inset:0;background:rgba(20,18,14,.45);display:none;place-items:center;z-index:50;padding:20px}
 .modal-bg.on{display:grid}
+#newsModal,#updModal{z-index:60}
 .modal-bg.locked{background:var(--bg)}
 .modal-bg.locked .modal{box-shadow:var(--shadow);border:1px solid var(--line)}
 .gate-brand{display:none;align-items:center;gap:10px;justify-content:center;margin:0 0 18px}
@@ -400,7 +401,7 @@ textarea#input::placeholder{color:var(--faint)}
     <span class="badge" id="newsVer"></span>
     <h2>Yenilikler 🎉</h2>
     <ul class="news" id="newsList"></ul>
-    <div class="modal-foot"><button class="btn primary" data-close>Harika</button></div>
+    <div class="modal-foot"><button class="btn primary" data-close>Başlayalım</button></div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -1449,8 +1450,8 @@ async function checkNews(){
     const v = await fetchVersion();
     $("#newsLink").onclick = e => { e.preventDefault(); $("#newsVer").textContent = "Sürüm " + v.version; $("#newsList").innerHTML = (v.notes || []).map(n => "<li>" + esc(n) + "</li>").join(""); openModal("newsModal"); };
     if(LOCAL || newerThan(v.version, MY_VERSION)) return checkUpdate();
-    const seen = store.get("coder.seen", "");
-    if(seen && seen !== v.version) $("#newsLink").onclick({preventDefault(){}});
+    // Bu surumu henuz gormediyse (ilk kez gelenler dahil) Yenilikler, giris ekranindan once gosterilir.
+    if(store.get("coder.seen", "") !== v.version) $("#newsLink").onclick({preventDefault(){}});
     store.set("coder.seen", v.version);
   }catch(e){}
 }
@@ -1464,6 +1465,7 @@ document.addEventListener("visibilitychange", () => { if(!document.hidden) check
   $("#greet").textContent = h < 6 ? "İyi geceler" : h < 12 ? "Günaydın" : h < 18 ? "İyi günler" : "İyi akşamlar";
   setMode(mode);
   if(window.innerWidth < 760) $("#side").classList.add("hidden");
+  if(!LOCAL) checkNews();
   if(!LOCAL){
     $("#dlMac").style.display = ""; $("#localSec").style.display = "none"; $("#webSec").style.display = ""; $("#legalLinks").style.display = "";
     try{
@@ -1481,7 +1483,7 @@ document.addEventListener("visibilitychange", () => { if(!document.hidden) check
   newChat();
   await loadModels();
   if(!model && !(WEB.shared && !LOCAL) && !$("#authModal").classList.contains("locked")) openSettings();
-  checkNews();
+  if(LOCAL) checkNews();
 })();
 </script>
 </body>
