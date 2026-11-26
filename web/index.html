@@ -792,6 +792,10 @@ async function webStream(s, name, messages, onToken, signal){
     await new Promise(res => setTimeout(res, 1200 * attempt));
     r = await doFetch();
   }
+  if(!r.ok && !viaShared && WEB.shared && [402, 408, 429, 500, 502, 503].includes(r.status)){
+    // Kendi anahtarin hakki dolduysa/yogunsa: sitenin yedekli ucretsiz modellerine gec
+    return webStream({...s, cloud_key: ""}, "auto", messages, onToken, signal);
+  }
   if(!r.ok){
     let d = await r.text(), code = ""; try{ const j = JSON.parse(d); code = (j.error && j.error.code) || ""; d = (j.error && (j.error.message || j.error)) || d; }catch(e){}
     if(code === "login"){ ACC.user = null; ACC.render(); ACC.gate(); throw new Error("Devam etmek için giriş yap."); }
@@ -1845,7 +1849,7 @@ async function makeVideo(prompt){
   try{
     say("Video düzenleyici hazırlanıyor… (ilk seferde ~30 MB iner)");
     const ff = await getFF();
-    if(MOTION_RX.test(prompt)){
+    if(MOTION_RX.test(prompt) || !BASIC_EDIT_RX.test(prompt)){
       const r = await makeMotion(prompt, item, el, say);
       const url = URL.createObjectURL(new Blob([r.data], {type: "video/mp4"}));
       const nCard = (r.plan.sahneler || []).length, nEmph = (r.plan.vurgu || []).length;
@@ -1913,7 +1917,9 @@ async function makeVideo(prompt){
 }
 
 /* ---------------- Motion: konusmaya senkron kinetik tipografi + infografik (Whisper + libass, cihazda) ---------------- */
-const MOTION_RX = /kinetik|tipograf|altyaz|motion|infografi|dinamik kurgu|konuşma(ya|yla| ile) (uyumlu|senkron)|caption|subtitle|reels yazı/i;
+const MOTION_RX = /kinetik|tipograf|alt ?yaz|motion|infografi|animasyon|kurgu|montaj|edit|profesyonel|kurumsal|dinamik|konuşma(ya|yla| ile) (uyumlu|senkron)|caption|subtitle/i;
+// Bu teknik istekler basit FFmpeg duzenlemesiyle yapilir; gerisi profesyonel motion kurgusuna gider
+const BASIC_EDIT_RX = /\b(kes|kırp|kirp|sessiz|sesi (kapat|sil|çıkar)|sesini (al|ver|çıkar)|mp3|gif|hızlandır|yavaşlat|döndür|ters çevir|sıkıştır|boyut(unu)? (küçült|düşür)|dikey yap|kare yap|ilk \d+ ?(sn|saniye)|son \d+ ?(sn|saniye))/i;
 const ASR = {pipe: null, loading: null};
 async function getASR(onProg){
   if(ASR.pipe) return ASR.pipe;
