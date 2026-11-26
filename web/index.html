@@ -1845,8 +1845,8 @@ async function makeVideo(prompt){
     if(MOTION_RX.test(prompt)){
       const r = await makeMotion(prompt, item, el, say);
       const url = URL.createObjectURL(new Blob([r.data], {type: "video/mp4"}));
-      const nCard = (r.plan.kartlar || []).length, nEmph = (r.plan.vurgu || []).length;
-      const ozet = "**Kinetik tipografi hazır** (" + r.styleName + " stil): " + r.words.length + " kelime konuşmayla eş zamanlı animasyonlandı, " + nEmph + " anahtar kelime vurgulandı" + (nCard ? ", " + nCard + " infografik fon sahnesi eklendi" : "") + ".";
+      const nCard = (r.plan.sahneler || []).length, nEmph = (r.plan.vurgu || []).length;
+      const ozet = "**Kinetik tipografi hazır** (" + r.styleName + " stil" + (r.sure ? ", " + r.sure + " sn'de" : "") + "): " + r.words.length + " kelime konuşmayla eş zamanlı animasyonlandı, " + nEmph + " anahtar kelime vurgulandı" + (nCard ? ", " + nCard + " infografik sahne eklendi (" + [...new Set(r.plan.sahneler.map(x => x.type))].join(", ") + ")" : "") + (r.plan.isim && r.plan.isim.ad ? ", isim etiketi: " + r.plan.isim.ad : "") + ".";
       box.innerHTML = md(ozet) + '<video controls playsinline style="max-width:min(100%,520px);max-height:560px;border-radius:12px;display:block;background:#000"></video>';
       box.querySelector("video").src = url;
       const acts = document.createElement("div"); acts.className = "gen-acts";
@@ -1916,8 +1916,11 @@ async function getASR(onProg){
   if(ASR.pipe) return ASR.pipe;
   if(!ASR.loading) ASR.loading = (async () => {
     const tf = await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.1/+esm");
+    let gpu = false; try{ gpu = !!(navigator.gpu && await navigator.gpu.requestAdapter()); }catch(e){}
+    const opts = gpu ? {dtype: {encoder_model: "fp16", decoder_model_merged: "q4f16"}, device: "webgpu"} : {dtype: {encoder_model: "q8", decoder_model_merged: "q8"}, device: "wasm"};
     const p = await tf.pipeline("automatic-speech-recognition", "onnx-community/whisper-small_timestamped",
-      {dtype: {encoder_model: "q8", decoder_model_merged: "q8"}, device: "wasm", progress_callback: x => { if(x.status === "progress" && onProg) onProg(x); }});
+      {...opts, progress_callback: x => { if(x.status === "progress" && onProg) onProg(x); }});
+    p.__gpu = gpu;
     ASR.pipe = p; return p;
   })();
   try{ return await ASR.loading; }catch(e){ ASR.loading = null; throw e; }
@@ -1993,32 +1996,62 @@ function heuristicPlan(words){
   });
   return {vurgu, kartlar, basliklar: []};
 }
-const MOTION_PROMPT = `Sen deneyimli bir motion designer ve kurgucusun. Sana bir videonun konuşma dökümünü kelime numaraları ve saniyeleriyle veriyorum.
-Görevin: kinetik tipografi ve infografik sahneler için bir kurgu planı çıkarmak. YALNIZCA şu JSON'u yaz:
-{"stil":"kurumsal|dinamik|minimal","vurgu":[kelime numaraları],"kartlar":[{"start":sn,"end":sn,"baslik":"kısa büyük ifade ya da sayı","alt":"2-5 kelimelik açıklama"}],"basliklar":[{"start":sn,"end":sn,"text":"1-3 kelimelik güçlü ifade"}]}
+const MOTION_PROMPT = `Sen ödüllü bir kurumsal motion designer ve kurgucusun. Sana bir röportaj/konuşma videosunun dökümünü kelime numaraları ve saniyeleriyle veriyorum.
+Konuşmayla eş zamanlı, kurumsal, modern bir kurgu planı çıkar. Belirli anlarda konuşmacı tamamen kaybolur ve açık gri fonda infografik sahne gelir (ses devam eder).
+YALNIZCA şu JSON'u yaz:
+{"stil":"kurumsal|dinamik|minimal",
+ "isim":{"ad":"Ad SOYAD","unvan":"Unvan","start":0.5,"end":4.5} ya da null,
+ "vurgu":[kelime numaraları],
+ "sahneler":[ ... ]}
+Sahne tipleri ve alanları (her sahnede "type","start","end","eyebrow","title1","title2" olsun; title1 lacivert, title2 kırmızı 2. satır):
+- "adimlar": süreç/adımlar anlatılırken. "items":[{"label":"Kurulum","icon":"gear"}] (3-5 madde), "vurgu": vurgulanacak madde sırası (genelde son).
+- "kartlar": seçenekler/kaynaklar/özellikler. "items":[{"ust":"KAYNAK","label":"İnternet","icon":"globe"}] (2-4).
+- "sayi": bir sayı geçtiğinde (ör. 8 mühendis). "adet":8, "icon":"person", "label":"Müşterinin fabrikası", "alt":"kısa açıklama", "icon2":"building".
+- "grafik": büyüme, rapor, analiz, sunum. "label":"Firmanıza özel sunum", "degerler":[3,4,3.5,5,7].
+- "zaman": sıralı aşamalar/zaman çizelgesi. "items":[{"label":"Satış"},{"label":"Teklif"}] (3-6).
+- "yol": baştan sona süreç. "ust1":"BAŞLANGIÇ","bas":"Talep","ust2":"SON ADIM","son":"Tahsilat girişi","adimlar":4,"alt":"Bütün süreç takipte".
+- "fazlar": yol haritası/büyüme aşamaları. "items":[{"ust":"BUGÜN","label":"ERP"},{"ust":"FAZ 1","label":""},...] (3-5).
+- "alinti": kapanış ya da güçlü cümle; lacivert fon. "title1":"Günlük çözüm değil,","vurgu":"Sürdürülebilir","title2":"olması."
+icon değerleri: gear, users, check, play, globe, person, building, chart, money, shield, phone, star.
 Kurallar:
-- vurgu: anlam taşıyan anahtar kelimeler (sayılar, ürün adları, sonuçlar); toplam kelimelerin en fazla %20'si.
-- kartlar: konuşmacının görünmediği infografik fon sahneleri. Önemli sayı, yüzde, karşılaştırma ya da ana fikir geçtiği anlarda, söylendiği saniyeye denk gelsin; her biri 2-4 sn; aralarında en az 5 sn olsun; videonun %35'inden fazlasını kaplamasın.
-- basliklar: kartların olmadığı yerlerde, vurucu ifadeler için; seyrek kullan.
-- Tüm metinler Türkçe ve doğru yazımlı olsun; dökümdeki yanlış duyulmuş özel isimleri bağlamdan düzelt.
-- Kullanıcının isteğindeki stil tarifine uy (kurumsal/modern → kurumsal, enerjik/hızlı → dinamik, sade → minimal).`;
-async function makeMotion(prompt, item, el, say){
+- Sahneler konuşmada o konunun söylendiği saniyeye denk gelsin; her biri 3-6 sn; aralarında en az 3 sn konuşmacı görünsün; toplam sürenin %40-50'si kadar sahne olsun. Son cümle güçlüyse "alinti" ile bitir.
+- eyebrow 2-3 kelimelik büyük harf üst başlık (ör. "SÜREÇ NASIL İLERLİYOR?"). title1/title2 kısa ve vurucu; konuşmadaki ifadeleri kullan.
+- vurgu: anahtar kelimeler (sayılar, ürün/kurum adları, sonuçlar), kelimelerin en fazla %12'si.
+- isim: konuşmacı kendini tanıtıyorsa ya da kullanıcı isteğinde verilmişse doldur, yoksa null.
+- Türkçe yazımı düzgün olsun; dökümde yanlış duyulmuş özel isimleri bağlamdan düzelt.`;
+function heuristicPlan(words){
+  const vurgu = [], sahneler = []; let last = -99;
+  words.forEach((w, i) => {
+    const clean = w.w.replace(/[.,!?;:…"]/g, "");
+    if(/\d/.test(clean)) vurgu.push(i);
+    if(/^\d+$/.test(clean.replace("%", "")) && w.s - last > 8){
+      const ctx = words.slice(i + 1, i + 4).map(x => x.w.replace(/[.,!?;:…"]/g, "")).join(" ");
+      sahneler.push({type: "sayi", start: Math.max(0, w.s - .3), end: w.s + 4, eyebrow: "ÖNE ÇIKAN", title1: clean + " " + ctx, title2: "", adet: Math.min(12, parseInt(clean.replace("%", "")) || 6), icon: "person"});
+      last = w.s;
+    }
+  });
+  return {vurgu, sahneler, isim: null};
+}
+async function makeMotionSlow(prompt, item, el, say){
   const ff = await getFF();
+  const MO = await import("/motion.js");
   const ext = ((item.name.match(/\.(\w{2,4})$/) || [])[1] || "mp4").toLowerCase();
   const input = "in." + ext;
   say("Video okunuyor…");
   await ff.writeFile(input, new Uint8Array(await item.file.arrayBuffer()));
   FF.logs = []; await ff.exec(["-hide_banner", "-i", input]).catch(() => {});
-  const vs = FF.logs.join("\n").match(/Video:.*?(\d{3,5})x(\d{3,5})/);
+  const info = FF.logs.join("\n");
+  const vs = info.match(/Video:.*?(\d{3,5})x(\d{3,5})/);
   let W = vs ? +vs[1] : 1280, H = vs ? +vs[2] : 720;
-  const rot = /rotate\s*:\s*-?90|displaymatrix: rotation of -?90/i.test(FF.logs.join("\n"));
-  if(rot) [W, H] = [H, W];
-  // 1) ses -> metin (kelime zamanlariyla)
+  if(/rotation of -?90|rotate\s*:\s*-?90/i.test(info)) [W, H] = [H, W];
+  if(/dikey|reels|tiktok|shorts|9:16|story|hikaye/i.test(prompt) && W > H){ W = 1080; H = 1920; }
+  const k = Math.min(1, 1920 / Math.max(W, H)); W = Math.round(W * k / 2) * 2; H = Math.round(H * k / 2) * 2;
+  // 1) ses -> kelime zamanli dokum
   say("Konuşma çıkarılıyor…");
   await ff.exec(["-hide_banner", "-y", "-i", input, "-vn", "-ac", "1", "-ar", "16000", "-f", "f32le", "audio.raw"]);
   const raw = await ff.readFile("audio.raw"); await ff.deleteFile("audio.raw").catch(() => {});
   const audio = new Float32Array(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength));
-  if(audio.length < 16000 * 0.5) throw new Error("Videoda konuşma bulunamadı (ses yok ya da çok kısa).");
+  if(audio.length < 16000 * .5) throw new Error("Videoda konuşma bulunamadı (ses yok ya da çok kısa).");
   const asr = await getASR(x => say("Ses tanıma modeli hazırlanıyor… %" + Math.round(x.progress || 0) + " (yalnızca ilk seferde ~250 MB)"));
   say("Konuşma yazıya dökülüyor… (" + Math.round(audio.length / 16000) + " sn ses, biraz sürebilir)");
   const res = await asr(audio, {language: "turkish", task: "transcribe", return_timestamps: "word", chunk_length_s: 30, stride_length_s: 5});
@@ -2029,29 +2062,86 @@ async function makeMotion(prompt, item, el, say){
   let plan = null;
   try{
     let reply = "";
-    const doc = words.map((w, i) => i + ":" + w.w + "@" + w.s.toFixed(2)).join(" ").slice(0, 14000);
-    const m = String(model).startsWith("webllm:") ? model : (WEB.settings().cloud_key ? model : "cloud:auto");
+    const doc = words.map((w, i) => i + ":" + w.w + "@" + w.s.toFixed(1)).join(" ").slice(0, 16000);
+    const m = String(model).startsWith("webllm:") ? "cloud:auto" : (WEB.settings().cloud_key ? model : "cloud:auto");
     await webStream(WEB.settings(), m.replace(/^cloud:/, ""), [{role: "system", content: MOTION_PROMPT},
       {role: "user", content: "İstek: " + prompt + "\nVideo: " + W + "x" + H + ", " + words[words.length - 1].e.toFixed(1) + " sn\nDöküm (numara:kelime@saniye):\n" + doc}], t => { reply += t; }, null);
     plan = parseJSONLoose(reply);
   }catch(e){}
-  if(!plan || !Array.isArray(plan.vurgu)) plan = heuristicPlan(words);
-  const styleName = /dinamik|enerji|hızlı|tiktok/i.test(prompt) ? "dinamik" : /minimal|sade/i.test(prompt) ? "minimal" : (plan.stil in STYLES ? plan.stil : "kurumsal");
-  // 3) ASS uret ve isle
-  const ass = buildASS(words, plan, W, H, styleName);
-  await ff.createDir("/fonts").catch(() => {});
-  await ff.writeFile("/fonts/Manrope.ttf", new Uint8Array(await (await fetch("/fonts/Manrope-ExtraBold.ttf")).arrayBuffer()));
-  await ff.writeFile("motion.ass", new TextEncoder().encode(ass));
-  const hasAudio = /Audio:/.test(FF.logs.join("\n")) || audio.length > 0;
-  say("Kinetik tipografi işleniyor… %0");
-  const onProg = ({progress}) => say("Kinetik tipografi işleniyor… %" + Math.max(0, Math.min(100, Math.round(progress * 100))) + " (cihazında)");
+  if(!plan || !Array.isArray(plan.sahneler)) plan = Object.assign(heuristicPlan(words), plan && Array.isArray(plan.vurgu) ? {vurgu: plan.vurgu} : {});
+  const nm = prompt.match(/(?:konuşmacı|isim|ad)\s*[:=]\s*([^,\n]+?)(?:\s*[,-]\s*([^,\n]+))?(?:$|\n|\.)/i);
+  if(nm) plan.isim = {ad: nm[1].trim(), unvan: (nm[2] || "").trim(), start: .6, end: 5};
+  const styleName = /dinamik|enerji|hızlı|tiktok/i.test(prompt) ? "dinamik" : /minimal|sade/i.test(prompt) ? "minimal" : (MO.PALETTES[plan.stil] ? plan.stil : "kurumsal");
+  // 3) sahneleri ciz, birlestir
+  const fontTTF = new Uint8Array(await (await fetch("/fonts/Montserrat-800.ttf")).arrayBuffer());
+  const r = await MO.renderMotion({ff, input, W, H, words, plan, palette: styleName, onStep: say, fontTTF});
+  say("Video birleştiriliyor… %0");
+  const onProg = ({progress}) => say("Video birleştiriliyor… %" + Math.max(0, Math.min(100, Math.round(progress * 100))) + " (cihazında; uzun videolarda birkaç dakika sürebilir)");
   ff.on("progress", onProg); FF.logs = [];
-  const code = await ff.exec(["-hide_banner", "-y", "-i", input, "-vf", "ass=motion.ass:fontsdir=/fonts", "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-pix_fmt", "yuv420p", ...(hasAudio ? ["-c:a", "aac", "-b:a", "160k"] : []), "-movflags", "+faststart", "out.mp4"], 20 * 60 * 1000);
+  const code = await ff.exec(r.args, 40 * 60 * 1000);
   ff.off("progress", onProg);
-  if(code !== 0) throw new Error("Video işlenemedi: " + FF.logs.slice(-3).join(" ").slice(0, 200));
+  if(code !== 0) throw new Error("Video işlenemedi: " + FF.logs.slice(-3).join(" ").slice(0, 220));
   const data = await ff.readFile("out.mp4");
+  for(let i = 0; i < r.scenes.length; i++){ try{ for(const f of await ff.listDir("s" + i)) if(!f.isDir) await ff.deleteFile("s" + i + "/" + f.name); await ff.deleteDir("s" + i); }catch(e){} }
   await ff.deleteFile(input).catch(() => {}); await ff.deleteFile("out.mp4").catch(() => {});
-  return {data, ass, words, plan, styleName};
+  return {data, ass: r.ass, words, plan, styleName};
+}
+
+// Hizli yol: FFmpeg'siz. Boyut Mediabunny ile, ses WebAudio ile, ses tanima WebGPU ile, kodlama donanimla.
+async function audio16k(file){
+  const ac = new (window.AudioContext || window.webkitAudioContext)();
+  const buf = await ac.decodeAudioData(await file.arrayBuffer()); ac.close();
+  const off = new OfflineAudioContext(1, Math.max(1, Math.ceil(buf.duration * 16000)), 16000);
+  const src = off.createBufferSource(); src.buffer = buf; src.connect(off.destination); src.start();
+  return (await off.startRendering()).getChannelData(0);
+}
+async function planMotion(prompt, words, W, H){
+  let plan = null;
+  try{
+    let reply = "";
+    const doc = words.map((w, i) => i + ":" + w.w + "@" + w.s.toFixed(1)).join(" ").slice(0, 16000);
+    const m = String(model).startsWith("webllm:") ? "cloud:auto" : (WEB.settings().cloud_key ? model : "cloud:auto");
+    await webStream(WEB.settings(), m.replace(/^cloud:/, ""), [{role: "system", content: MOTION_PROMPT},
+      {role: "user", content: "İstek: " + prompt + "\nVideo: " + W + "x" + H + ", " + words[words.length - 1].e.toFixed(1) + " sn\nDöküm (numara:kelime@saniye):\n" + doc}], t => { reply += t; }, null);
+    plan = parseJSONLoose(reply);
+  }catch(e){}
+  if(!plan || !Array.isArray(plan.sahneler)) plan = Object.assign(heuristicPlan(words), plan && Array.isArray(plan.vurgu) ? {vurgu: plan.vurgu} : {});
+  const nm = prompt.match(/(?:konuşmacı|isim|ad)\s*[:=]\s*([^,\n]+?)(?:\s*[,-]\s*([^,\n]+))?(?:$|\n|\.)/i);
+  if(nm) plan.isim = {ad: nm[1].trim(), unvan: (nm[2] || "").trim(), start: .6, end: 5};
+  return plan;
+}
+async function makeMotion(prompt, item, el, say){
+  if(typeof VideoEncoder === "undefined" || typeof OffscreenCanvas === "undefined") return makeMotionSlow(prompt, item, el, say);
+  const t0 = performance.now();
+  try{
+    const MO = await import("/motion.js?v=" + MY_VERSION);
+    const MB = await import("/vendor/mediabunny/mediabunny.min.mjs");
+    say("Video okunuyor…");
+    const inp = new MB.Input({source: new MB.BlobSource(item.file), formats: MB.ALL_FORMATS});
+    const vt = await inp.getPrimaryVideoTrack(); if(!vt) throw new Error("Videoda görüntü yok.");
+    let W = vt.displayWidth, H = vt.displayHeight;
+    if(/dikey|reels|tiktok|shorts|9:16|story|hikaye/i.test(prompt) && W > H){ W = 1080; H = 1920; }
+    const k = Math.min(1, 1920 / Math.max(W, H)); W = Math.round(W * k / 2) * 2; H = Math.round(H * k / 2) * 2;
+    say("Konuşma çıkarılıyor…");
+    const audio = await audio16k(item.file);
+    if(audio.length < 16000 * .5) throw new Error("Videoda konuşma bulunamadı (ses yok ya da çok kısa).");
+    const asr = await getASR(x => say("Ses tanıma modeli hazırlanıyor… %" + Math.round(x.progress || 0) + " (yalnızca ilk seferde)"));
+    say("Konuşma yazıya dökülüyor… (" + Math.round(audio.length / 16000) + " sn ses" + (asr.__gpu ? ", ekran kartında" : "") + ")");
+    const res = await asr(audio, {language: "turkish", task: "transcribe", return_timestamps: "word", chunk_length_s: 30, stride_length_s: 5});
+    const words = (res.chunks || []).map(c => ({w: c.text.trim(), s: c.timestamp[0], e: c.timestamp[1] ?? (c.timestamp[0] + .3)})).filter(w => w.w);
+    if(!words.length) throw new Error("Konuşma anlaşılamadı.");
+    say("Motion tasarımcısı kurguyu planlıyor…");
+    const plan = await planMotion(prompt, words, W, H);
+    const styleName = /dinamik|enerji|hızlı|tiktok/i.test(prompt) ? "dinamik" : /minimal|sade/i.test(prompt) ? "minimal" : (MO.PALETTES[plan.stil] ? plan.stil : "kurumsal");
+    const data = await MO.renderFast({file: item.file, W, H, words, plan, palette: styleName, onStep: say});
+    const ass = MO.buildCaptions(words, plan, W, H, MO.PALETTES[styleName]);
+    return {data, ass, words, plan, styleName, sure: Math.round((performance.now() - t0) / 1000)};
+  }catch(e){
+    if(/Videoda|Konuşma/.test(e.message || "")) throw e;
+    console.warn("Hızlı motor olmadı, yedek motora geçiliyor:", e);
+    say("Yedek motora geçiliyor…");
+    return makeMotionSlow(prompt, item, el, say);
+  }
 }
 
 /* ---------------- Ogrenen Code-Tr ---------------- */

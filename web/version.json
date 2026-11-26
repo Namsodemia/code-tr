@@ -1,12 +1,11 @@
 {
-  "version": "1.6.0",
-  "mac": "1.6.0",
+  "version": "1.7.0",
+  "mac": "1.7.0",
   "date": "2026-11-26",
   "notes": [
-    "🎬✨ Kinetik tipografi: videona \"konuşmayla uyumlu kinetik tipografi\" ya da \"infografik\" yaz; Code-Tr konuşmayı kelime kelime yazıya döker, motion tasarımcısı gibi kurgular.",
-    "📊 İnfografik fon sahneleri: önemli sayılar ve fikirler, konuşmacının görünmediği marka fonunda büyük animasyonlu kartlarla gösterilir.",
-    "🎨 Üç stil: kurumsal, dinamik, minimal. Animasyon dosyasını (.ass) da indirip düzenleyebilirsin.",
-    "🔒 Her şey cihazında: ses tanıma (Whisper) ve video işleme açık kaynak, ücretsiz; videon hiçbir sunucuya yüklenmez.",
-    "🛠 Düzeltme: kendi API anahtarınla da artık her zaman ücretsiz model kullanılıyor."
+    "🎬 Yeni motion motoru: röportaj videolarına profesyonel kurumsal kurgu. İsim etiketi, kelime kelime beliren altyazı ve konuşmacının kaybolduğu infografik sahneler.",
+    "📊 8 sahne şablonu: adım listesi, kaynak kartları, sayı + simgeler, rapor grafiği, zaman çizelgesi, baştan sona yol, faz sütunları, alıntı.",
+    "⚡ 3 kat daha hızlı: ses tanıma ekran kartında, video kodlama donanımla yapılıyor (30 sn'lik video ~30 sn'de).",
+    "🔒 Her şey cihazında, ücretsiz ve açık kaynak; videon hiçbir sunucuya yüklenmez."
   ]
 }

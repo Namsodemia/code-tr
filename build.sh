@@ -54,7 +54,12 @@ if [ ! -f web/vendor/ffmpeg/ffmpeg-core.wasm ]; then
   mkdir -p web/vendor/ffmpeg && cp "$T"/ffmpeg-ffmpeg-0.12.15/package/dist/esm/*.js "$T"/ffmpeg-core-0.12.10/package/dist/esm/ffmpeg-core.* web/vendor/ffmpeg/
 fi
 mkdir -p site/vendor && cp -R web/vendor/ffmpeg site/vendor/
-cp web/manifest.webmanifest web/sw.js site/
+if [ ! -f web/vendor/mediabunny/mediabunny.min.mjs ]; then
+  T=$(mktemp -d); (cd "$T" && npm pack mediabunny@1.65.2 --silent >/dev/null && tar xzf mediabunny-1.65.2.tgz)
+  mkdir -p web/vendor/mediabunny && cp "$T"/package/dist/bundles/mediabunny.min.mjs "$T"/package/LICENSE web/vendor/mediabunny/
+fi
+cp -R web/vendor/mediabunny site/vendor/
+cp web/manifest.webmanifest web/sw.js web/motion.js site/
 mkdir -p site/api && cp web/api/*.js site/api/
 cp web/version.json site/version.json
 CONTACT=$(cat mac/contact.txt 2>/dev/null || echo "iletisim@coder-tr.vercel.app")
