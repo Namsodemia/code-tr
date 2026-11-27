@@ -738,6 +738,13 @@ body{letter-spacing:-.005em}
     <p class="sub">Kullanıcıların gönderdiği bilgileri onayla; onaylananlar Code-Tr'nin topluluk hafızasına girer.</p>
     <div class="stats" id="lStats"></div>
     <div class="sec">
+      <h3>📌 Kalıcı kurallar</h3>
+      <p>Buraya yazdığın kurallar Code-Tr'nin <b>her cevabında</b> uygulanır. Örnek: “Bağlaç olan de/da'yı ayrı yaz.”, “Kısa ve samimi cevap ver.”</p>
+      <div class="field"><textarea id="rText" maxlength="500" style="min-height:60px;width:100%;border:1px solid var(--line2);background:var(--bg);border-radius:9px;padding:8px 10px;font:inherit;resize:vertical" placeholder="Yeni kural…"></textarea></div>
+      <button class="btn primary" id="rAdd">Kuralı ekle</button>
+      <div id="rList" style="margin-top:12px"></div>
+    </div>
+    <div class="sec">
       <h3>📚 Code-Tr'yi eğit</h3>
       <p>Cümleler ya da bağlantılar ekle; Code-Tr bunları okuyup hafızasına alır ve ilgili sorularda bu bilgilerle cevap verir.</p>
       <div class="field"><label>Başlık (isteğe bağlı)</label><input id="eTitle" maxlength="200" placeholder="ör. Code-Tr hakkında sık sorulanlar"></div>
@@ -1154,8 +1161,8 @@ async function fetchNotes(q){
   try{
     const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 1500);
     const j = await (await fetch("/api/learn?action=search&q=" + encodeURIComponent(String(q).slice(0, 400)), {signal: ctrl.signal})).json();
-    clearTimeout(to); return j.notes || [];
-  }catch(e){ return []; }
+    clearTimeout(to); return {notes: j.notes || [], rules: j.rules || []};
+  }catch(e){ return {notes: [], rules: []}; }
 }
 async function webRun(req, emit, signal){
   const s = WEB.settings();
@@ -1183,8 +1190,11 @@ async function webRun(req, emit, signal){
   const onToken = t => emit({type: "token", text: t});
   // Ogrenen Code-Tr: benzer sorular icin onaylanmis topluluk bilgisini getir
   const lastUser = [...req.messages].reverse().find(m => m.role === "user");
-  const notes = (!LOCAL && lastUser) ? await fetchNotes(lastUser.content) : [];
-  if(notes.length) msgs.unshift({role: "system", content: "Topluluk bilgisi (Code-Tr kullanıcılarının onaylanmış katkıları):\n" + notes.map(n => "- Konu: " + n.q + "\n  Bilgi: " + n.a + (n.src ? "\n  Kaynak: " + n.src : "")).join("\n")});
+  const {notes, rules} = (!LOCAL && lastUser) ? await fetchNotes(lastUser.content) : {notes: [], rules: []};
+  const extraSys = [];
+  if(rules.length) extraSys.push("Kalıcı kurallar (her cevapta uy):\n" + rules.map(r => "- " + r).join("\n"));
+  if(notes.length) extraSys.push("Topluluk bilgisi (Code-Tr kullanıcılarının onaylanmış katkıları):\n" + notes.map(n => "- Konu: " + n.q + "\n  Bilgi: " + n.a + (n.src ? "\n  Kaynak: " + n.src : "")).join("\n"));
+  if(extraSys.length) msgs.unshift({role: "system", content: extraSys.join("\n\n")});
   let busyShown = false;
   WEB.onLocalProgress = r => emit({type: "local_progress", r});
   WEB.onBusy = null; void busyShown;
@@ -2703,7 +2713,7 @@ $("#tSend").onclick = async () => {
   try{
     const r = await fetch("/api/learn?action=teach", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({q: $("#tQ").value, a: $("#tA").value})});
     const j = await r.json(); if(!r.ok) throw new Error(j.error || "Gönderilemedi");
-    closeModal("teachModal"); toast("Teşekkürler! Katkın onaylanınca Code-Tr bunu öğrenecek 🧠");
+    closeModal("teachModal"); toast(j.direct ? "Öğrenildi ✓ Code-Tr artık böyle cevap verecek 🧠" : "Teşekkürler! Katkın onaylanınca Code-Tr bunu öğrenecek 🧠");
   }catch(e){ err.textContent = e.message; err.style.display = "block"; }
 };
 async function openLearn(){
@@ -2766,7 +2776,30 @@ async function teachPost(action, body, btn){
 }
 $("#eAddText").onclick = async () => { if(await teachPost("add_text", {title: $("#eTitle").value, text: $("#eText").value}, $("#eAddText"))){ $("#eText").value = ""; $("#eTitle").value = ""; } };
 $("#eAddUrl").onclick = async () => { if(await teachPost("add_url", {url: $("#eUrl").value, title: $("#eTitle").value}, $("#eAddUrl"))){ $("#eUrl").value = ""; } };
-$("#learnBtn").onclick = () => { openLearn(); loadSources(); };
+async function loadRules(){
+  const box = $("#rList");
+  try{
+    const items = (await (await fetch("/api/learn?action=rules")).json()).items || [];
+    box.innerHTML = items.length ? "" : '<p class="sub" style="margin:0">Henüz kural yok.</p>';
+    for(const it of items){
+      const d = document.createElement("div"); d.className = "learn-item"; d.style.display = "flex"; d.style.gap = "10px"; d.style.alignItems = "center";
+      d.innerHTML = '<div style="flex:1;min-width:0;white-space:pre-wrap"></div><button class="btn">Sil</button>';
+      d.firstChild.textContent = it.text;
+      d.querySelector("button").onclick = async () => { await fetch("/api/learn?action=remove_rule", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({id: it.id})}); d.remove(); };
+      box.appendChild(d);
+    }
+  }catch(e){ box.innerHTML = ""; }
+}
+$("#rAdd").onclick = async () => {
+  const b = $("#rAdd"); b.disabled = true;
+  try{
+    const r = await fetch("/api/learn?action=add_rule", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({text: $("#rText").value})});
+    const j = await r.json(); if(!r.ok) throw new Error(j.error || "Eklenemedi");
+    $("#rText").value = ""; toast("Kural eklendi ✓"); loadRules();
+  }catch(e){ toast(e.message); }
+  finally{ b.disabled = false; }
+};
+$("#learnBtn").onclick = () => { openLearn(); loadSources(); loadRules(); };
 /* ---------------- Ortak çalışma: projeler (davet, kabul, ortak sohbet) ---------------- */
 window.PROJ = {
   list: [], invites: [], timer: null, on: false,

@@ -21,6 +21,16 @@ async function loadKB() {
   kbCache = list; kbAt = Date.now();
   return list;
 }
+// Kalici kurallar: yoneticinin yazdigi, her cevapta gecerli talimatlar (ton, TDK, Code-Tr kimligi vb.)
+let rulesCache = null, rulesAt = 0;
+export async function loadRules() {
+  if (rulesCache && Date.now() - rulesAt < 60000) return rulesCache;
+  const h = await redis("HGETALL", "learn:rules") || [];
+  const list = [];
+  for (let i = 0; i < h.length; i += 2) { try { list.push(JSON.parse(h[i + 1])); } catch {} }
+  rulesCache = list.sort((a, b) => a.t - b.t); rulesAt = Date.now();
+  return rulesCache;
+}
 export async function searchKB(q, n = 4) {
   const qk = keywords(q);
   if (!qk.length) return [];
@@ -80,7 +90,8 @@ export async function GET(req) {
   const url = new URL(req.url), action = url.searchParams.get("action");
   if (action === "search") {
     const q = (url.searchParams.get("q") || "").slice(0, 500);
-    try { return json({notes: await searchKB(q)}); } catch { return json({notes: []}); }
+    const [notes, rules] = await Promise.all([searchKB(q).catch(() => []), loadRules().catch(() => [])]);
+    return json({notes, rules: rules.map(r => r.text)});
   }
   const user = await currentUser(req);
   if (!isAdmin(user)) return json({error: "Yetkin yok."}, 403);
@@ -91,6 +102,7 @@ export async function GET(req) {
     return json({items, stats: {kb: Number(kb) || 0, up: Number(up) || 0, down: Number(down) || 0}, recent});
   }
   if (action === "kb") return json({items: (await loadKB()).filter(e => !e.sid)});
+  if (action === "rules") return json({items: await loadRules()});
   if (action === "sources") {
     const h = await redis("HGETALL", "learn:sources") || [];
     const list = [];
@@ -130,6 +142,11 @@ export async function POST(req) {
     const q = clip(b.q, 600), a = clip(b.a, 3000);
     if (q.length < 3 || a.length < 5) return json({error: "Soru ve doğru cevap boş olmasın."}, 400);
     const item = {id: randomToken(8), t: Date.now(), q, a, by: user.id, name: user.name};
+    if (isAdmin(user)) {   // yonetici ogrettiyse onay beklemeden hafizaya girer
+      await redis("HSET", "learn:kb", item.id, JSON.stringify({id: item.id, q, a, k: keywords(q), t: Date.now()}));
+      kbCache = null;
+      return json({ok: true, direct: true});
+    }
     await redis("LPUSH", "learn:pending", JSON.stringify(item));
     await redis("LTRIM", "learn:pending", 0, 499);
     return json({ok: true});
@@ -177,6 +194,19 @@ export async function POST(req) {
     if (ids.length) await redis("HDEL", "learn:kb", ...ids);
     await redis("HDEL", "learn:sources", sid); kbCache = null;
     return json({ok: true, removed: ids.length});
+  }
+  if (action === "add_rule") {
+    const text = clip(b.text, 500);
+    if (text.length < 5) return json({error: "Kural en az birkaç kelime olsun."}, 400);
+    if ((await loadRules()).length >= 40) return json({error: "En fazla 40 kural olabilir; önce birini sil."}, 400);
+    const id = randomToken(8);
+    await redis("HSET", "learn:rules", id, JSON.stringify({id, text, t: Date.now()}));
+    rulesCache = null;
+    return json({ok: true, id});
+  }
+  if (action === "remove_rule") {
+    await redis("HDEL", "learn:rules", clip(b.id, 40)); rulesCache = null;
+    return json({ok: true});
   }
   if (action === "forget") {
     await redis("HDEL", "learn:kb", clip(b.id, 40)); kbCache = null;
