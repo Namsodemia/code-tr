@@ -1,19 +1,12 @@
 {
-  "version": "1.34.0",
-  "mac": "1.34.0",
+  "version": "1.35.0",
+  "mac": "1.35.0",
   "date": "2026-11-27",
   "notes": [
+    "Code-Tr artık kendini doğru tanıtıyor: \"seni kim geliştirdi\" diye sorulunca Hakkında sayfasındaki bilgilere göre cevap verir",
     "Kalıcı kurallar: Öğrenme panelinde yazdığın kurallar Code-Tr'nin her cevabında uygulanır",
     "Yöneticinin \"Doğrusunu öğret\" ile gönderdiği bilgi onay beklemeden hafızaya girer",
     "Glow Up videolarında yakınlaştırma vuruşu, sarsıntı, efektli geçiş ve ses efekti uygulanmaz (marka kuralları); kurgu yalnız diğer modlarda",
-    "Yapay zekâ kurgu planı alınamazsa sahneler artık konuşmadan daha akıllı çıkarılır (adımlar, seçenekler, sayılar, kapanış alıntısı)",
-    "Geçişler artık ekran kartında (GPU): sinema kalitesinde hızlı kaydırma, zoom bulanıklığı ve datamosh glitch; açık kaynak gl-transitions koleksiyonundan (MIT)",
-    "Yeni geçişler: mercek itmesi, dönen geçiş, sarsıntılı kesme ve sıcak ışık sızıntısı (film yanığı); yapay zekâ konuşmanın anına göre seçer",
-    "Ekran kartı desteklenmeyen cihazlarda eski geçişler otomatik devreye girer",
-    "Profesyonel kurgu (After Effects tarzı): yüze odaklı yakınlaştırma vuruşları, kamera sarsıntısı, hareket bulanıklığıyla hızlı kaydırma, zoom bulanıklığı ve glitch geçişleri; kesmeler artık geçişle örtülüyor",
-    "Ses efektleri: geçişlerde whoosh, güçlü anlarda darbe sesi; konuşmayı bastırmadan, koddan üretilir (\"ses efekti olmasın\" yazarsan eklenmez)",
-    "Yüz algılama: yazılar, başlıklar ve sayılar yüzün üstüne gelmez; yakınlaşınca da yüzü takip edip kaçar",
-    "Kurgu yoğunluğu isteğine göre: \"dinamik kurgu\", \"sade kurgu\", \"geçiş olmasın\", \"zoom yok\"; teslimde ne yapıldığı yazılır (dolgu temizliği ve yazım düzeltmeleri dahil)",
-    "Video modunda açılış ekranında video önerileri"
+    "Yapay zekâ kurgu planı alınamazsa sahneler artık konuşmadan daha akıllı çıkarılır (adımlar, seçenekler, sayılar, kapanış alıntısı)"
   ]
 }
