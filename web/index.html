@@ -2171,7 +2171,7 @@ async function makeVideo(prompt, brand = null){
       const nCard = (r.plan.sahneler || []).length, nEmph = (r.plan.vurgu || []).length;
       const ozet = (r.plan.__heuristic ? "_Not: yapay zekâ kurgu planı alınamadı (" + (WEB.lastPlanError || "bilinmeyen sebep") + "), sahneler konuşmadan otomatik çıkarıldı._\n\n" : "") + "**Kinetik tipografi hazır** (" + r.styleName + " stil" + (r.sure ? ", " + r.sure + " sn'de" : "") + "): " + r.words.length + " kelime konuşmayla eş zamanlı animasyonlandı, " + nEmph + " anahtar kelime vurgulandı" + (nCard ? ", " + nCard + " infografik sahne eklendi (" + [...new Set(r.plan.sahneler.map(x => x.type))].join(", ") + ")" : "") + (r.plan.isim && r.plan.isim.ad ? ", isim etiketi: " + r.plan.isim.ad : "") + (r.plan.__istek ? ".\n\n**İsteğini şöyle uyguladım:** " + ((r.plan.istek && r.plan.istek.ozet) ? r.plan.istek.ozet + " → " : "") + ["grafik", "kanca", "kadraj", "kesme"].map(k => ({grafik: "bilgi grafikleri", kanca: "açılış başlığı", kadraj: "yumuşak kadraj", kesme: "boşluk kesme"})[k] + (r.plan.__istek[k] ? " ✓" : " ✗")).join(" · ") + " (değiştirmek için yaz: ör. \"grafik olmasın\", \"zoom yok\")" : "") + (r.plan.konsept && r.plan.konsept.fikir ? ". Konsept: " + r.plan.konsept.fikir : "") + (r.plan.__kesilen > .3 ? ", konuşmadaki boşluklardan " + r.plan.__kesilen.toFixed(1) + " sn kesildi (istemezsen \"boşlukları kesme\" yaz)" : "") + ".";
       const K = r.plan.__kurgu, gAd = {whip: "hızlı kaydırma", zoomblur: "zoom bulanıklığı", glitch: "glitch", flash: "flaş", lens: "mercek itmesi", spin: "dönen geçiş", shakecut: "sarsıntılı kesme", burn: "ışık sızıntısı"};
-      const kurguNot = K ? "\n\n**Kurgu (" + ({sade: "sade", orta: "orta", dinamik: "dinamik"}[K.seviye] || K.seviye) + "):** " + [K.punch ? K.punch + " yakınlaştırma vuruşu" : "", Object.keys(K.gecis || {}).length ? Object.entries(K.gecis).map(([k, v]) => v + " " + (gAd[k] || k)).join(", ") + " geçişi" : "", K.sarsinti ? K.sarsinti + " kamera sarsıntısı" : "", K.sfx ? K.sfx + " ses efekti (whoosh/darbe)" : ""].filter(Boolean).join(", ") +
+      const kurguNot = K && !brand ? "\n\n**Kurgu (" + ({sade: "sade", orta: "orta", dinamik: "dinamik"}[K.seviye] || K.seviye) + "):** " + [K.punch ? K.punch + " yakınlaştırma vuruşu" : "", Object.keys(K.gecis || {}).length ? Object.entries(K.gecis).map(([k, v]) => v + " " + (gAd[k] || k)).join(", ") + " geçişi" : "", K.sarsinti ? K.sarsinti + " kamera sarsıntısı" : "", K.sfx ? K.sfx + " ses efekti (whoosh/darbe)" : ""].filter(Boolean).join(", ") +
         (K.gpu ? " (geçişler ekran kartında)" : "") + (K.yuz ? ". Yüzün yeri bulundu: yazılar yüzün üstüne gelmiyor, yakınlaştırmalar yüze odaklı" : ". Yüz bulunamadı: yazılar güvenli bölgede") + ". _(Değiştirmek için yaz: \"dinamik kurgu\", \"sade kurgu\", \"ses efekti olmasın\", \"geçiş olmasın\", \"zoom yok\")_" +
         (!brand && (r.plan.__dolgu || (r.plan.__duzeltme || []).length) ? "\n\n**Temizlik:** " + (r.plan.__dolgu ? r.plan.__dolgu + " dolgu (eee/ıı) altyazıdan çıkarıldı. " : "") + ((r.plan.__duzeltme || []).length ? "Yazım düzeltildi: " + r.plan.__duzeltme.join(", ") + "." : "") : "") : "";
       const glowNot = brand ? "\n\n**Teslim notu (" + brand.ad + "):** ham sese dokunulmadı, müzik eklenmedi; altyazı opaklık + kayma ile, gölgesiz, Reels güvenli alanında (alt kenar ≤ y1470); tam ekran infografikte altyazı yok; font " + brand.font + " (Türkçe karakter setiyle)." + (r.clean ? " " + r.clean.removed + " dolgu (eee/ıı) altyazıdan çıkarıldı." + (r.clean.fixed.length ? " Yazım düzeltildi: " + r.clean.fixed.join(", ") + "." : "") : "") + (r.tdk && r.tdk.length ? "\n\n**TDK de/da teyidi:** " + r.tdk.join(" · ") : "") + (brand.not ? "\n\n_Marka kuralı: " + brand.not + "_" : "") + (r.plan.__sesTeklif ? "\n\n_Ses: ham sese dokunulmadı (Glow Up kuralı). Sesi yükseltmemi istiyorsan yalnız düz kazanç uygulayabilirim; onaylarsan Video sekmesinde \"sesi yükselt\" ile yaparım._" : "") : "";
@@ -2394,19 +2394,6 @@ Kurallar:
 - KURGU (After Effects tarzı, profesyonel kurgucu gibi): JSON'a "kurgu" ekle: {"yogunluk": "sade|orta|dinamik", "sfx": true/false, "olaylar": [{"t": saniye, "tip": "punch|shake|whip|zoomblur|glitch|lens|spin|shakecut|burn|flash"}]}.
   yogunluk: enerjik/viral/eğlenceli/TikTok/"dinamik"/"efektli" istek → dinamik; kurumsal/bilgilendirici → orta; duygusal/sakin/"sade" → sade. sfx (geçiş sesleri: whoosh, darbe) yalnız dinamikte ya da kullanıcı ses efekti isterse true.
   olaylar: punch = vurucu cümlenin anahtar kelimesinde yüze yakınlaşma (3-5 sn'de en fazla bir); shake = gerçekten güçlü an (şaşırtıcı sayı, ünlem; videoda en fazla 2-3); whip/zoomblur/lens = konu değişimi; spin = enerjik geçiş; glitch = sürpriz/ters köşe; shakecut = çarpıcı an; burn (ışık sızıntısı, duygusal/sıcak an) ve flash en fazla 1'er kez. Saniyeleri dökümden al; boş da bırakabilirsin (konuşmadan otomatik yerleştirilir).`;
-function heuristicPlan(words){
-  const vurgu = [], sahneler = []; let last = -99;
-  words.forEach((w, i) => {
-    const clean = w.w.replace(/[.,!?;:…"]/g, "");
-    if(/\d/.test(clean)) vurgu.push(i);
-    if(/^\d+$/.test(clean.replace("%", "")) && w.s - last > 8){
-      const ctx = words.slice(i + 1, i + 4).map(x => x.w.replace(/[.,!?;:…"]/g, "")).join(" ");
-      sahneler.push({type: "sayi", start: Math.max(0, w.s - .3), end: w.s + 4, eyebrow: "ÖNE ÇIKAN", title1: clean + " " + ctx, title2: "", adet: Math.min(12, parseInt(clean.replace("%", "")) || 6), icon: "person"});
-      last = w.s;
-    }
-  });
-  return {vurgu, sahneler, isim: null};
-}
 async function makeMotionSlow(prompt, item, el, say){
   const ff = await getFF();
   const MO = await import("/motion.js");

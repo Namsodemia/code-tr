@@ -698,6 +698,7 @@ const capY = (y, fs, H) => STYLE.face ? faceAvoid(y, fs * 1.5, H, STYLE.face, .1
 export const KURGU_TIPLER = ["punch", "shake", "whip", "zoomblur", "glitch", "lens", "spin", "shakecut", "burn", "flash"];
 export function planEdits({words, groups, emph, cuts = [], dur, level = "orta", ai = [], brand = false, sfx = false}){
   const L = brand ? "sade" : level, out = {punch: [], shake: [], trans: [], sfx: [], intro: L !== "sade", level: L};
+  if(brand){ out.intro = false; out.level = "marka"; return out; }   // Glow Up kurallari: punch-in/pop zoom, sarsinti, efekt gecis ve sentetik ses yok
   const gap = L === "dinamik" ? 1.8 : L === "orta" ? 2.6 : 4.5, amt = L === "dinamik" ? .16 : L === "orta" ? .12 : .08;
   const grpEnd = t => { const g = groups.find(x => t >= x.st - .05 && t < x.en); return g ? g.en : t + 1.2; };
   // yapay zekanin istedigi olaylar
